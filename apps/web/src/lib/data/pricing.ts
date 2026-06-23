@@ -1,0 +1,47 @@
+export const pricingPlans = [
+  {
+    name: "Rising",
+    subtitle: "STRATEGIC CLARITY",
+    description: "Focused guidance for important life and career decisions.",
+    price: "₹ 24,999",
+    period: "",
+    features: [
+      "Personal Kundli Analysis",
+      "Career & Wealth Guidance",
+      "Favourable Timing Insights",
+      "1:1 Consultation (90Min)",
+    ],
+    variant: "default" as const,
+    cta: "EXPLORE RISING",
+  },
+  {
+    name: "Celestial",
+    subtitle: "GROWTH & EXPANSION",
+    description: "Advanced insights for growth, expansion and strategic moves.",
+    price: "₹ 90,000",
+    period: "",
+    features: [
+      "Business & Partnership Analysis",
+      "Detailed Horoscope Reading",
+      "Wealth & Opportunity Cycles",
+      "Priority Consultation (60 Min)",
+    ],
+    variant: "highlighted" as const,
+    cta: "EXPLORE CELESTIAL",
+  },
+  {
+    name: "Zenith",
+    subtitle: "LEGACY & LEADERSHIP",
+    description: "Elite astrological guidance for leaders and legacy builders.",
+    price: "₹ 99,999",
+    period: "",
+    features: [
+      "Complete Cosmic Blueprint",
+      "Leadership & Legacy Mapping",
+      "Wealth Protection Timing",
+      "Exclusive Annual Forecast",
+    ],
+    variant: "dark" as const,
+    cta: "EXPLORE ZENITH",
+  },
+];

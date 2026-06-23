@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@tsp/types": ["packages/types/src"],
+      "@tsp/constants": ["packages/constants/src"],
+      "@tsp/zod-schemas": ["packages/zod-schemas/src"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,0 +1,399 @@
+{
+  "info": {
+    "_postman_id": "90bd4fc3-6e88-45fb-a94e-7c8edcb0bb80",
+    "name": "TSP API",
+    "description": "TSP API collection. Login and signup set the access_token HTTP-only cookie; Postman retains it automatically for subsequent requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3001/api/v1" },
+    { "key": "email", "value": "tsp.user@example.com" },
+    { "key": "password", "value": "Password123" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "sessionId", "value": "" },
+    { "key": "astrologerId", "value": "" },
+    { "key": "consultationId", "value": "" },
+    { "key": "orderId", "value": "" },
+    { "key": "paymentTransactionId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"TSP Test User\",\n  \"role\": \"USER\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/signup"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.refreshToken) pm.collectionVariables.set('refreshToken', data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Firebase Phone Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"idToken\": \"firebase-id-token\"\n}" },
+            "url": "{{baseUrl}}/auth/firebase/phone"
+          }
+        },
+        {
+          "name": "Firebase Google Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"idToken\": \"firebase-id-token\"\n}" },
+            "url": "{{baseUrl}}/auth/firebase/google"
+          }
+        },
+        {
+          "name": "Firebase Apple Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"idToken\": \"firebase-id-token\"\n}" },
+            "url": "{{baseUrl}}/auth/firebase/apple"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": "{{baseUrl}}/auth/refresh"
+          }
+        },
+        {
+          "name": "Current User",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/auth/me" }
+        },
+        {
+          "name": "List Sessions",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/auth/sessions" }
+        },
+        {
+          "name": "Revoke Session",
+          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/auth/sessions/{{sessionId}}" }
+        },
+        {
+          "name": "Logout",
+          "request": { "method": "POST", "header": [], "url": "{{baseUrl}}/auth/logout" }
+        }
+      ]
+    },
+    {
+      "name": "OTP",
+      "item": [
+        {
+          "name": "Send OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{email}}\",\n  \"purpose\": \"LOGIN\"\n}"
+            },
+            "url": "{{baseUrl}}/otp/send"
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{email}}\",\n  \"code\": \"123456\",\n  \"purpose\": \"LOGIN\"\n}"
+            },
+            "url": "{{baseUrl}}/otp/verify"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users/profile" }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timezone\": \"Asia/Kolkata\",\n  \"preferredLanguage\": \"en\",\n  \"dob\": \"1995-06-15\",\n  \"tob\": \"14:30\",\n  \"pob\": \"New Delhi, India\",\n  \"gender\": \"Male\"\n}"
+            },
+            "url": "{{baseUrl}}/users/profile"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Astrologers",
+      "item": [
+        {
+          "name": "List Approved Astrologers",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/astrologers" }
+        },
+        {
+          "name": "Get Astrologer",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/astrologers/{{astrologerId}}" }
+        },
+        {
+          "name": "Onboard Astrologer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Vedic astrologer specialising in career and relationships.\",\n  \"skills\": [\"Vedic\", \"Career\", \"Love & Marriage\"],\n  \"languages\": [\"en\", \"hi\"],\n  \"pricingPerMin\": 15\n}"
+            },
+            "url": "{{baseUrl}}/astrologers/onboard"
+          }
+        },
+        {
+          "name": "Update My Availability",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"isAvailable\": true\n}" },
+            "url": "{{baseUrl}}/astrologers/me/availability"
+          }
+        },
+        {
+          "name": "Submit KYC",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idType\": \"PAN\",\n  \"idNumber\": \"ABCDE1234F\",\n  \"idDocUrl\": \"https://example.com/kyc/pan.pdf\"\n}"
+            },
+            "url": "{{baseUrl}}/astrologers/kyc/submit"
+          }
+        },
+        {
+          "name": "Review KYC (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"APPROVED\"\n}" },
+            "url": "{{baseUrl}}/astrologers/{{astrologerId}}/kyc/review"
+          }
+        },
+        {
+          "name": "Set Availability Rules",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rules\": [\n    {\n      \"dayOfWeek\": 1,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"17:00\",\n      \"timezone\": \"Asia/Kolkata\"\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/astrologers/me/availability/rules"
+          }
+        },
+        {
+          "name": "Get Availability Rules",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/astrologers/{{astrologerId}}/availability/rules" }
+        },
+        {
+          "name": "Add Availability Exception",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2026-12-25\",\n  \"isAvailable\": false,\n  \"reason\": \"Holiday\"\n}"
+            },
+            "url": "{{baseUrl}}/astrologers/me/availability/exceptions"
+          }
+        },
+        {
+          "name": "Get Availability Exceptions",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/astrologers/{{astrologerId}}/availability/exceptions" }
+        }
+      ]
+    },
+    {
+      "name": "Consultations",
+      "item": [
+        {
+          "name": "List My Consultations",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/consultations" }
+        },
+        {
+          "name": "Create Consultation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.id) pm.collectionVariables.set('consultationId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"astrologerId\": \"{{astrologerId}}\",\n  \"scheduledAt\": \"2026-12-31T10:00:00.000Z\"\n}"
+            },
+            "url": "{{baseUrl}}/consultations"
+          }
+        },
+        {
+          "name": "Start Consultation",
+          "request": { "method": "POST", "header": [], "url": "{{baseUrl}}/consultations/{{consultationId}}/start" }
+        },
+        {
+          "name": "Complete Consultation",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"durationMin\": 15\n}" },
+            "url": "{{baseUrl}}/consultations/{{consultationId}}/complete"
+          }
+        },
+        {
+          "name": "Cancel Consultation",
+          "request": { "method": "POST", "header": [], "url": "{{baseUrl}}/consultations/{{consultationId}}/cancel" }
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "item": [
+        {
+          "name": "Get Wallet and Transactions",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/wallet" }
+        },
+        {
+          "name": "Add Funds (Development)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"amount\": 1000\n}" },
+            "url": "{{baseUrl}}/wallet/add-funds"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "List Payment Orders",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/payments/orders" }
+        },
+        {
+          "name": "Create Payment Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.id) pm.collectionVariables.set('orderId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"amount\": 500,\n  \"currency\": \"INR\"\n}" },
+            "url": "{{baseUrl}}/payments/orders"
+          }
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"gatewayTransactionId\": \"pay_mock_test_001\",\n  \"signature\": \"mock-signature\"\n}"
+            },
+            "url": "{{baseUrl}}/payments/verify"
+          }
+        },
+        {
+          "name": "Razorpay Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-razorpay-signature", "value": "webhook-signature" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"payment.captured\",\n  \"payload\": {\n    \"payment\": {\n      \"entity\": {\n        \"id\": \"pay_test\",\n        \"order_id\": \"order_test\"\n      }\n    }\n  }\n}"
+            },
+            "url": "{{baseUrl}}/payments/webhook"
+          }
+        },
+        {
+          "name": "Create Refund (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentTransactionId\": \"{{paymentTransactionId}}\",\n  \"amount\": 100,\n  \"reason\": \"Customer request\"\n}"
+            },
+            "url": "{{baseUrl}}/payments/refunds"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Review Astrologer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"APPROVED\"\n}" },
+            "url": "{{baseUrl}}/admin/astrologers/{{astrologerId}}/review"
+          }
+        }
+      ]
+    }
+  ]
+}

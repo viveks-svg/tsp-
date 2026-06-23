@@ -1,0 +1,316 @@
+--- reset Mon Jun 22 15:44:54 IST 2026 ---
+[ssr getServerAuth] upstream status=200
+[ssr getServerAuth] upstream status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[ssr getServerAuth] upstream status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultation/chat | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultations/99f082ed-85e2-4842-bbdf-cf149471a229/call | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultations/99f082ed-85e2-4842-bbdf-cf149471a229/call | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultations | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultations | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/blog | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultation/chat | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultation/chat | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream fetch threw: TypeError: fetch failed
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream fetch threw: TypeError: fetch failed
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/consultation/call | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/business-vastu | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/business-vastu | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream fetch threw: TypeError: fetch failed
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/business-vastu | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/shop | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/consultations | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/consultations | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultation/chat | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/wallet | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/profile | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/profile | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/profile | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultation/chat | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultation/chat | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream fetch threw: TypeError: fetch failed
+[me] hit | referer=http://localhost:3000/consultation/chat | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/profile | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/profile | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/profile | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/profile | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultation/chat | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/business-vastu | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/consultations | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/availability | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/availability | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/consultations | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/consultations | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/consultations | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/availability | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/earnings | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/profile | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/consultations | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/availability | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/earnings | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/profile | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/horoscope/weekly | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/consultations | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/business-vastu | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200

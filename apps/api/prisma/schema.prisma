@@ -1,0 +1,437 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ASTROLOGER
+  ADMIN
+}
+
+enum AstrologerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ConsultationStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum ConsultationType {
+  CHAT
+  CALL
+}
+
+enum CallSessionStatus {
+  RINGING
+  ACTIVE
+  COMPLETED
+  MISSED
+  REJECTED
+  BUSY
+  FAILED
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id                  String              @id @default(uuid())
+  email               String?             @unique
+  phone               String?             @unique
+  passwordHash        String?
+  name                String?
+  role                Role                @default(USER)
+  firebaseUid         String?             @unique
+  authProvider        String? // EMAIL | GOOGLE | PHONE | APPLE
+  avatarUrl           String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  wallet              Wallet?
+  astrologer          Astrologer?         @relation("UserAstrologer")
+  approvedAstrologers Astrologer[]        @relation("ApprovedAstrologers")
+  consultations       Consultation[]      @relation("UserConsultations")
+  transactions        WalletTransaction[]
+  blogs               Blog[]
+  profile             UserProfile?
+  sessions            UserSession[]
+  orders              PaymentOrder[]
+  queues              ConsultationQueue[]
+  reviews             ConsultationReview[]
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance   Decimal             @db.Decimal(12, 2)
+  updatedAt DateTime            @updatedAt
+  ledgerEntries WalletLedgerEntry[]
+}
+
+model Astrologer {
+  id                  String                            @id @default(uuid())
+  userId              String                            @unique
+  user                User                              @relation("UserAstrologer", fields: [userId], references: [id], onDelete: Cascade)
+  bio                 String
+  pricingPerMin       Decimal                           @db.Decimal(12, 2)
+  rating              Float                             @default(5.0)
+  isAvailable         Boolean                           @default(true)
+  status              AstrologerStatus                  @default(PENDING)
+  approvedAt          DateTime?
+  approvedById        String?
+  approvedBy          User?                             @relation("ApprovedAstrologers", fields: [approvedById], references: [id])
+  rejectionReason     String?
+  createdAt           DateTime                          @default(now())
+  updatedAt           DateTime                          @updatedAt
+  consultations       Consultation[]                    @relation("AstrologerConsultations")
+  expertises          AstrologerExpertise[]
+  languages           AstrologerLanguage[]
+  availabilityRules   AstrologerAvailabilityRule[]
+  exceptions          AstrologerAvailabilityException[]
+  verification        AstrologerVerification?
+  queues              ConsultationQueue[]
+  reviews             ConsultationReview[]
+}
+
+model Consultation {
+  id                  String             @id @default(uuid())
+  userId              String
+  user                User               @relation("UserConsultations", fields: [userId], references: [id], onDelete: Cascade)
+  astrologerId        String
+  astrologer          Astrologer         @relation("AstrologerConsultations", fields: [astrologerId], references: [id], onDelete: Cascade)
+  status              ConsultationStatus @default(PENDING)
+  type                ConsultationType   @default(CHAT)
+  durationMin         Int?
+  cost                Decimal?           @db.Decimal(12, 2)
+  lockedPricingPerMin Decimal            @db.Decimal(12, 2)
+  scheduledAt         DateTime
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  transactions        WalletTransaction[] @relation("ConsultationTransactions")
+  chatThread          ChatThread?
+  callSession         CallSession?
+  note                ConsultationNote?
+  review              ConsultationReview?
+}
+
+model WalletTransaction {
+  id                String            @id @default(uuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount            Decimal           @db.Decimal(12, 2)
+  type              TransactionType
+  status            TransactionStatus @default(PENDING)
+  description       String
+  razorpayPaymentId String?
+  razorpayOrderId   String?
+  consultationId    String?
+  consultation      Consultation?     @relation("ConsultationTransactions", fields: [consultationId], references: [id], onDelete: SetNull)
+  createdAt         DateTime          @default(now())
+}
+
+model Blog {
+  id        String   @id @default(uuid())
+  title     String
+  slug      String   @unique
+  content   String
+  published Boolean  @default(false)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserProfile {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timezone          String   @default("UTC")
+  preferredLanguage String   @default("en")
+  dob               DateTime?
+  tob               String?  // Time of birth (e.g. "14:30")
+  pob               String?  // Place of birth
+  gender            String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model OTPVerification {
+  id          String   @id @default(uuid())
+  identifier  String   // Email or phone number
+  code        String   // Plain or hashed OTP
+  purpose     String   // e.g. "LOGIN", "SIGNUP", "PASSWORD_RESET"
+  expiresAt   DateTime
+  isUsed      Boolean  @default(false)
+  attempts    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([identifier, code])
+}
+
+model UserSession {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash String   @unique
+  deviceId         String?
+  deviceModel      String?
+  os               String?
+  ipAddress        String?
+  userAgent        String?
+  isRevoked        Boolean  @default(false)
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Expertise {
+  id          String                @id @default(uuid())
+  name        String                @unique
+  description String?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  astrologers AstrologerExpertise[]
+}
+
+model AstrologerExpertise {
+  astrologerId String
+  astrologer   Astrologer @relation(fields: [astrologerId], references: [id], onDelete: Cascade)
+  expertiseId  String
+  expertise    Expertise  @relation(fields: [expertiseId], references: [id], onDelete: Cascade)
+  rank         Int        @default(1)
+
+  @@id([astrologerId, expertiseId])
+}
+
+model Language {
+  id          String               @id @default(uuid())
+  code        String               @unique
+  name        String
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  astrologers AstrologerLanguage[]
+}
+
+model AstrologerLanguage {
+  astrologerId String
+  astrologer   Astrologer @relation(fields: [astrologerId], references: [id], onDelete: Cascade)
+  languageId   String
+  language     Language   @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  proficiency  String     @default("FLUENT") // BASIC, FLUENT, NATIVE
+
+  @@id([astrologerId, languageId])
+}
+
+model AstrologerAvailabilityRule {
+  id           String     @id @default(uuid())
+  astrologerId String
+  astrologer   Astrologer @relation(fields: [astrologerId], references: [id], onDelete: Cascade)
+  dayOfWeek    Int        // 0 = Sunday, 1 = Monday, etc.
+  startTime    String     // "HH:MM"
+  endTime      String     // "HH:MM"
+  timezone     String     @default("UTC")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([astrologerId])
+}
+
+model AstrologerAvailabilityException {
+  id           String     @id @default(uuid())
+  astrologerId String
+  astrologer   Astrologer @relation(fields: [astrologerId], references: [id], onDelete: Cascade)
+  date         DateTime
+  isAvailable  Boolean    @default(false)
+  startTime    String?
+  endTime      String?
+  reason       String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([astrologerId, date])
+}
+
+model AstrologerVerification {
+  id           String           @id @default(uuid())
+  astrologerId String           @unique
+  astrologer   Astrologer       @relation(fields: [astrologerId], references: [id], onDelete: Cascade)
+  idType       String           // PAN, AADHAAR, PASSPORT, etc.
+  idNumber     String
+  idDocUrl     String
+  status       AstrologerStatus @default(PENDING)
+  submittedAt  DateTime         @default(now())
+  reviewedAt   DateTime?
+  reviewedById String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model WalletLedgerEntry {
+  id           String          @id @default(uuid())
+  walletId     String
+  wallet       Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  amount       Decimal         @db.Decimal(12, 2)
+  type         TransactionType
+  balanceAfter Decimal         @db.Decimal(12, 2)
+  purpose      String
+  referenceId  String?
+  description  String
+  createdAt    DateTime        @default(now())
+
+  @@index([walletId])
+}
+
+model PaymentOrder {
+  id              String               @id @default(uuid())
+  userId          String
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount          Decimal              @db.Decimal(12, 2)
+  currency        String               @default("INR")
+  status          OrderStatus          @default(PENDING)
+  gatewayProvider String
+  gatewayOrderId  String?              @unique
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  transactions    PaymentTransaction[]
+
+  @@index([userId])
+}
+
+model PaymentTransaction {
+  id                   String             @id @default(uuid())
+  orderId              String
+  order                PaymentOrder       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  gatewayTransactionId String?            @unique
+  gatewaySignature     String?
+  amount               Decimal            @db.Decimal(12, 2)
+  status               TransactionStatus  @default(PENDING)
+  errorCode            String?
+  errorMessage         String?
+  rawResponse          Json?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  refunds              Refund[]
+
+  @@index([orderId])
+}
+
+model Refund {
+  id              String             @id @default(uuid())
+  transactionId   String
+  transaction     PaymentTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  amount          Decimal            @db.Decimal(12, 2)
+  status          RefundStatus       @default(PENDING)
+  gatewayRefundId String?            @unique
+  reason          String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([transactionId])
+}
+
+model ConsultationQueue {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  astrologerId String
+  astrologer   Astrologer @relation(fields: [astrologerId], references: [id], onDelete: Cascade)
+  status       String     @default("PENDING") // PENDING | SERVED | CANCELLED
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([astrologerId, status])
+}
+
+model ChatThread {
+  id             String        @id @default(uuid())
+  consultationId String        @unique
+  consultation   Consultation  @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  status         String        @default("ACTIVE") // ACTIVE | COMPLETED
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  messages       ChatMessage[]
+}
+
+model ChatMessage {
+  id        String     @id @default(uuid())
+  threadId  String
+  thread    ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  senderId  String
+  content   String
+  type      String     @default("TEXT") // TEXT | SYSTEM
+  createdAt DateTime   @default(now())
+}
+
+model CallSession {
+  id               String            @id @default(uuid())
+  consultationId   String            @unique
+  consultation     Consultation      @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  channelName      String            @unique
+  trtcUserIdCaller String
+  trtcUserIdAstro  String
+  status           CallSessionStatus @default(RINGING)
+  startedAt        DateTime?
+  endedAt          DateTime?
+  durationSeconds  Int?
+  endReason        String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model ConsultationNote {
+  id             String       @id @default(uuid())
+  consultationId String       @unique
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  content        String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model ConsultationReview {
+  id             String       @id @default(uuid())
+  consultationId String       @unique
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  astrologerId   String
+  astrologer     Astrologer   @relation(fields: [astrologerId], references: [id], onDelete: Cascade)
+  rating         Float
+  review         String?
+  createdAt      DateTime     @default(now())
+}
+
+
+
+
