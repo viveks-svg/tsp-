@@ -58,7 +58,7 @@ export const horoscopeMetadata: Metadata = {
 };
 
 export const rootMetadata: Metadata = {
-  title: "Astro Space — Transform Your Future with Vedic Astrology & Executive Consulting",
+  title: "Time Space & Planets — Transform Your Future with Vedic Astrology & Executive Consulting",
   description: siteConfig.description,
   keywords: [
     "astrology",
