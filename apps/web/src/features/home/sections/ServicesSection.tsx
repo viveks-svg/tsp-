@@ -4,10 +4,7 @@ import { services } from "@/lib/data/services";
 
 export default function ServicesSection() {
   return (
-    <section
-      className="relative py-16 lg:py-24 overflow-hidden bg-gradient-to-br from-[#F6A000] via-[#E89500] to-[#D88D14]"
-      id="services"
-    >
+    <section id="services" className="relative py-16 lg:py-24 overflow-hidden bg-gradient-to-br from-[#F6A000] via-[#E89500] to-[#D88D14]">
       {/* Subtle noise overlay */}
       <div className="absolute inset-0 bg-noise pointer-events-none" />
 
@@ -19,7 +16,7 @@ export default function ServicesSection() {
               <span className="text-white/60 text-sm">✦</span>
               <div className="w-12 h-px bg-white/25" />
             </div>
-            <h2 className="font-heading text-4xl md:text-5xl font-bold text-white text-balance">
+            <h2 className="font-heading text-4xl md:text-5xl font-bold text-black text-balance">
               Our Services
             </h2>
           </div>

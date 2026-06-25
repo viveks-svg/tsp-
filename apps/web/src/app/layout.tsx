@@ -16,39 +16,39 @@ export const dynamic = "force-dynamic";
 
 const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-inter-next",
   display: "swap",
 });
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
-  variable: "--font-playfair",
+  variable: "--font-playfair-next",
   display: "swap",
 });
 
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["500", "600"],
-  variable: "--font-poppins",
+  variable: "--font-poppins-next",
   display: "swap",
 });
 
 const cinzel = Cinzel({
   subsets: ["latin"],
-  variable: "--font-cinzel",
+  variable: "--font-cinzel-next",
   display: "swap",
 });
 
 const poltawskiNowy = Poltawski_Nowy({
   subsets: ["latin"],
-  variable: "--font-poltawski",
+  variable: "--font-poltawski-next",
   display: "swap",
 });
 
 const tiroSanskrit = Tiro_Devanagari_Sanskrit({
   subsets: ["latin"],
   weight: "400",
-  variable: "--font-tiro-sanskrit",
+  variable: "--font-tiro-sanskrit-next",
   display: "swap",
 });
 
@@ -83,21 +83,19 @@ export default async function RootLayout({
                 };
 
                 var tspReload = function () {
-                  window.location.href = window.location.href;
+                  window.location.reload();
                 };
 
                 /* ── BFCache ──────────────────────────────────────────
-                 * When the browser restores a page from BFCache, the
-                 * JavaScript heap is frozen as-is. React may have stale
-                 * state and event handlers may break. Force a hard reload
-                 * to get a fresh render tree from the server.
-                 *
-                 * IMPORTANT: we deliberately do NOT guard with a
-                 * 'reloading' flag here because BFCache preserves that
-                 * flag from the pre-navigation session, which would
-                 * permanently suppress the reload. */
+                 * Force a hard reload on BFCache restore to prevent React 
+                 * state corruption and dead event listeners. 
+                 * Wrapped in setTimeout to bypass browser blocks on sync reloads. */
                 window.addEventListener('pageshow', function (event) {
-                  if (event.persisted) tspReload();
+                  if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                    setTimeout(function() {
+                      window.location.reload();
+                    }, 50);
+                  }
                 }, true);
 
                 /* ── Cross-group link clicks ──────────────────────────

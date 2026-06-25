@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useCallback, useEffect } from "react";
-import TRTC from "trtc-sdk-v5";
+import type TRTC from "trtc-sdk-v5";
 import { useCallStore } from "../store/call.store";
 
 /**
@@ -28,7 +28,8 @@ export function useTrtcClient() {
    */
   const getTrtc = useCallback(() => {
     if (!trtcRef.current) {
-      trtcRef.current = TRTC.create();
+      const TRTC_SDK = require("trtc-sdk-v5").default || require("trtc-sdk-v5");
+      trtcRef.current = TRTC_SDK.create();
     }
     return trtcRef.current;
   }, []);
@@ -51,7 +52,12 @@ export function useTrtcClient() {
       }
       isJoiningOrJoinedRef.current = true;
       try {
+        const TRTC = require("trtc-sdk-v5").default || require("trtc-sdk-v5");
         const trtc = getTrtc();
+
+        if (!trtc) {
+          throw new Error("TRTC client failed to initialize.");
+        }
 
         // Listen for remote stream events
         trtc.on(TRTC.EVENT.REMOTE_VIDEO_AVAILABLE, ({ userId: remoteUserId }: { userId: string }) => {
@@ -89,9 +95,6 @@ export function useTrtcClient() {
 
         trtc.on(TRTC.EVENT.CONNECTION_STATE_CHANGED, (event: { prevState: string; state: string }) => {
           console.log(`[TRTC] Connection: ${event.prevState} → ${event.state}`);
-          if (event.state === "CONNECTED") {
-            setActive();
-          }
         });
 
         // Enter the room — TRTC uses string room IDs via strRoomId
@@ -159,7 +162,15 @@ export function useTrtcClient() {
   const toggleLocalAudio = useCallback(async (muted: boolean) => {
     const trtc = trtcRef.current;
     if (trtc) {
-      await trtc.updateLocalAudio({ mute: muted });
+      try {
+        await trtc.updateLocalAudio({ mute: muted });
+      } catch (err: any) {
+        if (err?.code === 5998 || err?.message?.includes("abort") || err?.message?.includes("not started")) {
+          console.warn("[TRTC] toggleLocalAudio aborted (not ready):", err);
+        } else {
+          console.error("[TRTC] toggleLocalAudio failed:", err);
+        }
+      }
     }
   }, []);
 
@@ -169,7 +180,15 @@ export function useTrtcClient() {
   const toggleLocalVideo = useCallback(async (muted: boolean) => {
     const trtc = trtcRef.current;
     if (trtc) {
-      await trtc.updateLocalVideo({ mute: muted });
+      try {
+        await trtc.updateLocalVideo({ mute: muted });
+      } catch (err: any) {
+        if (err?.code === 5998 || err?.message?.includes("abort") || err?.message?.includes("not started")) {
+          console.warn("[TRTC] toggleLocalVideo aborted (not ready):", err);
+        } else {
+          console.error("[TRTC] toggleLocalVideo failed:", err);
+        }
+      }
     }
   }, []);
 

@@ -10,7 +10,7 @@ export default function AppLayout({
 }>) {
   return (
     <>
-      <TopBar />
+      {/* <TopBar /> */}
       <Navbar />
       <main className="min-h-screen bg-cream pt-[125px] lg:pt-[140px]">{children}</main>
       <Footer />

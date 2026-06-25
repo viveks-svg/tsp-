@@ -52,10 +52,51 @@ export default function AuthProvider({
   const pendingActionRef = useRef<(() => void) | null>(null);
   const stateRef = useRef(state);
 
+  // Sync state to ref
   useEffect(() => {
     stateRef.current = state;
   });
 
+  // Load from localStorage on mount if no initialUser was provided by SSR
+  useEffect(() => {
+    if (!initialUser && typeof window !== "undefined") {
+      try {
+        const storedAuth = localStorage.getItem("tsp_auth_state");
+        if (storedAuth) {
+          const parsed = JSON.parse(storedAuth);
+          if (parsed && parsed.user) {
+            setState((prev) => ({
+              ...prev,
+              user: parsed.user,
+              isAuthenticated: true,
+              walletBalance: Number(parsed.walletBalance ?? 0),
+            }));
+          }
+        }
+      } catch (e) {
+        // ignore storage errors
+      }
+    }
+  }, [initialUser]);
+
+  // Save to localStorage whenever user state changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (state.isAuthenticated && state.user) {
+        localStorage.setItem(
+          "tsp_auth_state",
+          JSON.stringify({
+            user: state.user,
+            walletBalance: state.walletBalance,
+          })
+        );
+      } else if (!state.isLoading) {
+        localStorage.removeItem("tsp_auth_state");
+      }
+    }
+  }, [state.isAuthenticated, state.user, state.walletBalance, state.isLoading]);
+
+  // Auto-revalidate session in background
   useEffect(() => {
     let cancelled = false;
 

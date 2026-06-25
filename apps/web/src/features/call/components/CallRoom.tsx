@@ -247,18 +247,30 @@ export default function CallRoom({ consultationId }: CallRoomProps) {
   }, [status, consultationId, endCall]);
 
   // ── 6. Cleanup on unmount ──
+  const unmountTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
+    if (unmountTimeoutRef.current) {
+      clearTimeout(unmountTimeoutRef.current);
+      unmountTimeoutRef.current = null;
+    }
+
     return () => {
-      const currentState = useCallStore.getState();
-      if (
-        currentState.status === "active" ||
-        currentState.status === "connecting" ||
-        currentState.status === "ringing" ||
-        currentState.status === "initiating"
-      ) {
-        endCall(consultationId);
-      }
-      reset();
+      // Delay cleanup by 100ms. If this is a Strict Mode dummy unmount, the
+      // immediate remount will clear this timeout. If it's a real unmount
+      // (user navigated away), the timeout will execute and end the call.
+      unmountTimeoutRef.current = setTimeout(() => {
+        const currentState = useCallStore.getState();
+        if (
+          currentState.status === "active" ||
+          currentState.status === "connecting" ||
+          currentState.status === "ringing" ||
+          currentState.status === "initiating"
+        ) {
+          endCall(consultationId);
+        }
+        reset();
+      }, 100);
     };
   }, [consultationId, endCall, reset]);
 

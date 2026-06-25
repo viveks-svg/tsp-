@@ -64,15 +64,14 @@ export default function HeroSection() {
 
             {/* Headline */}
             <FadeUp delay={0.1} onMount>
-              <h1 className="font-heading text-[2.75rem] sm:text-[3.5rem] lg:text-[4.5rem] xl:text-[5rem] font-bold leading-[1.06] tracking-[-0.01em] text-white mb-7">
+              <h1 className="font-heading text-[3rem] sm:text-[4rem] lg:text-[5rem] xl:text-[5.5rem] font-semibold leading-[0.98] tracking-[-0.03em] text-white mb-8">
                 Ancient Wisdom
                 <br />
-                <span className="relative inline-block">
-                  <span className="text-[#C8A04A]">Modern Decisions</span>
-                  <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-gradient-to-r from-[#C8A04A]/60 via-[#C8A04A] to-[#C8A04A]/60 rounded-full" />
+                <span className="text-[#C8A04A]">
+                  for Modern
                 </span>
                 <br />
-                For Life & Business
+                Success
               </h1>
             </FadeUp>
 

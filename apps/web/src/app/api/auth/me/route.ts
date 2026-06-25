@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { appendFileSync } from "node:fs";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 
 // TEMP DEBUG: append every hit to a file we can inspect from outside the browser.

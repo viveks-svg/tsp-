@@ -3,6 +3,9 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AuthModal from "@/features/auth/components/AuthModal";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function MarketingLayout({
   children,
 }: Readonly<{
@@ -10,7 +13,7 @@ export default function MarketingLayout({
 }>) {
   return (
     <>
-      <TopBar />
+      {/* <TopBar /> */}
       <Navbar />
       <main>{children}</main>
       <Footer />

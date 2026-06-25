@@ -43,16 +43,16 @@
   --color-foreground: #111827;
 
   /* Fonts */
-  --font-playfair: "Playfair Display", serif;
-  --font-poppins: "Poppins", sans-serif;
-  --font-tiro-sanskrit: "Tiro Devanagari Sanskrit", serif;
-  --font-inter: "Inter", sans-serif;
-  --font-poltawski: "Poltawski Nowy", serif;
-  --font-cinzel: "Cinzel", serif;
+  --font-playfair: var(--font-playfair-next), "Playfair Display", serif;
+  --font-poppins: var(--font-poppins-next), "Poppins", sans-serif;
+  --font-tiro-sanskrit: var(--font-tiro-sanskrit-next), "Tiro Devanagari Sanskrit", serif;
+  --font-inter: var(--font-inter-next), "Inter", sans-serif;
+  --font-poltawski: var(--font-poltawski-next), "Poltawski Nowy", serif;
+  --font-cinzel: var(--font-cinzel-next), "Cinzel", serif;
   --font-trajan: "Trajan Pro", var(--font-cinzel), serif;
 
-  --font-heading: var(--font-playfair), serif;
-  --font-body: var(--font-inter), sans-serif;
+  --font-heading: var(--font-playfair);
+  --font-body: var(--font-inter);
 
   /* Shadows */
   --shadow-card: 0px 4px 12px rgba(0, 0, 0, 0.08);

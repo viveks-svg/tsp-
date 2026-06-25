@@ -11,7 +11,7 @@ export default function TrustStrip() {
             <span className="text-white/80 text-[11px] font-medium whitespace-nowrap px-6 tracking-[0.2em] uppercase">
               {item}
             </span>
-            <span className="text-gold/60 text-[8px]">✦</span>
+            <span className="text-gold text-[8px]">✦</span>
           </span>
         ))}
       </div>
