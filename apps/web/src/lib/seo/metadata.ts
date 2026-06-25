@@ -70,7 +70,7 @@ export const rootMetadata: Metadata = {
     "business astrology",
   ],
   openGraph: {
-    title: "Astro Space — Transform Your Future",
+    title: "Time Space & Planets — Transform Your Future",
     description:
       "We integrate Astrology, Vedic Philosophy, and Business Strategy to unlock the next level of your professional destiny.",
     type: "website",
@@ -78,7 +78,7 @@ export const rootMetadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Astro Space — Transform Your Future",
+    title: "Time Space & Planets — Transform Your Future",
     description:
       "Premium astrology consultation for leaders and executives.",
   },
