@@ -162,7 +162,7 @@ export default function ConsultationsPageContent() {
                 </div>
                 {consultation.status === "ACTIVE" && (
                   <Link
-                    href={`/consultations/${consultation.id}/${consultation.type === "CALL" ? "call" : "chat"}`}
+                    href={`${ROUTES.CONSULTATIONS}/${consultation.id}/${consultation.type === "CALL" ? "call" : "chat"}`}
                     className="mt-5 inline-flex rounded-button bg-navy hover:bg-navy-hover px-4 py-2 text-xs font-semibold text-white transition-colors"
                   >
                     {consultation.type === "CALL" ? "Join Call Room" : "Join Chat Room"}

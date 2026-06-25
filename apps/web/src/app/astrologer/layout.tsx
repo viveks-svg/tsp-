@@ -20,6 +20,7 @@ import { useCallStore } from "@/features/call/store/call.store";
 import { useCallSocket } from "@/features/call/hooks/useCallSocket";
 import IncomingCallModal from "@/features/call/components/IncomingCallModal";
 import { cn } from "@/lib/cn";
+import { ROUTES } from "@/lib/constants/routes";
 
 const NAV_ITEMS = [
   { href: "/astrologer/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -49,7 +50,7 @@ export default function AstrologerLayout({
 
   const handleAcceptCall = (consultationId: string) => {
     acceptCall(consultationId);
-    router.push(`/consultations/${consultationId}/call`);
+    router.push(`${ROUTES.CONSULTATIONS}/${consultationId}/call`);
   };
 
   const handleRejectCall = (consultationId: string) => {

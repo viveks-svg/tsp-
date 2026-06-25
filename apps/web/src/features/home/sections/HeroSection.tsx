@@ -91,7 +91,7 @@ export default function HeroSection() {
                   size="lg"
                   className="px-8 py-3.5 rounded-full btn-shine shadow-[0_4px_25px_rgba(246,160,0,0.2)]"
                   onClick={() => {
-                    window.location.href = "/consultation/chat";
+                    window.location.href = "/book";
                   }}
                 >
                   <Calendar className="w-4 h-4" />
@@ -102,11 +102,11 @@ export default function HeroSection() {
                   size="lg"
                   className="px-8 py-3.5 rounded-full border-white/20 text-white hover:bg-white/10 hover:text-white hover:border-white/30"
                   onClick={() => {
-                    window.location.href = "/consultation/call";
+                    window.location.href = "/solutions";
                   }}
                 >
                   <Video className="w-4 h-4" />
-                  Online Meeting
+                  View Solutions
                 </Button>
               </div>
             </FadeUp>

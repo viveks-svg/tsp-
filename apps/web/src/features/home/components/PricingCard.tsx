@@ -9,6 +9,7 @@ interface PricingCardProps {
   features: string[];
   variant: "default" | "highlighted" | "dark";
   cta: string;
+  onBook?: () => void;
 }
 
 // Function to map feature names to specific premium icons
@@ -49,6 +50,7 @@ export default function PricingCard({
   features,
   variant,
   cta,
+  onBook,
 }: PricingCardProps) {
   return (
     <div
@@ -112,6 +114,7 @@ export default function PricingCard({
 
       {/* CTA Button */}
       <button
+        onClick={onBook}
         className={cn(
           "w-full py-3 px-4 rounded-[6px] border font-poppins text-[10px] font-semibold tracking-[0.1em] uppercase flex items-center justify-center gap-2 transition-all duration-300",
           variant === "dark"

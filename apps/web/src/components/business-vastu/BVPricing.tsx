@@ -6,6 +6,7 @@ import { CheckCircle2, Sparkles, Crown, Gem } from "lucide-react";
 import { PRICING_PLANS } from "@/lib/data/business-vastu";
 import type { BVPricingPlan } from "@/lib/data/business-vastu";
 import { cn } from "@/lib/cn";
+import { useState } from "react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -22,9 +23,11 @@ const PLAN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
 function PricingCard({
   plan,
   index,
+  onBook,
 }: {
   plan: BVPricingPlan;
   index: number;
+  onBook: (plan: BVPricingPlan) => void;
 }) {
   const router = useRouter();
   const Icon = PLAN_ICONS[plan.slug];
@@ -125,9 +128,7 @@ function PricingCard({
 
       {/* CTA Button */}
       <button
-        onClick={() =>
-          router.push(`/business-vastu/plans/${plan.slug}`)
-        }
+        onClick={() => onBook(plan)}
         className={cn(
           "w-full py-3 rounded-full font-poppins font-semibold transition-all text-sm",
           isLight &&
@@ -145,6 +146,12 @@ function PricingCard({
 }
 
 export default function BVPricing() {
+  const router = useRouter();
+
+  const handleBook = (plan: BVPricingPlan) => {
+    router.push(`/book?service=business-vastu&plan=${plan.slug}`);
+  };
+
   return (
     <section id="pricing" className="bg-[#F7F4EE] py-20 lg:py-28">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -174,7 +181,7 @@ export default function BVPricing() {
         {/* Plans Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
           {PRICING_PLANS.map((plan, i) => (
-            <PricingCard key={plan.slug} plan={plan} index={i} />
+            <PricingCard key={plan.slug} plan={plan} index={i} onBook={handleBook} />
           ))}
         </div>
 
@@ -184,6 +191,7 @@ export default function BVPricing() {
           working days.
         </p>
       </div>
+
     </section>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Search, ShoppingBag, Star, X, Plus, Minus, Heart, ArrowUpDown, ArrowRight, MessageCircle } from "lucide-react";
+import { Search, ShoppingBag, Star, X, Plus, Minus, Heart, ArrowUpDown, ArrowRight, MessageCircle, MapPin, Truck } from "lucide-react";
 import Image from "next/image";
+import Script from "next/script";
 import { cn } from "@/lib/cn";
+import { apiClient } from "@/lib/http/client";
 import { SHOP_PRODUCTS, type Product } from "@/lib/data/shop";
 import { div } from "framer-motion/client";
 
@@ -19,7 +21,61 @@ export default function ShopPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlist, setWishlist] = useState<string[]>([]);
-  const [checkoutStep, setCheckoutStep] = useState<"cart" | "success">("cart");
+  const [checkoutStep, setCheckoutStep] = useState<"cart" | "shipping" | "success">("cart");
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Shipping form state
+  const [shippingData, setShippingData] = useState({
+    customerName: "",
+    customerEmail: "",
+    customerPhone: "",
+    shippingAddress: "",
+    city: "",
+    state: "",
+    pincode: ""
+  });
+
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Load initial cart and shipping details from localStorage
+  React.useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem("tsp_shop_cart");
+      if (savedCart) {
+        setCart(JSON.parse(savedCart));
+      }
+      const savedShipping = localStorage.getItem("tsp_shop_shipping");
+      if (savedShipping) {
+        setShippingData((prev) => ({
+          ...prev,
+          ...JSON.parse(savedShipping)
+        }));
+      }
+    } catch (e) {
+      console.error("Failed to load shop state from localStorage", e);
+    }
+    setIsMounted(true);
+  }, []);
+
+  // Save cart to localStorage when it changes
+  React.useEffect(() => {
+    if (!isMounted) return;
+    try {
+      localStorage.setItem("tsp_shop_cart", JSON.stringify(cart));
+    } catch (e) {
+      console.error("Failed to save cart to localStorage", e);
+    }
+  }, [cart, isMounted]);
+
+  // Save shipping details to localStorage when they change
+  React.useEffect(() => {
+    if (!isMounted) return;
+    try {
+      localStorage.setItem("tsp_shop_shipping", JSON.stringify(shippingData));
+    } catch (e) {
+      console.error("Failed to save shipping data to localStorage", e);
+    }
+  }, [shippingData, isMounted]);
 
   const categories = [
     { id: "all", label: "All Products" },
@@ -93,11 +149,77 @@ export default function ShopPage() {
     );
   };
 
+  const handleCheckout = async () => {
+    if (!shippingData.customerName || !shippingData.customerPhone || !shippingData.shippingAddress) {
+      alert("Please fill in all required shipping details.");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const orderPayload = {
+        ...shippingData,
+        items: cart.map(item => ({
+          productId: item.product.id,
+          productName: item.product.name,
+          price: item.product.price,
+          quantity: item.quantity
+        })),
+        totalAmount: subtotal
+      };
+
+      const res: any = await apiClient.post('/shop/orders', orderPayload);
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'mock_key',
+        amount: subtotal * 100,
+        currency: "INR",
+        name: "Time Space & Planets",
+        description: "Divine Shop Order",
+        order_id: res.razorpayOrderId,
+        handler: async function (response: any) {
+          try {
+            await apiClient.post('/shop/orders/verify', {
+              razorpayOrderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature
+            });
+            setCheckoutStep("success");
+            setCart([]);
+          } catch (verifyError) {
+            alert("Payment verification failed.");
+            setIsProcessing(false);
+          }
+        },
+        prefill: {
+          name: shippingData.customerName,
+          email: shippingData.customerEmail,
+          contact: shippingData.customerPhone
+        },
+        theme: {
+          color: "#0A2540"
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function () {
+        alert("Payment failed or cancelled.");
+        setIsProcessing(false);
+      });
+      rzp.open();
+
+    } catch (error) {
+      alert("Failed to initiate checkout. Please try again.");
+      setIsProcessing(false);
+    }
+  };
+
   const totalItems = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart]);
   const subtotal = useMemo(() => cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0), [cart]);
 
   return (
     <div className="min-h-screen bg-cream pb-20 relative">
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       {/* Hero Banner Section */}
       <section className="bg-gradient-navy text-white pt-[125px] pb-16 lg:pt-[140px] relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gold via-transparent to-transparent" />
@@ -315,7 +437,7 @@ export default function ShopPage() {
 
       {/* WhatsApp Help Floating Widget */}
       <a
-        href="https://wa.me/+919311899615?text=Hello%20Time%20Space%20Planets%2C%20I%20have%20a%20question%20about%20spiritual%20remedies."
+        href="https://wa.me/+919810278102?text=Hello%20Time%20Space%20Planets%2C%20I%20have%20a%20question%20about%20spiritual%20remedies."
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 bg-emerald-500 hover:bg-emerald-600 text-white p-4 rounded-full shadow-lg hover:scale-105 transition-all duration-300 z-40"
@@ -380,7 +502,6 @@ export default function ShopPage() {
                 </p>
                 <button
                   onClick={() => {
-                    setCart([]);
                     setCartOpen(false);
                     setCheckoutStep("cart");
                   }}
@@ -388,6 +509,70 @@ export default function ShopPage() {
                 >
                   Continue Shopping
                 </button>
+              </div>
+            ) : checkoutStep === "shipping" ? (
+              <div className="space-y-4">
+                <button onClick={() => setCheckoutStep("cart")} className="text-xs font-medium text-muted hover:text-dark flex items-center gap-1 mb-2">
+                  <ArrowRight className="w-3.5 h-3.5 rotate-180" /> Back to Cart
+                </button>
+                <h3 className="font-heading text-lg font-bold text-dark flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-gold" /> Shipping Details
+                </h3>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Full Name *"
+                    value={shippingData.customerName}
+                    onChange={(e) => setShippingData({ ...shippingData, customerName: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      value={shippingData.customerEmail}
+                      onChange={(e) => setShippingData({ ...shippingData, customerEmail: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Phone *"
+                      value={shippingData.customerPhone}
+                      onChange={(e) => setShippingData({ ...shippingData, customerPhone: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Street Address *"
+                    value={shippingData.shippingAddress}
+                    onChange={(e) => setShippingData({ ...shippingData, shippingAddress: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                  />
+                  <div className="grid grid-cols-3 gap-3">
+                    <input
+                      type="text"
+                      placeholder="City *"
+                      value={shippingData.city}
+                      onChange={(e) => setShippingData({ ...shippingData, city: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                    />
+                    <input
+                      type="text"
+                      placeholder="State *"
+                      value={shippingData.state}
+                      onChange={(e) => setShippingData({ ...shippingData, state: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                    />
+                    <input
+                      type="text"
+                      placeholder="PIN *"
+                      value={shippingData.pincode}
+                      onChange={(e) => setShippingData({ ...shippingData, pincode: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                    />
+                  </div>
+                </div>
               </div>
             ) : cart.length === 0 ? (
               <div className="text-center py-20 text-muted space-y-2">
@@ -462,7 +647,7 @@ export default function ShopPage() {
           </div>
 
           {/* Cart Footer */}
-          {cart.length > 0 && checkoutStep === "cart" && (
+          {cart.length > 0 && checkoutStep !== "success" && (
             <div className="p-5 border-t border-border bg-cream/20 space-y-4">
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs text-paragraph">
@@ -484,11 +669,15 @@ export default function ShopPage() {
               </div>
 
               <button
-                onClick={() => setCheckoutStep("success")}
-                className="w-full bg-navy text-white hover:bg-navy-hover py-3 rounded-button font-semibold text-xs font-poppins flex items-center justify-center gap-1.5 transition-colors shadow-md"
+                onClick={() => {
+                  if (checkoutStep === "cart") setCheckoutStep("shipping");
+                  else handleCheckout();
+                }}
+                disabled={isProcessing}
+                className="w-full bg-navy text-white hover:bg-navy-hover py-3 rounded-button font-semibold text-xs font-poppins flex items-center justify-center gap-1.5 transition-colors shadow-md disabled:opacity-70"
               >
-                Proceed to Checkout
-                <ArrowRight className="w-4 h-4" />
+                {isProcessing ? "Processing..." : checkoutStep === "cart" ? "Proceed to Checkout" : "Pay Securely via Razorpay"}
+                {!isProcessing && <ArrowRight className="w-4 h-4" />}
               </button>
             </div>
           )}

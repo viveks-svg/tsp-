@@ -1,5 +1,6 @@
 import { MessageCircle, Scroll, Clock } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 const cards = [
   {
@@ -8,6 +9,7 @@ const cards = [
     icon: MessageCircle,
     linkText: "REDEEM OFFER →",
     highlighted: false,
+    href: "/consultations/chat"
   },
   {
     title: "Free Kundli Analysis",
@@ -15,6 +17,7 @@ const cards = [
     icon: Scroll,
     linkText: "START ANALYSIS →",
     highlighted: true,
+    href: "free-services/kundali"
   },
   {
     title: "Get 5 Minutes Free",
@@ -22,6 +25,7 @@ const cards = [
     icon: Clock,
     linkText: "CLAIM MINUTES →",
     highlighted: false,
+    href: "/consultations/chat"
   },
 ];
 
@@ -35,11 +39,10 @@ export default function FeatureCards() {
             return (
               <div
                 key={card.title}
-                className={`relative rounded-2xl p-8 lg:p-10 card-premium overflow-hidden ${
-                  card.highlighted
-                    ? "bg-gradient-to-b from-[#F6A000] to-[#D88D14] text-white shadow-[0_15px_40px_rgba(246,160,0,0.2)] border border-gold/20"
-                    : "bg-white text-[#1A1A1A] shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0ECE4]"
-                }`}
+                className={`relative rounded-2xl p-8 lg:p-10 card-premium overflow-hidden ${card.highlighted
+                  ? "bg-gradient-to-b from-[#F6A000] to-[#D88D14] text-white shadow-[0_15px_40px_rgba(246,160,0,0.2)] border border-gold/20"
+                  : "bg-white text-[#1A1A1A] shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0ECE4]"
+                  }`}
               >
                 {/* Zodiac Wheel Watermark Background */}
                 <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none select-none">
@@ -48,43 +51,41 @@ export default function FeatureCards() {
                     alt="Watermark"
                     width={350}
                     height={350}
-                    className={`absolute -right-16 -bottom-16 w-[260px] h-[260px] object-contain select-none pointer-events-none transition-opacity duration-300 ${
-                      card.highlighted 
-                        ? "opacity-[0.06] invert brightness-200" 
-                        : "opacity-[0.04] grayscale brightness-75"
-                    }`}
+                    className={`absolute -right-16 -bottom-16 w-[260px] h-[260px] object-contain select-none pointer-events-none transition-opacity duration-300 ${card.highlighted
+                      ? "opacity-[0.06] invert brightness-200"
+                      : "opacity-[0.04] grayscale brightness-75"
+                      }`}
                   />
                 </div>
 
                 {/* Card Icon */}
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 relative z-10 ${
-                  card.highlighted 
-                    ? "bg-white/15 text-white" 
-                    : "bg-gold/[0.07] text-gold"
-                }`}>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 relative z-10 ${card.highlighted
+                  ? "bg-white/15 text-white"
+                  : "bg-gold/[0.07] text-gold"
+                  }`}>
                   <Icon className="w-6 h-6" strokeWidth={1.75} />
                 </div>
 
                 {/* Card Title */}
-                <h3 className={`font-heading text-2xl lg:text-[1.65rem] font-bold mb-3 relative z-10 ${
-                  card.highlighted ? "text-white" : "text-[#1A1A1A]"
-                }`}>
+                <h3 className={`font-heading text-2xl lg:text-[1.65rem] font-bold mb-3 relative z-10 ${card.highlighted ? "text-white" : "text-[#1A1A1A]"
+                  }`}>
                   {card.title}
                 </h3>
 
                 {/* Card Description */}
-                <p className={`text-sm lg:text-[0.95rem] leading-relaxed mb-8 relative z-10 max-w-[280px] ${
-                  card.highlighted ? "text-white/85" : "text-[#6B6B6B]"
-                }`}>
+                <p className={`text-sm lg:text-[0.95rem] leading-relaxed mb-8 relative z-10 max-w-[280px] ${card.highlighted ? "text-white/85" : "text-[#6B6B6B]"
+                  }`}>
                   {card.description}
                 </p>
 
                 {/* Card Action Link */}
-                <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold tracking-[0.15em] relative z-10 transition-transform duration-200 cursor-pointer ${
-                  card.highlighted ? "text-white/90" : "text-gold"
-                }`}>
+                <Link
+                  href={card.href}
+                  className={`inline-flex items-center gap-1.5 text-[11px] font-bold tracking-[0.15em] relative z-10 transition-transform duration-200 hover:translate-x-1 ${card.highlighted ? "text-white/90" : "text-gold"
+                    }`}
+                >
                   {card.linkText}
-                </span>
+                </Link>
               </div>
             );
           })}

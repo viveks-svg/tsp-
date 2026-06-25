@@ -4,20 +4,20 @@ export interface NavLink {
   label: string;
   type?: "dropdown" | "link";
   href: string;
-  dropdownType?: "consultations" | "horoscope" | "free-services" | "calculators";
+  dropdownType?: "consultations" | "solutions" | "horoscope" | "free-services" | "calculators";
 }
 
 export const navLinks: NavLink[] = [
   {
-    label: "Consultation",
-    type: "dropdown",
-    href: "#",
-    dropdownType: "consultations",
+    label: "Home",
+    href: ROUTES.HOME,
+    type: "link",
   },
   {
-    label: "Business Vastu",
-    href: "/business-vastu",
-    type: "link"
+    label: "Solutions",
+    type: "dropdown",
+    href: ROUTES.SOLUTIONS,
+    dropdownType: "solutions",
   },
   {
     label: "Horoscope",
@@ -40,9 +40,11 @@ export const navLinks: NavLink[] = [
   {
     label: "Shop",
     href: ROUTES.SHOP,
+    type: "link",
   },
   {
     label: "Blog",
     href: ROUTES.BLOG,
+    type: "link",
   },
 ];

@@ -1,8 +1,18 @@
+"use client";
+
+import { useState } from "react";
 import FadeUp from "@/components/animations/FadeUp";
 import { pricingPlans } from "@/lib/data/pricing";
 import PricingCard from "@/features/home/components/PricingCard";
+import { useRouter } from "next/navigation";
 
 export default function PricingSection() {
+  const router = useRouter();
+
+  const handleBook = (plan: any) => {
+    const slug = plan.name.toLowerCase();
+    router.push(`/book?service=business-vastu&plan=${slug}`);
+  };
   return (
     <section className="py-16 lg:py-24 bg-white overflow-visible" id="pricing">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-visible">
@@ -38,10 +48,12 @@ export default function PricingSection() {
               features={plan.features}
               variant={plan.variant}
               cta={plan.cta}
+              onBook={() => handleBook(plan)}
             />
           ))}
         </div>
       </div>
+
     </section>
   );
 }

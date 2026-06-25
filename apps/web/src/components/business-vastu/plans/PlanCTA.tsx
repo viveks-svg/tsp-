@@ -6,6 +6,7 @@ import { CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { BVPricingPlan } from "@/lib/data/business-vastu";
 
+
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
   visible: { opacity: 1, y: 0 },
@@ -18,8 +19,11 @@ interface PlanCTAProps {
 
 export default function PlanCTA({ plan }: PlanCTAProps) {
   const router = useRouter();
-  const displayName =
-    plan.name.charAt(0) + plan.name.slice(1).toLowerCase();
+  const displayName = plan.name.charAt(0) + plan.name.slice(1).toLowerCase();
+
+  const handleBook = () => {
+    router.push(`/book?service=${plan.slug}`);
+  };
 
   return (
     <section className="bg-gradient-to-br from-[#071B8D] to-[#041B8C] py-20 lg:py-28">
@@ -58,11 +62,7 @@ export default function PlanCTA({ plan }: PlanCTAProps) {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mt-8">
               <button
-                onClick={() =>
-                  router.push(
-                    `/consultation?plan=${plan.slug}&service=business-vastu`
-                  )
-                }
+                onClick={handleBook}
                 className="bg-[#F6A000] text-[#071B8D] font-poppins font-semibold px-8 py-4 rounded-full hover:brightness-110 transition text-base"
               >
                 Book This Plan Now →
@@ -120,6 +120,7 @@ export default function PlanCTA({ plan }: PlanCTAProps) {
           </motion.div>
         </div>
       </div>
+
     </section>
   );
 }

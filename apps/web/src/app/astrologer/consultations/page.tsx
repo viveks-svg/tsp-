@@ -7,6 +7,7 @@ import { apiClient } from "@/lib/http/client";
 import { ENDPOINTS } from "@/lib/constants/http/endpoints";
 import { useCallSocket } from "@/features/call/hooks/useCallSocket";
 import { cn } from "@/lib/cn";
+import { ROUTES } from "@/lib/constants/routes";
 
 interface ConsultationItem {
   id: string;
@@ -74,10 +75,10 @@ export default function AstrologerConsultationsPage() {
 
       if (consultation.type === "CALL") {
         acceptCall(consultation.id);
-        router.push(`/consultations/${consultation.id}/call`);
+        router.push(`${ROUTES.CONSULTATIONS}/${consultation.id}/call`);
       } else {
         await apiClient.post(ENDPOINTS.CONSULTATIONS.START(consultation.id));
-        router.push(`/consultations/${consultation.id}/chat`);
+        router.push(`${ROUTES.CONSULTATIONS}/${consultation.id}/chat`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start consultation.");
@@ -87,9 +88,9 @@ export default function AstrologerConsultationsPage() {
 
   const handleJoinChat = (consultation: ConsultationItem) => {
     if (consultation.type === "CALL") {
-      router.push(`/consultations/${consultation.id}/call`);
+      router.push(`${ROUTES.CONSULTATIONS}/${consultation.id}/call`);
     } else {
-      router.push(`/consultations/${consultation.id}/chat`);
+      router.push(`${ROUTES.CONSULTATIONS}/${consultation.id}/chat`);
     }
   };
 

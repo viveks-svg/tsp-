@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Star, CheckCircle } from "lucide-react";
 import { apiClient } from "@/lib/http/client";
 import { cn } from "@/lib/cn";
+import { ROUTES } from "@/lib/constants/routes";
 
 interface CallReviewModalProps {
   consultationId: string;
@@ -39,18 +40,18 @@ export default function CallReviewModal({
       });
       setSubmitted(true);
       setTimeout(() => {
-        router.push("/consultations");
+        router.push(ROUTES.CONSULTATIONS);
       }, 1500);
     } catch {
       // Still redirect on failure
-      router.push("/consultations");
+      router.push(ROUTES.CONSULTATIONS);
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleSkip = () => {
-    router.push("/consultations");
+    router.push(ROUTES.CONSULTATIONS);
   };
 
   return (

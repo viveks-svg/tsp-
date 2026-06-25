@@ -18,25 +18,25 @@ const services: ServiceCard[] = [
     icon: "🏠",
     title: "Business Vastu",
     description: "Harmonise your workspace to attract growth, abundance and decisive energy.",
-    href: "#"
+    href: "/solutions/business-vastu"
   },
   {
     icon: "⭐",
     title: "Strategic Consulting",
     description: "High-impact decisions with astrological precision and karmic awareness.",
-    href: "#"
+    href: "/solutions/strategic-consulting"
   },
   {
     icon: "👥",
     title: "Partnership Alignment",
     description: "Evaluate compatibility and long-term success of business partnerships.",
-    href: "#"
+    href: "/solutions/partnership-analysis"
   },
   {
     icon: "🏡",
     title: "Personal Life Guidance",
     description: "Clarity in relationships, health, career and major life milestones.",
-    href: "#"
+    href: "/solutions/career-guidance"
   }
 ];
 
@@ -145,7 +145,7 @@ export default function WhatWeDoSection() {
           className="mt-12 text-center"
         >
           <Link
-            href="/business-vastu"
+            href="/solutions"
             className="inline-flex items-center gap-2 bg-[#1E1A16] text-white border border-[#1E1A16] px-8 py-3.5 rounded-full text-sm font-semibold hover:bg-[#D4AF37] hover:text-[#1E1A16] hover:border-[#D4AF37] hover:shadow-[0_12px_40px_rgba(212,175,55,0.30)] active:scale-[0.98] transition-all duration-300"
           >
             View All Solutions

@@ -72,6 +72,7 @@ model User {
   profile             UserProfile?
   sessions            UserSession[]
   orders              PaymentOrder[]
+  shopOrders          ShopOrder[]
   queues              ConsultationQueue[]
   reviews             ConsultationReview[]
 }
@@ -434,4 +435,167 @@ model ConsultationReview {
 
 
 
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
 
+enum ServiceCategory {
+  BUSINESS_VASTU
+  CONSULTATION
+  REPORT
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  REFUNDED
+}
+
+enum UrgencyTier {
+  STANDARD    // 2+ days ahead — base price
+  NEXT_DAY    // tomorrow — +25%
+  SAME_DAY    // today — +50% (only enabled if admin toggle is on)
+}
+
+// ─── BOOKING ──────────────────────────────────────────────────────────────────
+
+model Booking {
+  id                String          @id @default(cuid())
+
+  // Service context
+  serviceCategory   ServiceCategory
+  serviceSlug       String          // e.g. "rising", "celestial", "zenith", "astro-swot"
+  serviceName       String          // human-readable label stored at booking time
+  
+  // Customer
+  fullName          String
+  email             String
+  phone             String
+  
+  // Astrology details (required for consultation/vastu, optional for reports)
+  dateOfBirth       DateTime?
+  timeOfBirth       String?         // "HH:MM" — stored as string, no TZ issues
+  placeOfBirth      String?
+  
+  // Business details (required for BUSINESS_VASTU)
+  businessName      String?
+  businessAddress   String?
+  spaceType         String?         // "Office" | "Factory" | "Retail" | "Hotel" | "CoWorking" | "Plot"
+  
+  // Scheduling
+  scheduledDate     DateTime?       // date of appointment (null for REPORT — no slot)
+  scheduledSlot     String?         // "10:00-11:00" — human-readable slot label
+  urgencyTier       UrgencyTier     @default(STANDARD)
+  
+  // Specific requirements / notes from client
+  notes             String?
+  
+  // Pricing (snapshot at booking time — never rely on live prices for confirmed bookings)
+  baseAmountPaise   Int             // base price in paise
+  surchargeAmountPaise Int          @default(0)
+  totalAmountPaise  Int             // baseAmountPaise + surchargeAmountPaise
+  currency          String          @default("INR")
+  
+  // Payment
+  razorpayOrderId   String?         @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+  
+  status            BookingStatus   @default(PENDING_PAYMENT)
+  
+  // Audit
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  confirmedAt       DateTime?
+
+  @@index([email])
+  @@index([status])
+  @@index([serviceCategory])
+  @@index([scheduledDate])
+}
+
+// ─── PAYMENT LEDGER ───────────────────────────────────────────────────────────
+// Every payment event is appended here. Never mutate — only append.
+
+model PaymentEvent {
+  id              String    @id @default(cuid())
+  bookingId       String
+  
+  eventType       String    // "ORDER_CREATED" | "PAYMENT_CAPTURED" | "PAYMENT_FAILED" | "REFUND_INITIATED" | "REFUND_COMPLETED"
+  razorpayEventId String?   // razorpay payment_id / refund_id / etc.
+  amountPaise     Int
+  
+  // Raw webhook payload stored for audit
+  rawPayload      Json?
+  
+  createdAt       DateTime  @default(now())
+
+  @@index([bookingId])
+}
+
+// ─── SLOT CONFIG (admin-controlled availability) ──────────────────────────────
+
+model SlotConfig {
+  id              String    @id @default(cuid())
+  date            DateTime  @db.Date   // specific date this config applies to
+  slots           Json      // string[] — e.g. ["10:00-11:00", "14:00-15:00"]
+  isBlocked       Boolean   @default(false)  // fully block a date (holiday, travel)
+  sameDayEnabled  Boolean   @default(false)  // allow same-day urgent bookings
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([date])
+}
+
+// ─── Shop E-Commerce Models ──────────────────────────────────────────────────
+
+enum ShopOrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model ShopOrder {
+  id              String            @id @default(uuid())
+  userId          String?
+  user            User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  // Contact & Shipping
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  shippingAddress String
+  city            String
+  state           String
+  pincode         String
+  
+  // Financials
+  totalAmount     Decimal           @db.Decimal(12, 2)
+  status          ShopOrderStatus   @default(PENDING)
+  
+  // Payment Gateway
+  razorpayOrderId String?           @unique
+  paymentId       String?           @unique
+  
+  // Timestamps
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  items           ShopOrderItem[]
+}
+
+model ShopOrderItem {
+  id              String       @id @default(uuid())
+  orderId         String
+  order           ShopOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Snapshot of product details at time of purchase
+  productId       String
+  productName     String
+  price           Decimal      @db.Decimal(12, 2)
+  quantity        Int
+  
+  createdAt       DateTime     @default(now())
+}

@@ -83,7 +83,7 @@ export default function AstrologerCard({
       await apiClient.post(ENDPOINTS.CONSULTATIONS.START(cons.id));
       
       // 3. Redirect directly to the live WebSocket chat room
-      router.push(`/consultations/${cons.id}/chat`);
+      router.push(`${ROUTES.CONSULTATIONS}/${cons.id}/chat`);
     } catch (error) {
       setBookingError(
         error instanceof Error
@@ -107,7 +107,7 @@ export default function AstrologerCard({
       );
 
       // 2. Redirect to the call room
-      router.push(`/consultations/${result.consultationId}/call`);
+      router.push(`${ROUTES.CONSULTATIONS}/${result.consultationId}/call`);
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Unable to start this call.";
       if (msg.includes("ASTROLOGER_BUSY")) {

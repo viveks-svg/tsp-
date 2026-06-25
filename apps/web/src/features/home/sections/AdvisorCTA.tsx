@@ -68,7 +68,9 @@ export default function AdvisorCTA() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
                 className="btn-shine bg-gradient-to-r from-[#F6A000] to-[#E89500] text-white px-12 py-5 rounded-full text-base font-heading font-semibold shadow-[0_4px_30px_rgba(246,160,0,0.25)] hover:shadow-[0_8px_40px_rgba(246,160,0,0.35)] transition-shadow duration-300"
-              >
+                onClick={() => {
+                  window.location.href = "/consultations/chat"
+                }}>
                 Talk @ ₹1 Only
               </motion.button>
             </div>

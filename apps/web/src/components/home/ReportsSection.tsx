@@ -40,7 +40,7 @@ export default function ReportsSection() {
           <div className="mt-4 md:mt-0 hidden md:block">
             <Link
               href="/reports"
-              className="font-poppins text-[#F6A000] text-[12px] uppercase tracking-wider hover:underline transition-all"
+              className="font-poppins border border-[#F6A000] border-[1px] rounded-[30px] p-2 text-[#F6A000] text-[12px] uppercase tracking-wider hover:underline transition-all"
             >
               View All Reports →
             </Link>

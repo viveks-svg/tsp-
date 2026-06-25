@@ -1,6 +1,14 @@
 import { ROUTES } from "./routes";
 
 export const footerLinks = {
+  solutions: [
+    { label: "Business Vastu", href: "/solutions/business-vastu" },
+    { label: "Strategic Consulting", href: "/solutions/strategic-consulting" },
+    { label: "Career Guidance", href: "/solutions/career-guidance" },
+    { label: "Residential Vastu", href: "/solutions/residential-vastu" },
+    { label: "Relationship Guidance", href: "/solutions/relationship-guidance" },
+    { label: "View All Solutions", href: ROUTES.SOLUTIONS },
+  ],
   horoscopes: [
     { label: "Today's Horoscope", href: ROUTES.HOROSCOPE },
     { label: "Daily Horoscope", href: "/horoscope/daily" },

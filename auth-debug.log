@@ -744,3 +744,209 @@
 [me] -> 401 (no access_token cookie reached the proxy)
 [me] hit | referer=http://localhost:3000/business-vastu | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
 [me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/consultation/chat | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/consultation/chat | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/business-vastu | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/business-vastu/office | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/business-vastu | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/book?service=celestial | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/consultation/chat | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/business-vastu/office | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/business-vastu | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/reports/astro-swot | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/resources | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/consultations | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/contact | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/consultations | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/consultations | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/contact | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/solutions | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/solutions | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/book | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/book | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/book | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/solutions | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/solutions | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultations/chat | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultations | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/book | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/book | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/solutions | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/resources | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/reports | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/resources | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultations | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/about | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/astrologer/dashboard | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/shop | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/book | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/solutions | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/solutions | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/dashboard/consultations/9a6dcdd1-e157-40ea-bf32-3d83c97e23ef/chat | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/reports/astro-swot | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream fetch threw: TypeError: fetch failed
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream fetch threw: TypeError: fetch failed
+[me] hit | referer=http://localhost:3000/reports/astro-swot | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream fetch threw: TypeError: fetch failed
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream fetch threw: TypeError: fetch failed
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=500
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/dashboard/consultations/02d1791c-9cae-4dc5-8052-343deba0bc6c/chat | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/free-services/kundli | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultations/chat | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultations/chat | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/book?service=office-vastu&plan=standard | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/solutions/office-vastu | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/solutions/office-vastu | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/dashboard/consultations/575fd83a-3e1a-4ac7-a37f-f5e0e4b9272c/chat | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/dashboard/consultations/2568c6a6-c5bd-4c82-ae54-ae49e015a17d/chat | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__,rzp_unified_session_id] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/shop | hasAccessToken=true | cookies=[__next_hmr_refresh_hash__,rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/shop | hasAccessToken=true | cookies=[rzp_unified_session_id,access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/shop | hasAccessToken=true | cookies=[rzp_unified_session_id,access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/book?service=business-vastu&plan=celestial | hasAccessToken=true | cookies=[access_token,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/solutions/business-vastu | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/solutions/business-vastu | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/shop | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/consultations/chat | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] upstream NestJS status=200

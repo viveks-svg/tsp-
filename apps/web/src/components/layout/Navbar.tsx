@@ -12,6 +12,11 @@ import { navLinks, type NavLink } from "@/lib/constants/nav";
 import { ROUTES } from "@/lib/constants/routes";
 import { useAuth } from "@/providers/AuthProvider";
 import { useAuthModal } from "@/hooks/useAuthModal";
+import {
+  getServicesByCategoryMap,
+  CATEGORY_LABELS,
+  type ServiceCategory,
+} from "@/lib/data/service-catalog";
 import { calculators } from "@/lib/data/calculators";
 import { freeServices } from "@/lib/data/free-services";
 import { zodiacSigns, zodiacEmojis } from "@/lib/data/zodiac";
@@ -30,6 +35,8 @@ function getInitials(name: string | null | undefined): string {
   if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
+
+const CATEGORY_ORDER: ServiceCategory[] = ['business', 'leadership', 'personal', 'property'];
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -58,6 +65,9 @@ export default function Navbar() {
   // Auth state
   const { user, isAuthenticated, walletBalance, logout } = useAuth();
   const authModal = useAuthModal();
+
+  // Solutions mega menu data
+  const servicesByCategory = getServicesByCategoryMap();
 
   // Escape key listener for accessibility
   useEffect(() => {
@@ -125,23 +135,19 @@ export default function Navbar() {
           <div className="flex items-center justify-between min-h-[72px]">
             {/* Logo */}
             <Link href="/" className="flex items-center shrink-0">
-              <Image src="/logo/Group 2.svg" alt="Astro Space" width={60} height={60}
+              <Image src="/logo/Group 2.svg" alt="Time Space & Planets" width={60} height={60}
                 className="w-12.5 h-12.5 md:w-15 md:h-15" priority
               />
             </Link>            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-7">
+            <div className="hidden lg:flex items-center gap-8.5">
               {navLinks.map((link: NavLink) => {
                 if (link.type === "dropdown") {
                   let active = false;
-                  if (link.dropdownType === "consultations") {
-                    active = pathname.startsWith("/consultation");
-                  } else if (link.dropdownType === "horoscope") {
-                    active = pathname.startsWith("/horoscope");
-                  } else if (link.dropdownType === "free-services") {
-                    active = pathname.startsWith("/free-services");
-                  } else if (link.dropdownType === "calculators") {
-                    active = pathname.startsWith("/calculators");
-                  }
+                  if (link.dropdownType === "solutions") active = pathname.startsWith("/solutions");
+                  else if (link.dropdownType === "consultations") active = pathname.startsWith("/consultation");
+                  else if (link.dropdownType === "horoscope") active = pathname.startsWith("/horoscope");
+                  else if (link.dropdownType === "free-services") active = pathname.startsWith("/free-services");
+                  else if (link.dropdownType === "calculators") active = pathname.startsWith("/calculators");
 
                   const isOpen = activeDropdown === link.label;
 
@@ -164,7 +170,7 @@ export default function Navbar() {
                         <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", isOpen && "rotate-180")} />
                       </button>
 
-                      {/* Dropdown Menu Container */}
+                      {/* Dropdown Mega Menu */}
                       <AnimatePresence>
                         {isOpen && (
                           <motion.div
@@ -173,38 +179,59 @@ export default function Navbar() {
                             exit={{ opacity: 0, y: 8, scale: 0.96 }}
                             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                             className={cn(
-                              "absolute pt-2 z-50 invisible opacity-0 pointer-events-none transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:visible group-focus-within:opacity-100 group-focus-within:pointer-events-auto",
-                              link.dropdownType === "calculators" ? "-left-[320px]" : link.dropdownType === "free-services" ? "-left-40" : "-left-4"
+                              "absolute pt-4 z-50",
+                              link.dropdownType === "solutions" ? "-left-[280px]" :
+                                link.dropdownType === "consultations" ? "-left-4" :
+                                  link.dropdownType === "free-services" ? "-left-4" :
+                                    link.dropdownType === "horoscope" ? "-left-[200px]" : "-left-[280px]"
                             )}
                           >
-                            {link.dropdownType === "consultations" && (
-                              <div className="grid grid-cols-1 gap-1 p-2 bg-[#1C1A17]/95 backdrop-blur-xl rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.3)] border border-white/[0.06] w-56">
-                                {[
-                                  { label: "Chat with Astrologer", href: ROUTES.CHAT, desc: "Instant text guidance" },
-                                  { label: "Call with Astrologer", href: ROUTES.CALL, desc: "Direct voice consultation" },
-                                ].map((child) => (
+                            {link.dropdownType === "solutions" && (
+                              <div className="grid grid-cols-4 gap-6 p-6 bg-[#1C1A17]/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.3)] border border-white/[0.06] w-[780px]">
+                                {CATEGORY_ORDER.map((cat) => {
+                                  const services = servicesByCategory[cat];
+                                  if (!services?.length) return null;
+                                  return (
+                                    <div key={cat} className="space-y-3">
+                                      <span className="block text-xs font-bold text-[#C8A04A] uppercase tracking-wider border-b border-white/[0.06] pb-1.5 font-poppins">
+                                        {CATEGORY_LABELS[cat]}
+                                      </span>
+                                      <div className="space-y-0.5">
+                                        {services.map((service) => (
+                                          <Link
+                                            key={service.id}
+                                            href={`/solutions/${service.id}`}
+                                            onClick={() => setActiveDropdown(null)}
+                                            className="block px-2 py-1.5 rounded-lg text-xs font-poppins text-white/60 hover:bg-white/[0.05] hover:text-white transition-colors font-medium"
+                                          >
+                                            {service.name}
+                                          </Link>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                {/* View All CTA */}
+                                <div className="col-span-4 pt-3 border-t border-white/[0.06]">
                                   <Link
-                                    key={child.label}
-                                    href={child.href}
+                                    href={ROUTES.SOLUTIONS}
                                     onClick={() => setActiveDropdown(null)}
-                                    className={cn(
-                                      "block px-4 py-2.5 rounded-lg transition-colors font-poppins",
-                                      isActiveLink(pathname, child.href)
-                                        ? "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold"
-                                        : "text-white/60 hover:bg-white/[0.05] hover:text-white"
-                                    )}
+                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#C8A04A] hover:text-white transition-colors font-poppins"
                                   >
-                                    <span className="block text-sm font-semibold">{child.label}</span>
-                                    <span className="block text-[10px] text-muted font-normal mt-0.5">{child.desc}</span>
+                                    View All Solutions
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                    </svg>
                                   </Link>
-                                ))}
+                                </div>
                               </div>
                             )}
 
+
+
                             {link.dropdownType === "horoscope" && (
-                              <div className="grid grid-cols-12 gap-6 p-6 bg-[#1C1A17]/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.3)] border border-white/[0.06] w-[220px]">
-                                {/* Zodiac Signs */}
-                                {/* <div className="col-span-8 border-r border-border/60 pr-6">
+                              <div className="grid grid-cols-4 gap-6 p-6 bg-[#1C1A17]/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.3)] border border-white/[0.06] w-[700px]">
+                                <div className="col-span-3">
                                   <span className="block text-xs font-bold text-[#C8A04A] uppercase tracking-wider mb-3 font-poppins">
                                     Zodiac Signs
                                   </span>
@@ -215,7 +242,7 @@ export default function Navbar() {
                                         href={`/horoscope/${sign.toLowerCase()}`}
                                         onClick={() => setActiveDropdown(null)}
                                         className={cn(
-                                          "flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-cream/70 hover:text-navy transition-colors font-poppins text-xs font-medium text-white/60",
+                                          "flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-white/[0.05] hover:text-white transition-colors font-poppins text-xs font-medium text-white/60",
                                           isActiveLink(pathname, `/horoscope/${sign.toLowerCase()}`) && "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold border border-gold/30"
                                         )}
                                       >
@@ -224,9 +251,8 @@ export default function Navbar() {
                                       </Link>
                                     ))}
                                   </div>
-                                </div> */}
-                                {/* Timeframes */}
-                                <div className="col-span-4 flex flex-col justify-between">
+                                </div>
+                                <div className="col-span-1 flex flex-col justify-between">
                                   <div>
                                     <span className="block text-xs font-bold text-[#C8A04A] uppercase tracking-wider mb-3 font-poppins">
                                       Timeframes
@@ -252,7 +278,6 @@ export default function Navbar() {
                                       ))}
                                     </div>
                                   </div>
-
                                 </div>
                               </div>
                             )}
@@ -265,13 +290,13 @@ export default function Navbar() {
                                     href={service.href}
                                     onClick={() => setActiveDropdown(null)}
                                     className={cn(
-                                      "flex items-start gap-3 p-3 rounded-xl hover:bg-cream/75 transition-colors group",
+                                      "flex items-start gap-3 p-3 rounded-xl hover:bg-white/[0.05] transition-colors group",
                                       isActiveLink(pathname, service.href)
                                         ? "bg-[#C8A04A]/10 text-[#C8A04A] border-l-2 border-[#C8A04A]"
                                         : "text-white/60"
                                     )}
                                   >
-                                    <span className="text-2xl mt-0.5 p-1.5 bg-cream/40 border border-border rounded-lg group-hover:bg-white transition-colors">{service.icon}</span>
+                                    <span className="text-2xl mt-0.5 p-1.5 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors">{service.icon}</span>
                                     <div>
                                       <span className="block text-sm font-semibold text-white/90 group-hover:text-white transition-colors font-poppins">
                                         {service.title}
@@ -301,7 +326,7 @@ export default function Navbar() {
                                             href={calc.href}
                                             onClick={() => setActiveDropdown(null)}
                                             className={cn(
-                                              "flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-cream/70 hover:text-navy transition-colors font-poppins text-xs font-medium text-white/60",
+                                              "flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-white/[0.05] hover:text-white transition-colors font-poppins text-xs font-medium text-white/60",
                                               isActiveLink(pathname, calc.href) && "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold border border-gold/20"
                                             )}
                                           >
@@ -374,7 +399,7 @@ export default function Navbar() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.96 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-2 w-64 bg-[#1C1A17]/95 backdrop-blur-xl rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.3)] border border-white/[0.06] py-2 z-50 invisible opacity-0 pointer-events-none transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:visible group-focus-within:opacity-100 group-focus-within:pointer-events-auto"
+                        className="absolute right-0 top-full mt-2 w-64 bg-[#1C1A17]/95 backdrop-blur-xl rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.3)] border border-white/[0.06] py-2 z-50"
                       >
                         {/* User Info */}
                         <div className="px-4 py-3 border-b border-white/[0.06]">
@@ -389,8 +414,8 @@ export default function Navbar() {
                         {/* Wallet Balance */}
                         <div className="px-4 py-2.5 border-b border-white/[0.06]">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-muted font-medium">Wallet Balance</span>
-                            <span className="text-sm font-bold text-navy">
+                            <span className="text-xs text-white/50 font-medium">Wallet Balance</span>
+                            <span className="text-sm font-bold text-[#C8A04A]">
                               ₹{Number(walletBalance).toFixed(2)}
                             </span>
                           </div>
@@ -402,10 +427,10 @@ export default function Navbar() {
                             <Link
                               href="/astrologer/dashboard"
                               onClick={() => setDropdownOpen(false)}
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-gold bg-navy/5 hover:bg-cream hover:text-navy transition-colors font-poppins"
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#C8A04A] hover:bg-white/[0.05] transition-colors font-poppins"
                             >
-                              <LayoutDashboard className="w-4 h-4 text-gold" />
-                              Astrologer Panel
+                              <LayoutDashboard className="w-4 h-4 text-[#C8A04A]" />
+                              Admin Panel
                             </Link>
                           )}
                           <Link
@@ -443,10 +468,10 @@ export default function Navbar() {
                         </div>
 
                         {/* Logout */}
-                        <div className="pt-1 border-t border-border">
+                        <div className="pt-1 border-t border-white/[0.06]">
                           <button
                             onClick={handleLogout}
-                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors font-poppins"
+                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-rose-400 hover:bg-rose-500/10 transition-colors font-poppins"
                           >
                             <LogOut className="w-4 h-4" />
                             Sign Out
@@ -467,12 +492,12 @@ export default function Navbar() {
                 </button>
               )}
 
-              {/* CTA */}
+              {/* CTA — Book Now */}
               <Link
-                href={ROUTES.CHAT}
+                href={ROUTES.BOOK}
                 className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-[#C8A04A] to-[#A6832E] text-white px-5 py-2.5 rounded-full text-[13px] font-semibold hover:from-[#D4AC5A] hover:to-[#B8933E] shadow-[0_2px_16px_rgba(200,160,74,0.25)] hover:shadow-[0_4px_24px_rgba(200,160,74,0.35)] transition-all duration-300 btn-shine"
               >
-                Our Astro Expert
+                Book Now
               </Link>
 
               {/* Mobile Menu Toggle */}
@@ -509,14 +534,14 @@ export default function Navbar() {
                 exit={{ x: "100%" }}
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
                 onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl"
+                className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-[#1C1A17] shadow-2xl overflow-y-auto"
               >
                 <div className="p-6 pt-20">
                   {/* Mobile user info */}
                   {isAuthenticated && user ? (
                     <div className="mb-6 pb-4 border-b border-white/[0.06]">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-navy text-white flex items-center justify-center text-sm font-bold">
+                        <div className="w-10 h-10 rounded-full bg-[#C8A04A]/20 text-[#C8A04A] flex items-center justify-center text-sm font-bold">
                           {getInitials(user.name)}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -533,36 +558,36 @@ export default function Navbar() {
                           <Link
                             href="/astrologer/dashboard"
                             onClick={() => setMobileOpen(false)}
-                            className="col-span-2 text-center text-xs font-semibold py-2.5 rounded-lg bg-gold/15 text-gold border border-gold/30 hover:bg-gold/20 transition-colors"
+                            className="col-span-2 text-center text-xs font-semibold py-2.5 rounded-lg bg-[#C8A04A]/15 text-[#C8A04A] border border-[#C8A04A]/30 hover:bg-[#C8A04A]/20 transition-colors"
                           >
-                            Astrologer Dashboard
+                            Admin Dashboard
                           </Link>
                         )}
                         <Link
                           href={ROUTES.PROFILE}
                           onClick={() => setMobileOpen(false)}
-                          className="flex-1 text-center text-xs font-medium py-2 rounded-lg bg-cream text-navy hover:bg-cream-dark transition-colors"
+                          className="flex-1 text-center text-xs font-medium py-2 rounded-lg bg-white/[0.05] text-white/70 hover:bg-white/[0.08] transition-colors"
                         >
                           Profile
                         </Link>
                         <Link
                           href={ROUTES.WALLET}
                           onClick={() => setMobileOpen(false)}
-                          className="flex-1 text-center text-xs font-medium py-2 rounded-lg bg-cream text-navy hover:bg-cream-dark transition-colors"
+                          className="flex-1 text-center text-xs font-medium py-2 rounded-lg bg-white/[0.05] text-white/70 hover:bg-white/[0.08] transition-colors"
                         >
                           Wallet
                         </Link>
                         <Link
                           href={ROUTES.CONSULTATIONS}
                           onClick={() => setMobileOpen(false)}
-                          className="text-center text-xs font-medium py-2 rounded-lg bg-cream text-navy hover:bg-cream-dark transition-colors"
+                          className="text-center text-xs font-medium py-2 rounded-lg bg-white/[0.05] text-white/70 hover:bg-white/[0.08] transition-colors"
                         >
                           Consultations
                         </Link>
                         <Link
                           href={ROUTES.ORDERS}
                           onClick={() => setMobileOpen(false)}
-                          className="text-center text-xs font-medium py-2 rounded-lg bg-cream text-navy hover:bg-cream-dark transition-colors"
+                          className="text-center text-xs font-medium py-2 rounded-lg bg-white/[0.05] text-white/70 hover:bg-white/[0.08] transition-colors"
                         >
                           Orders
                         </Link>
@@ -575,7 +600,7 @@ export default function Navbar() {
                           setMobileOpen(false);
                           authModal.open("login");
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-navy text-white text-sm font-semibold hover:bg-navy-hover transition-colors"
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-white/[0.08] text-white text-sm font-semibold hover:bg-white/[0.12] transition-colors"
                       >
                         <User className="w-4 h-4" />
                         Sign In / Sign Up
@@ -588,15 +613,11 @@ export default function Navbar() {
                       if (link.type === "dropdown") {
                         const isExpanded = !!expandedLinks[link.label];
                         let active = false;
-                        if (link.dropdownType === "consultations") {
-                          active = pathname.startsWith("/consultation");
-                        } else if (link.dropdownType === "horoscope") {
-                          active = pathname.startsWith("/horoscope");
-                        } else if (link.dropdownType === "free-services") {
-                          active = pathname.startsWith("/free-services");
-                        } else if (link.dropdownType === "calculators") {
-                          active = pathname.startsWith("/calculators");
-                        }
+                        if (link.dropdownType === "solutions") active = pathname.startsWith("/solutions");
+                        else if (link.dropdownType === "consultations") active = pathname.startsWith("/consultation");
+                        else if (link.dropdownType === "horoscope") active = pathname.startsWith("/horoscope");
+                        else if (link.dropdownType === "free-services") active = pathname.startsWith("/free-services");
+                        else if (link.dropdownType === "calculators") active = pathname.startsWith("/calculators");
 
                         return (
                           <div key={link.label} className="flex flex-col">
@@ -607,14 +628,14 @@ export default function Navbar() {
                               className={cn(
                                 "flex items-center justify-between text-base font-medium py-3 px-4 rounded-[12px] transition-colors font-poppins w-full text-left",
                                 active
-                                  ? "bg-cream/50 text-navy font-semibold"
-                                  : "text-dark hover:bg-cream hover:text-navy"
+                                  ? "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold"
+                                  : "text-white/70 hover:bg-white/[0.05] hover:text-white"
                               )}
                             >
                               <span>{link.label}</span>
                               <ChevronDown
                                 className={cn(
-                                  "w-4 h-4 text-paragraph transition-transform duration-200",
+                                  "w-4 h-4 text-white/40 transition-transform duration-200",
                                   isExpanded ? "rotate-180" : ""
                                 )}
                               />
@@ -626,104 +647,110 @@ export default function Navbar() {
                                   animate={{ height: "auto", opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}
                                   transition={{ duration: 0.2 }}
-                                  className="overflow-hidden pl-4 flex flex-col gap-1 mt-1 border-l border-border/60 ml-4"
+                                  className="overflow-hidden pl-4 flex flex-col gap-0.5 mt-1 border-l border-white/[0.06] ml-4 font-poppins"
                                 >
-                                  {link.dropdownType === "consultations" && (
+                                  {link.dropdownType === "solutions" && (
                                     <>
+                                      {CATEGORY_ORDER.map((cat) => {
+                                        const services = servicesByCategory[cat];
+                                        if (!services?.length) return null;
+                                        return (
+                                          <div key={cat} className="space-y-0.5 mb-3">
+                                            <span className="block text-[10px] font-bold text-[#C8A04A]/70 uppercase tracking-wider font-poppins px-2 pt-2">
+                                              {CATEGORY_LABELS[cat]}
+                                            </span>
+                                            {services.map((service) => (
+                                              <Link
+                                                key={service.id}
+                                                href={`/solutions/${service.id}`}
+                                                onClick={() => setMobileOpen(false)}
+                                                className="block text-sm font-medium py-1.5 px-3 rounded-[8px] transition-colors font-poppins text-white/50 hover:bg-white/[0.05] hover:text-white"
+                                              >
+                                                {service.name}
+                                              </Link>
+                                            ))}
+                                          </div>
+                                        );
+                                      })}
                                       <Link
-                                        href={ROUTES.CHAT}
+                                        href={ROUTES.SOLUTIONS}
                                         onClick={() => setMobileOpen(false)}
-                                        className={cn(
-                                          "text-sm font-medium py-2 px-3 rounded-[8px] transition-colors font-poppins",
-                                          isActiveLink(pathname, ROUTES.CHAT) ? "bg-[#C8A04A]/10 text-[#C8A04A] border-l-2 border-[#C8A04A]" : "text-white/60 hover:bg-white/[0.05] hover:text-white"
-                                        )}
+                                        className="text-sm font-semibold py-2 px-3 text-[#C8A04A] hover:text-white transition-colors font-poppins"
                                       >
-                                        Chat with Astrologer
-                                      </Link>
-                                      <Link
-                                        href={ROUTES.CALL}
-                                        onClick={() => setMobileOpen(false)}
-                                        className={cn(
-                                          "text-sm font-medium py-2 px-3 rounded-[8px] transition-colors font-poppins",
-                                          isActiveLink(pathname, ROUTES.CALL) ? "bg-[#C8A04A]/10 text-[#C8A04A] border-l-2 border-[#C8A04A]" : "text-white/60 hover:bg-white/[0.05] hover:text-white"
-                                        )}
-                                      >
-                                        Call with Astrologer
+                                        View All Solutions →
                                       </Link>
                                     </>
                                   )}
 
                                   {link.dropdownType === "horoscope" && (
-                                    <div className="py-1 space-y-3">
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {[
-                                          { label: "Daily", slug: "daily" },
-                                          { label: "Weekly", slug: "weekly" },
-                                          { label: "Monthly", slug: "monthly" },
-                                          { label: "Yearly", slug: "yearly" },
-                                        ].map((item) => (
-                                          <Link
-                                            key={item.slug}
-                                            href={`/horoscope/${item.slug}`}
-                                            onClick={() => setMobileOpen(false)}
-                                            className={cn(
-                                              "text-xs px-2.5 py-1.5 rounded-full border transition-colors",
-                                              isActiveLink(pathname, `/horoscope/${item.slug}`)
-                                                ? "bg-navy text-white border-navy"
-                                                : "bg-card text-paragraph border-border"
-                                            )}
-                                          >
-                                            {item.label}
-                                          </Link>
-                                        ))}
-                                      </div>
-                                      <div className="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-border/40">
+                                    <div className="flex flex-col gap-1 pt-1">
+                                      <div className="flex flex-wrap gap-1 px-2 mb-3">
                                         {zodiacSigns.map((sign) => (
                                           <Link
                                             key={sign}
                                             href={`/horoscope/${sign.toLowerCase()}`}
                                             onClick={() => setMobileOpen(false)}
                                             className={cn(
-                                              "flex items-center gap-1 py-1.5 px-2 rounded-lg text-xs font-poppins text-paragraph hover:bg-cream border border-transparent",
-                                              isActiveLink(pathname, `/horoscope/${sign.toLowerCase()}`) && "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold border-gold/30"
+                                              "text-xs px-2.5 py-1.5 rounded-full border transition-colors",
+                                              isActiveLink(pathname, `/horoscope/${sign.toLowerCase()}`)
+                                                ? "bg-navy text-white border-navy"
+                                                : "bg-white/5 text-white/60 border-white/10"
                                             )}
                                           >
-                                            <span>{zodiacEmojis[sign]}</span>
-                                            <span className="truncate">{sign}</span>
+                                            {sign}
                                           </Link>
                                         ))}
                                       </div>
+                                      {[
+                                        { label: "Daily Horoscope", slug: "daily" },
+                                        { label: "Weekly Horoscope", slug: "weekly" },
+                                        { label: "Monthly Horoscope", slug: "monthly" },
+                                        { label: "Yearly Horoscope", slug: "yearly" },
+                                      ].map((item) => (
+                                        <Link
+                                          key={item.slug}
+                                          href={`/horoscope/${item.slug}`}
+                                          onClick={() => setMobileOpen(false)}
+                                          className={cn(
+                                            "text-sm font-medium py-2 px-3 rounded-[8px] transition-colors font-poppins",
+                                            isActiveLink(pathname, `/horoscope/${item.slug}`)
+                                              ? "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold"
+                                              : "text-white/60 hover:bg-white/[0.05] hover:text-white"
+                                          )}
+                                        >
+                                          {item.label}
+                                        </Link>
+                                      ))}
                                     </div>
                                   )}
 
                                   {link.dropdownType === "free-services" && (
-                                    <div className="flex flex-col gap-0.5">
+                                    <div className="flex flex-col gap-0.5 pt-1">
                                       {freeServices.map((service) => (
                                         <Link
                                           key={service.id}
                                           href={service.href}
                                           onClick={() => setMobileOpen(false)}
                                           className={cn(
-                                            "text-sm font-medium py-2 px-3 rounded-[8px] transition-colors font-poppins flex items-center gap-2",
+                                            "text-sm font-medium py-2 px-3 rounded-[8px] transition-colors font-poppins",
                                             isActiveLink(pathname, service.href)
-                                              ? "bg-[#C8A04A]/10 text-[#C8A04A] border-l-2 border-[#C8A04A]"
+                                              ? "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold"
                                               : "text-white/60 hover:bg-white/[0.05] hover:text-white"
                                           )}
                                         >
-                                          <span>{service.icon}</span>
-                                          <span>{service.title}</span>
+                                          {service.title}
                                         </Link>
                                       ))}
                                     </div>
                                   )}
 
                                   {link.dropdownType === "calculators" && (
-                                    <div className="space-y-3">
+                                    <div className="space-y-3 pt-1">
                                       {(Object.keys(CALCULATOR_CATEGORY_LABELS) as CalculatorCategory[]).map((cat) => {
                                         const calcs = calculators.filter((c) => c.category === cat);
                                         return (
                                           <div key={cat} className="space-y-1">
-                                            <span className="block text-[10px] font-bold text-muted uppercase tracking-wider font-poppins px-2">
+                                            <span className="block text-[10px] font-bold text-[#C8A04A]/70 uppercase tracking-wider font-poppins px-2">
                                               {CALCULATOR_CATEGORY_LABELS[cat]}
                                             </span>
                                             <div className="grid grid-cols-2 gap-1">
@@ -733,8 +760,8 @@ export default function Navbar() {
                                                   href={calc.href}
                                                   onClick={() => setMobileOpen(false)}
                                                   className={cn(
-                                                    "flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-paragraph hover:bg-cream border border-transparent",
-                                                    isActiveLink(pathname, calc.href) && "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold border-gold/20"
+                                                    "flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs hover:bg-white/[0.05] transition-colors",
+                                                    isActiveLink(pathname, calc.href) && "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold"
                                                   )}
                                                 >
                                                   <span>{calc.icon}</span>
@@ -763,8 +790,8 @@ export default function Navbar() {
                           className={cn(
                             "text-base font-medium py-3 px-4 rounded-[12px] transition-colors font-poppins",
                             active
-                              ? "bg-[#C8A04A]/10 text-[#C8A04A] border-l-2 border-[#C8A04A]"
-                              : "text-dark hover:bg-cream hover:text-navy"
+                              ? "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold"
+                              : "text-white/70 hover:bg-white/[0.05] hover:text-white"
                           )}
                         >
                           {link.label}
@@ -774,19 +801,19 @@ export default function Navbar() {
                   </div>
 
 
-                  <div className="mt-6 pt-6 border-t border-border space-y-3">
+                  <div className="mt-6 pt-6 border-t border-white/[0.06] space-y-3">
                     <Link
-                      href={ROUTES.CHAT}
+                      href={ROUTES.BOOK}
                       onClick={() => setMobileOpen(false)}
-                      className="block w-full text-center bg-gradient-to-r from-[#C8A04A] to-[#A6832E] text-white px-5 py-3 rounded-button text-sm font-semibold hover:bg-navy-hover transition-colors"
+                      className="block w-full text-center bg-gradient-to-r from-[#C8A04A] to-[#A6832E] text-white px-5 py-3 rounded-full text-sm font-semibold hover:from-[#D4AC5A] hover:to-[#B8933E] transition-all duration-300"
                     >
-                      Our Astro Expert
+                      Book Now
                     </Link>
 
                     {isAuthenticated && (
                       <button
                         onClick={handleLogout}
-                        className="flex items-center justify-center gap-2 w-full text-center text-rose-600 px-5 py-2.5 rounded-button text-sm font-semibold hover:bg-rose-50 transition-colors border border-rose-200"
+                        className="flex items-center justify-center gap-2 w-full text-center text-rose-400 px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-rose-500/10 transition-colors border border-rose-500/20"
                       >
                         <LogOut className="w-4 h-4" />
                         Sign Out

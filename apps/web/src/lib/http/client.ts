@@ -6,7 +6,8 @@
  * stored for the web origin. Other API requests go directly to NestJS.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const envUrl = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = (envUrl && envUrl !== "undefined") ? envUrl : "http://localhost:3001/api/v1";
 
 class ApiClient {
   private baseUrl: string;

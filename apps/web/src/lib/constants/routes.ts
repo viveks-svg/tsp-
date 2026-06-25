@@ -4,32 +4,39 @@
  * and enable easy refactoring.
  *
  * Route groups (see route-ownership.ts):
- * - PUBLIC tools (horoscope, chat, free-services, calculators) → (marketing)
+ * - PUBLIC pages (solutions, book, about, etc.) → (marketing)
  * - USER portal (dashboard, consultations, kundli, etc.) → (user)
  * - Never duplicate the same path in both groups.
  */
 export const ROUTES = {
-  // Marketing
+  // ─── Primary Navigation ────────────────────────────────────────────────────
   HOME: "/",
   ABOUT: "/about",
-  PRICING: "/pricing",
+  SOLUTIONS: "/solutions",
+  CONSULTATIONS_PAGE: "/consultations",
+  REPORTS_PAGE: "/reports",
+  RESOURCES: "/resources",
   CONTACT: "/contact",
+  BOOK: "/book",
+  BOOKING_SUCCESS: "/booking/success",
+
+  // ─── Marketing ─────────────────────────────────────────────────────────────
   BUSINESS_VASTU: "/business-vastu",
+  PRICING: "/pricing",
   FAQ: "/faq",
   BLOG: "/blog",
   PRIVACY_POLICY: "/privacy-policy",
   TERMS: "/terms",
 
-  // Public tools — (marketing) only
-  CHAT: "/consultation/chat",
-  CALL: "/consultation/call",
+  // ─── Legacy public tools (still functional, removed from nav) ──────────────
+  CHAT: "/consultations/chat",
+  CALL: "/consultations/call",
   HOROSCOPE: "/horoscope",
   FREE_SERVICES: "/free-services",
   CALCULATORS: "/calculators",
   SHOP: "/shop",
-  // BUSINESS_VASTUE: "/business-vastu",
 
-  // Free services sub-pages
+  // Free services sub-pages (legacy)
   FREE_KUNDALI: "/free-services/kundali",
   FREE_KUNDALI_MATCHING: "/free-services/kundali-matching",
   FREE_TAROT: "/free-services/tarot",
@@ -37,7 +44,7 @@ export const ROUTES = {
   FREE_PANCHANG: "/free-services/panchang",
   FREE_MANGAL_DOSHA: "/free-services/mangal-dosha",
 
-  // Calculator sub-pages
+  // Calculator sub-pages (legacy)
   CALC_LOVE: "/calculators/love",
   CALC_NAME_COMPATIBILITY: "/calculators/name-compatibility",
   CALC_DASHA: "/calculators/dasha",
@@ -54,18 +61,17 @@ export const ROUTES = {
   CALC_HORA: "/calculators/hora",
   CALC_CHOGHADIYA: "/calculators/choghadiya",
 
-  // Auth
+  // ─── Auth ──────────────────────────────────────────────────────────────────
   LOGIN: "/login",
   SIGNUP: "/signup",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
   VERIFY_EMAIL: "/verify-email",
 
-  // User portal — (user) only
+  // ─── User portal — (user) only ────────────────────────────────────────────
   DASHBOARD: "/dashboard",
-  /** Logged-in personalized horoscope (future). Public hub is HOROSCOPE. */
   DASHBOARD_HOROSCOPE: "/dashboard/horoscope",
-  CONSULTATIONS: "/consultations",
+  CONSULTATIONS: "/dashboard/consultations",
   KUNDLI: "/kundli",
   WALLET: "/wallet",
   PROFILE: "/profile",

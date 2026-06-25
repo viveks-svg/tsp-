@@ -21,7 +21,7 @@ export const PUBLIC_TOOL_ROUTES = [
 ] as const;
 
 /** User portal pages — live under (user), auth required */
-export const USER_PORTAL_ROUTES = ["/dashboard", "/consultations", "/kundli", "/wallet", "/profile", "/settings", "/subscriptions", "/orders",] as const;
+export const USER_PORTAL_ROUTES = ["/dashboard", "/dashboard/consultations", "/kundli", "/wallet", "/profile", "/settings", "/subscriptions", "/orders",] as const;
 
 /**
  * Personalized horoscope for logged-in users (future).

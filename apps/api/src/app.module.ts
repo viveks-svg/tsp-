@@ -17,6 +17,10 @@ import { AdminModule } from "./modules/admin/admin.module";
 import { DatabaseModule } from "./database/database.module";
 import { RealtimeModule } from "./realtime/realtime.module";
 import { JobsModule } from "./jobs/jobs.module";
+import { BookingsModule } from "./modules/bookings/booking.module";
+import { SlotsModule } from "./modules/slots/slots.module";
+import { ShopModule } from "./modules/shop/shop.module";
+import { OrdersModule } from "./modules/orders/orders.module";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
 import configuration from "./config/configuration";
@@ -43,6 +47,10 @@ import configuration from "./config/configuration";
     AdminModule,
     JobsModule,
     RealtimeModule,
+    BookingsModule,
+    SlotsModule,
+    ShopModule,
+    OrdersModule,
   ],
   providers: [
     {
