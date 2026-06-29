@@ -19,7 +19,8 @@ RUN DATABASE_URL="postgresql://user:pass@localhost:5432/db" pnpm --filter @tsp/a
 
 RUN pnpm --filter @tsp/api run build
 
-# ---- Production image ----
+# ---------------- Production ----------------
+
 FROM node:22-alpine
 
 RUN apk add --no-cache libstdc++ libgcc
@@ -36,7 +37,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
+COPY --from=builder /app/apps/api/prisma.config.ts ./apps/api/prisma.config.ts
 
 EXPOSE 3001
 
-CMD ["node", "apps/api/dist/main"]
+CMD ["sh", "-c", "cd /app/apps/api && npx prisma migrate deploy && node dist/main"]
