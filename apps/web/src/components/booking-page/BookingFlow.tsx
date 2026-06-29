@@ -422,7 +422,12 @@ export default function BookingFlow() {
           await confirmPayment(data.bookingId, response.razorpay_order_id, response.razorpay_payment_id, response.razorpay_signature);
         },
         modal: {
-          ondismiss: () => setIsLoading(false),
+          ondismiss: () => {
+            setIsLoading(false);
+            // Razorpay test mode sometimes fails to clean up the overflow hidden
+            // when closed or when throwing an error.
+            document.body.style.overflow = 'auto';
+          },
         },
       };
       const rzp = new (window as any).Razorpay(options);
