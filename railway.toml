@@ -1,9 +1,7 @@
 [build]
-builder = "NIXPACKS"
-buildCommand = "npm install -g pnpm@9.1.4 && pnpm install --frozen-lockfile && pnpm --filter @tsp/api run build"
-
-[build.nixpacksPlan.phases.setup]
-nixPkgs = ["nodejs_22"]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/api/Dockerfile"
 
 [deploy]
-startCommand = "node apps/api/dist/main.js"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
