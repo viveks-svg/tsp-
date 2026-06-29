@@ -141,23 +141,44 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
       { name: "birthPlace", label: "Birth Place", type: "text", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Calculate Dasha Periods",
-    compute: (values) => {
-      const birthYear = values.birthDate ? new Date(values.birthDate).getFullYear() : new Date().getFullYear();
-      
-      const dashas = [
-        { planet: "Ketu", years: 7, start: birthYear },
-        { planet: "Venus", years: 20, start: birthYear + 7 },
-        { planet: "Sun", years: 6, start: birthYear + 27 },
-        { planet: "Moon", years: 10, start: birthYear + 33 },
-        { planet: "Mars", years: 7, start: birthYear + 43 },
-        { planet: "Rahu", years: 18, start: birthYear + 50 },
-        { planet: "Jupiter", years: 16, start: birthYear + 68 },
-        { planet: "Saturn", years: 19, start: birthYear + 84 },
-        { planet: "Mercury", years: 17, start: birthYear + 103 },
-      ];
-
+    compute: async (values) => {
+      let dashas = [];
+      let currentDasha = null;
+      let balance = { years: 0, months: 0, days: 0 };
       const currentYear = new Date().getFullYear();
-      const currentDasha = dashas.find(d => currentYear >= d.start && currentYear < d.start + d.years) || dashas[5];
+
+      try {
+        const { fetchDasha } = await import("@/lib/api/ephemeris");
+        const apiData = await fetchDasha({
+          birthDate: values.birthDate,
+          birthTime: values.birthTime,
+          birthPlace: values.birthPlace,
+        });
+        
+        dashas = apiData.mahadashas.map((d: any) => ({
+          planet: d.planet,
+          years: d.durationYears,
+          start: new Date(d.startDate).getFullYear(),
+        }));
+        
+        balance = apiData.balanceAtBirth;
+        currentDasha = dashas.find((d: any) => currentYear >= d.start && currentYear < d.start + d.years) || dashas[5];
+      } catch (error) {
+        // Fallback local calculation
+        const birthYear = values.birthDate ? new Date(values.birthDate).getFullYear() : currentYear;
+        dashas = [
+          { planet: "Ketu", years: 7, start: birthYear },
+          { planet: "Venus", years: 20, start: birthYear + 7 },
+          { planet: "Sun", years: 6, start: birthYear + 27 },
+          { planet: "Moon", years: 10, start: birthYear + 33 },
+          { planet: "Mars", years: 7, start: birthYear + 43 },
+          { planet: "Rahu", years: 18, start: birthYear + 50 },
+          { planet: "Jupiter", years: 16, start: birthYear + 68 },
+          { planet: "Saturn", years: 19, start: birthYear + 84 },
+          { planet: "Mercury", years: 17, start: birthYear + 103 },
+        ];
+        currentDasha = dashas.find(d => currentYear >= d.start && currentYear < d.start + d.years) || dashas[5];
+      }
 
       return (
         <ServiceResultCard title="Your Vimshottari Dasha Timeline">
@@ -169,6 +190,11 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
                 Active from {currentDasha.start} to {currentDasha.start + currentDasha.years} (Duration: {currentDasha.years} years)
               </p>
             </div>
+            {balance.years > 0 && (
+               <div className="text-center text-xs text-muted mb-2 font-poppins">
+                 Balance at birth: {balance.years} years, {balance.months} months, {balance.days} days
+               </div>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs font-poppins">
                 <thead>
@@ -180,7 +206,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
-                  {dashas.map((d) => {
+                  {dashas.map((d: any) => {
                     const isCurrent = d.planet === currentDasha.planet;
                     const isPast = currentYear >= d.start + d.years;
                     return (
@@ -269,28 +295,41 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
       { name: "birthPlace", label: "Birth Place", type: "text", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Find Rashi",
-    compute: (values) => {
-      const birthDate = values.birthDate ? new Date(values.birthDate) : new Date();
-      const month = birthDate.getMonth(); // 0-11
-      const day = birthDate.getDate();
-
-      const rashis = [
-        { name: "Aries (Mesha)", planet: "Mars", element: "Fire", symbol: "Ram", traits: "Energetic, dynamic, courageous, and direct." },
-        { name: "Taurus (Vrishabha)", planet: "Venus", element: "Earth", symbol: "Bull", traits: "Patient, reliable, artistic, and steady." },
-        { name: "Gemini (Mithuna)", planet: "Mercury", element: "Air", symbol: "Twins", traits: "Intellectual, witty, adaptable, and communicative." },
-        { name: "Cancer (Karka)", planet: "Moon", element: "Water", symbol: "Crab", traits: "Nurturing, intuitive, protective, and emotional." },
-        { name: "Leo (Simha)", planet: "Sun", element: "Fire", symbol: "Lion", traits: "Generous, expressive, proud, and charismatic." },
-        { name: "Virgo (Kanya)", planet: "Mercury", element: "Earth", symbol: "Virgin", traits: "Analytical, methodical, helpful, and detail-oriented." },
-        { name: "Libra (Tula)", planet: "Venus", element: "Air", symbol: "Scales", traits: "Harmonious, diplomatic, aesthetic, and relationship-focused." },
-        { name: "Scorpio (Vrishchika)", planet: "Mars", element: "Water", symbol: "Scorpion", traits: "Intense, mystical, resilient, and transformative." },
-        { name: "Sagittarius (Dhanu)", planet: "Jupiter", element: "Fire", symbol: "Archer", traits: "Optimistic, philosophical, adventurous, and truth-seeking." },
-        { name: "Capricorn (Makara)", planet: "Saturn", element: "Earth", symbol: "Sea-Goat", traits: "Ambitious, disciplined, structured, and patient." },
-        { name: "Aquarius (Kumbha)", planet: "Saturn", element: "Air", symbol: "Water Bearer", traits: "Humanitarian, innovative, detached, and intellectual." },
-        { name: "Pisces (Meena)", planet: "Jupiter", element: "Water", symbol: "Fish", traits: "Compassionate, spiritual, imaginative, and sacrifice-loving." },
-      ];
-
-      // Determistic map based on month
-      const rashi = rashis[Math.min(month, 11)];
+    compute: async (values) => {
+      let rashi;
+      try {
+        const { fetchRashi } = await import("@/lib/api/ephemeris");
+        const apiData = await fetchRashi({
+          birthDate: values.birthDate,
+          birthTime: values.birthTime,
+          birthPlace: values.birthPlace,
+        });
+        rashi = {
+          name: `${apiData.rashiEnglish} (${apiData.rashi})`,
+          planet: apiData.rulingPlanet,
+          element: apiData.element,
+          symbol: apiData.symbol,
+          traits: apiData.quality + " qualities.",
+        };
+      } catch (error) {
+        const birthDate = values.birthDate ? new Date(values.birthDate) : new Date();
+        const month = birthDate.getMonth(); // 0-11
+        const rashis = [
+          { name: "Aries (Mesha)", planet: "Mars", element: "Fire", symbol: "Ram", traits: "Energetic, dynamic, courageous, and direct." },
+          { name: "Taurus (Vrishabha)", planet: "Venus", element: "Earth", symbol: "Bull", traits: "Patient, reliable, artistic, and steady." },
+          { name: "Gemini (Mithuna)", planet: "Mercury", element: "Air", symbol: "Twins", traits: "Intellectual, witty, adaptable, and communicative." },
+          { name: "Cancer (Karka)", planet: "Moon", element: "Water", symbol: "Crab", traits: "Nurturing, intuitive, protective, and emotional." },
+          { name: "Leo (Simha)", planet: "Sun", element: "Fire", symbol: "Lion", traits: "Generous, expressive, proud, and charismatic." },
+          { name: "Virgo (Kanya)", planet: "Mercury", element: "Earth", symbol: "Virgin", traits: "Analytical, methodical, helpful, and detail-oriented." },
+          { name: "Libra (Tula)", planet: "Venus", element: "Air", symbol: "Scales", traits: "Harmonious, diplomatic, aesthetic, and relationship-focused." },
+          { name: "Scorpio (Vrishchika)", planet: "Mars", element: "Water", symbol: "Scorpion", traits: "Intense, mystical, resilient, and transformative." },
+          { name: "Sagittarius (Dhanu)", planet: "Jupiter", element: "Fire", symbol: "Archer", traits: "Optimistic, philosophical, adventurous, and truth-seeking." },
+          { name: "Capricorn (Makara)", planet: "Saturn", element: "Earth", symbol: "Sea-Goat", traits: "Ambitious, disciplined, structured, and patient." },
+          { name: "Aquarius (Kumbha)", planet: "Saturn", element: "Air", symbol: "Water Bearer", traits: "Humanitarian, innovative, detached, and intellectual." },
+          { name: "Pisces (Meena)", planet: "Jupiter", element: "Water", symbol: "Fish", traits: "Compassionate, spiritual, imaginative, and sacrifice-loving." },
+        ];
+        rashi = rashis[Math.min(month, 11)];
+      }
 
       return (
         <ServiceResultCard title="Your Rashi (Moon Sign) Result">
@@ -332,17 +371,28 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
       { name: "birthPlace", label: "Birth Place", type: "text", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Find Lagna",
-    compute: (values) => {
-      const birthTime = values.birthTime || "12:00";
-      const hours = parseInt(birthTime.split(":")[0], 10);
-      
-      const signs = [
-        "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-        "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
-      ];
-      // Deterministically find sign based on birth hour
-      const index = Math.floor(hours / 2) % 12;
-      const lagna = signs[index];
+    compute: async (values) => {
+      let lagna = "Aries";
+      try {
+        const { fetchLagna } = await import("@/lib/api/ephemeris");
+        const apiData = await fetchLagna({
+          birthDate: values.birthDate,
+          birthTime: values.birthTime,
+          birthPlace: values.birthPlace,
+        });
+        lagna = apiData.lagnaEnglish;
+      } catch (error) {
+        const birthTime = values.birthTime || "12:00";
+        const hours = parseInt(birthTime.split(":")[0], 10);
+        
+        const signs = [
+          "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+          "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+        ];
+        // Deterministically find sign based on birth hour
+        const index = Math.floor(hours / 2) % 12;
+        lagna = signs[index];
+      }
 
       return (
         <ServiceResultCard title="Your Ascendant (Lagna) Report">
@@ -703,20 +753,37 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
       { name: "birthPlace", label: "Birth Place", type: "text", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Find Nakshatra",
-    compute: (values) => {
-      const birthDate = values.birthDate ? new Date(values.birthDate) : new Date();
-      const day = birthDate.getDate();
+    compute: async (values) => {
+      let star;
+      try {
+        const { fetchNakshatra } = await import("@/lib/api/ephemeris");
+        const apiData = await fetchNakshatra({
+          birthDate: values.birthDate,
+          birthTime: values.birthTime,
+          birthPlace: values.birthPlace,
+        });
+        star = {
+          name: apiData.nakshatra,
+          lord: apiData.rulingLord,
+          deity: apiData.deity,
+          symbol: apiData.symbol,
+          traits: `Gana: ${apiData.gana}, Pada: ${apiData.pada}.`,
+        };
+      } catch (error) {
+        const birthDate = values.birthDate ? new Date(values.birthDate) : new Date();
+        const day = birthDate.getDate();
 
-      const stars = [
-        { name: "Ashwini", lord: "Ketu", deity: "Ashwini Kumars", symbol: "Horse Head", traits: "Swift, adventurous, healing focus, pioneering." },
-        { name: "Bharani", lord: "Venus", deity: "Yama", symbol: "Yoni", traits: "Resilient, creative, intense, subject to sudden shifts." },
-        { name: "Krittika", lord: "Sun", deity: "Agni", symbol: "Razor/Knife", traits: "Sharp mind, direct, purging energy, ambitious." },
-        { name: "Rohini", lord: "Moon", deity: "Brahma", symbol: "Chariot/Temple", traits: "Beautiful, artistic, growth-oriented, stable family bonds." },
-        { name: "Mrigashira", lord: "Mars", deity: "Soma", symbol: "Deer Head", traits: "Searching, curious, gentle, travel-loving." },
-        { name: "Ardra", lord: "Rahu", deity: "Rudra", symbol: "Teardrop", traits: "Transformative, intellectual, weathers emotional storms." },
-      ];
+        const stars = [
+          { name: "Ashwini", lord: "Ketu", deity: "Ashwini Kumars", symbol: "Horse Head", traits: "Swift, adventurous, healing focus, pioneering." },
+          { name: "Bharani", lord: "Venus", deity: "Yama", symbol: "Yoni", traits: "Resilient, creative, intense, subject to sudden shifts." },
+          { name: "Krittika", lord: "Sun", deity: "Agni", symbol: "Razor/Knife", traits: "Sharp mind, direct, purging energy, ambitious." },
+          { name: "Rohini", lord: "Moon", deity: "Brahma", symbol: "Chariot/Temple", traits: "Beautiful, artistic, growth-oriented, stable family bonds." },
+          { name: "Mrigashira", lord: "Mars", deity: "Soma", symbol: "Deer Head", traits: "Searching, curious, gentle, travel-loving." },
+          { name: "Ardra", lord: "Rahu", deity: "Rudra", symbol: "Teardrop", traits: "Transformative, intellectual, weathers emotional storms." },
+        ];
 
-      const star = stars[day % stars.length];
+        star = stars[day % stars.length];
+      }
 
       return (
         <ServiceResultCard title="Your Birth Star (Nakshatra) Report">
@@ -756,17 +823,29 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
       { name: "birthDate", label: "Birth Date", type: "date", required: true },
     ],
     submitLabel: "Calculate Ayanamsa",
-    compute: (values) => {
-      const year = values.birthDate ? new Date(values.birthDate).getFullYear() : new Date().getFullYear();
+    compute: async (values) => {
+      let degrees, minutes, seconds;
       
-      // Calculate Lahiri Ayanamsa: roughly 23.85 degrees + 50.29 seconds per year from 1950
-      const diffYears = year - 1950;
-      const secondsOffset = diffYears * 50.29;
-      const baseDeg = 23.16 + (secondsOffset / 3600);
-      
-      const degrees = Math.floor(baseDeg);
-      const minutes = Math.floor((baseDeg - degrees) * 60);
-      const seconds = Math.round((((baseDeg - degrees) * 60) - minutes) * 60);
+      try {
+        const { fetchAyanamsa } = await import("@/lib/api/ephemeris");
+        const apiData = await fetchAyanamsa({
+          birthDate: values.birthDate || new Date().toISOString().split('T')[0],
+        });
+        degrees = apiData.degrees;
+        minutes = apiData.minutes;
+        seconds = apiData.seconds;
+      } catch (error) {
+        const year = values.birthDate ? new Date(values.birthDate).getFullYear() : new Date().getFullYear();
+        
+        // Calculate Lahiri Ayanamsa: roughly 23.85 degrees + 50.29 seconds per year from 1950
+        const diffYears = year - 1950;
+        const secondsOffset = diffYears * 50.29;
+        const baseDeg = 23.16 + (secondsOffset / 3600);
+        
+        degrees = Math.floor(baseDeg);
+        minutes = Math.floor((baseDeg - degrees) * 60);
+        seconds = Math.round((((baseDeg - degrees) * 60) - minutes) * 60);
+      }
 
       return (
         <ServiceResultCard title="Lahiri Ayanamsa Calculation">

@@ -33,15 +33,15 @@ export default function AdvisorCTA() {
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <section className="relative pt-16 pb-20 bg-gradient-to-b from-[#FEFBF6] to-[#FAF7F1] overflow-visible" id="advisor-cta">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section className="relative w-full py-12 md:py-16 lg:py-24 bg-gradient-to-b from-[#FEFBF6] to-[#FAF7F1] overflow-hidden" id="advisor-cta">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-16 xl:px-24 relative z-10">
         <FadeUp>
-          <div className="bg-[#0A0A0A] rounded-[28px] md:rounded-[36px] p-8 md:p-14 text-center relative overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.2)] border border-white/[0.03]">
+          <div className="bg-[#0A0A0A] rounded-[28px] md:rounded-[36px] p-6 sm:p-8 md:p-14 text-center relative overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.2)] border border-white/[0.03] max-w-4xl mx-auto">
             {/* Subtle inner gold glow */}
             <div className="absolute top-0 right-0 w-[350px] h-[350px] bg-[radial-gradient(circle,rgba(246,160,0,0.06)_0%,transparent_70%)] pointer-events-none" />
             <div className="absolute -left-10 -bottom-10 w-[250px] h-[250px] bg-[radial-gradient(circle,rgba(246,160,0,0.04)_0%,transparent_70%)] pointer-events-none" />
 
-            <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-medium text-white leading-tight mb-4 relative z-10 text-balance">
+            <h2 className="font-heading text-2xl md:text-3xl lg:text-4xl font-medium text-white leading-tight mb-4 relative z-10 text-balance overflow-hidden break-words">
               Get Excellence Advice
             </h2>
 
@@ -50,7 +50,7 @@ export default function AdvisorCTA() {
             </p>
 
             {/* Countdown Timer Pill */}
-            <div className="inline-flex items-center justify-center gap-4 bg-white/[0.04] border border-white/[0.06] rounded-full px-6 py-3.5 mb-10 relative z-10">
+            <div className="inline-flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 bg-white/[0.04] border border-white/[0.06] rounded-[20px] sm:rounded-full px-6 py-3.5 mb-8 md:mb-10 relative z-10 w-full sm:w-auto">
               <span className="text-gold/70 text-[11px] font-inter uppercase tracking-[0.2em]">
                 Offers Expires In
               </span>
@@ -67,7 +67,7 @@ export default function AdvisorCTA() {
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
-                className="btn-shine bg-gradient-to-r from-[#F6A000] to-[#E89500] text-white px-12 py-5 rounded-full text-base font-heading font-semibold shadow-[0_4px_30px_rgba(246,160,0,0.25)] hover:shadow-[0_8px_40px_rgba(246,160,0,0.35)] transition-shadow duration-300"
+                className="btn-shine w-full sm:w-auto bg-gradient-to-r from-[#F6A000] to-[#E89500] text-white px-12 py-5 rounded-full text-base font-heading font-semibold shadow-[0_4px_30px_rgba(246,160,0,0.25)] hover:shadow-[0_8px_40px_rgba(246,160,0,0.35)] transition-shadow duration-300"
                 onClick={() => {
                   window.location.href = "/consultations/chat"
                 }}>

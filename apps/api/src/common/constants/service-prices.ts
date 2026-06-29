@@ -31,6 +31,8 @@ export const SERVICE_PRICES: Record<string, number> = {
   'relationship-guidance':  999900,   // ₹9,999
   'health-wellness':        999900,   // ₹9,999
   'family-harmony':         999900,   // ₹9,999
+  'mobile-analysis':        499900,   // ₹4,999
+  'signature-analysis':     499900,   // ₹4,999
 
   // ─── Property Solutions ────────────────────────────────────────────────────
   'residential-vastu':     1499900,   // ₹14,999 (basic plan)

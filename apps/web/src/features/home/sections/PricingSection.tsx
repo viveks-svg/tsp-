@@ -14,12 +14,12 @@ export default function PricingSection() {
     router.push(`/book?service=business-vastu&plan=${slug}`);
   };
   return (
-    <section className="py-16 lg:py-24 bg-white overflow-visible" id="pricing">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-visible">
+    <section className="relative w-full py-12 md:py-16 lg:py-24 bg-white overflow-hidden" id="pricing">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-16 xl:px-24">
         {/* Heading Section */}
         <FadeUp>
-          <div className="text-center mb-14">
-            <h2 className="font-playfair text-3xl md:text-4xl lg:text-[2.65rem] font-bold text-[#1A1A1A] tracking-tight leading-tight text-balance">
+          <div className="text-center mb-12 md:mb-14 overflow-hidden break-words">
+            <h2 className="font-playfair text-2xl md:text-3xl lg:text-4xl font-bold text-[#1A1A1A] tracking-tight leading-tight text-balance">
               Guided by the <span className="text-[#9333EA]">Stars</span>
               <br />
               Aligned for <span className="text-[#9333EA]">Greatness</span>
@@ -37,7 +37,7 @@ export default function PricingSection() {
         </FadeUp>
 
         {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start overflow-visible pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto items-start overflow-visible pt-6">
           {pricingPlans.map((plan) => (
             <PricingCard
               key={plan.name}

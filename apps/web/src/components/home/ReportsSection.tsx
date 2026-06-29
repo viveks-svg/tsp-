@@ -2,8 +2,9 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image"; // ⚡ Added Next.js Image import
+import Image from "next/image"; 
 import { ReportCard } from "@/types/home";
+import { useCart } from "@/providers/CartProvider";
 
 const fadeInRightVariant = {
   hidden: { opacity: 0, x: 20 },
@@ -14,7 +15,7 @@ const fadeInRightVariant = {
   })
 };
 
-// 🛠️ Fixed image placeholder extensions and names to exactly match your sidebar structure
+
 const reports: ReportCard[] = [
   { title: "Astro SWOT Analysis", price: 1999, slug: "astro-swot", imagePlaceholder: "/images/vastu.png" },
   { title: "Career Blueprint Report", price: 2999, slug: "career-blueprint", imagePlaceholder: "/images/career-blueprint.png" },
@@ -24,15 +25,28 @@ const reports: ReportCard[] = [
 ];
 
 export default function ReportsSection() {
+  const { addToCart } = useCart();
+
+  const handleAddReport = (report: ReportCard) => {
+    addToCart({
+      id: report.slug,
+      name: report.title,
+      price: report.price,
+      type: "report",
+      image: report.imagePlaceholder,
+      description: report.title,
+    });
+  };
+
   return (
-    <section className="w-full bg-gradient-to-b from-[#2E2740] via-[#1A1730] to-[#12101F] py-20 md:py-28 overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1400px]">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-14">
-          <div className="max-w-2xl">
+    <section className="relative w-full bg-gradient-to-b from-[#2E2740] via-[#1A1730] to-[#12101F] py-12 md:py-16 lg:py-24 overflow-hidden">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-16 xl:px-24">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-12">
+          <div className="max-w-2xl overflow-hidden break-words">
             <span className="text-[#F6A000] font-poppins text-[11px] font-semibold uppercase tracking-[0.28em] mb-3 block">
               Premium Astrology Reports
             </span>
-            <h2 className="font-playfair text-[28px] md:text-[38px] leading-tight text-white">
+            <h2 className="font-playfair text-2xl md:text-3xl lg:text-4xl leading-tight text-white">
               In-Depth Reports For Powerful Insights
             </h2>
           </div>
@@ -47,7 +61,7 @@ export default function ReportsSection() {
           </div>
         </div>
 
-        <div className="flex overflow-x-auto pb-8 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pb-0 lg:grid lg:grid-cols-5 gap-4 md:gap-5 snap-x snap-mandatory scrollbar-hide">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           {reports.map((report, index) => (
             <motion.div
               key={index}
@@ -56,7 +70,7 @@ export default function ReportsSection() {
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               variants={fadeInRightVariant}
-              className="group min-w-[250px] md:min-w-[230px] lg:min-w-0 flex-shrink-0 snap-start rounded-[22px] overflow-hidden border border-[#332D68]/55 shadow-[0_20px_60px_rgba(0,0,0,0.24)] hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(0,0,0,0.35)] transition-all duration-500 bg-[#11102A] h-[390px] md:h-[410px]"
+              className="group w-full rounded-[22px] overflow-hidden border border-[#332D68]/55 shadow-[0_20px_60px_rgba(0,0,0,0.24)] hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(0,0,0,0.35)] transition-all duration-500 bg-[#11102A] h-[390px] md:h-[410px]"
             >
               {/* Top visual area with integrated Next.js Image component */}
               <div className="relative h-[57%] w-full overflow-hidden bg-gradient-to-br from-[#332D73] via-[#241F56] to-[#15142F]">
@@ -106,12 +120,13 @@ export default function ReportsSection() {
                     </span>
                   </div>
 
-                  <Link
-                    href={`/reports/${report.slug}`}
-                    className="inline-flex items-center justify-center rounded-full bg-[#0F1023] px-4 py-2 text-[11px] font-semibold text-white whitespace-nowrap shrink-0 transition-all duration-300 hover:bg-[#C99411] hover:text-black shadow-[0_8px_24px_rgba(15,16,35,0.25)]"
-                  >
-                    Get Report
-                  </Link>
+                <button
+                  onClick={() => handleAddReport(report)}
+                  className="inline-flex items-center justify-center rounded-full bg-[#0F1023] px-4 py-2 text-[11px] font-semibold text-white whitespace-nowrap shrink-0 transition-all duration-300 hover:bg-[#C99411] hover:text-black shadow-[0_8px_24px_rgba(15,16,35,0.25)]"
+                >
+                  Get Report
+                </button>
+
                 </div>
               </div>
             </motion.div>

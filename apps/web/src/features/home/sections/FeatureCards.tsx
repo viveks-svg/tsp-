@@ -31,15 +31,15 @@ const cards = [
 
 export default function FeatureCards() {
   return (
-    <section className="pt-0 pb-0 bg-gradient-to-b from-[#FAF7F1] to-[#F5F0E6] relative overflow-hidden" id="feature-cards">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+    <section className="relative w-full py-12 md:py-16 lg:py-24 bg-gradient-to-b from-[#FAF7F1] to-[#F5F0E6] overflow-hidden" id="feature-cards">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-16 xl:px-24">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {cards.map((card) => {
             const Icon = card.icon;
             return (
               <div
                 key={card.title}
-                className={`relative rounded-2xl p-8 lg:p-10 card-premium overflow-hidden ${card.highlighted
+                className={`relative rounded-2xl p-6 md:p-8 lg:p-10 card-premium overflow-hidden ${card.highlighted
                   ? "bg-gradient-to-b from-[#F6A000] to-[#D88D14] text-white shadow-[0_15px_40px_rgba(246,160,0,0.2)] border border-gold/20"
                   : "bg-white text-[#1A1A1A] shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0ECE4]"
                   }`}

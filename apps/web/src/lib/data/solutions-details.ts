@@ -216,6 +216,34 @@ export const SOLUTION_DETAILS: Record<string, SolutionDetail> = {
     ],
     spikyBadgeText: "Pure Peace"
   },
+  "mobile-analysis": {
+    importance: "Your phone number is an active digital mantra that vibrates thousands of times a day. Every text, call, and notification carries numerical waves that either sync with your birth chart or clash with your personal energies. Aligning your phone number vibrations attracts financial opportunities, smooths communications, and removes unseen business or career blockages.",
+    importancePoints: [
+      "Harmonize digit combinations with your birth chart's ruling and friendly planets.",
+      "Activate the money and accumulation frequencies (like custom 8, 9, or 5 combinations) for business growth.",
+      "Avoid malefic numbers and combinations that invite sudden legal issues or financial leaks."
+    ],
+    process: [
+      { title: "Vibration Vetting", description: "Calculating the total value and internal pairing vibrations of your active mobile numbers." },
+      { title: "Astro-Compatibility Check", description: "Evaluating number compatibility with your horoscope and current operating Dasha cycle." },
+      { title: "Destiny Customization", description: "Selecting 3 new lucky mobile number combinations tailored to invite success, wealth, or relationship stability." }
+    ],
+    spikyBadgeText: "High Vibrations"
+  },
+  "signature-analysis": {
+    importance: "Your signature is your subconscious graphic identity—it represents your declaration of intent to the universe. A signature that drops at the end, has backward strokes, or crosses out your name acts as a self-sabotage pattern. Calibrating your signature strokes changes your mindset and alters how the world responds to your leadership and efforts.",
+    importancePoints: [
+      "Correct downward stroke slants that draw energy depletion or depression.",
+      "Add a solid, ascending underline structure to establish career stability and self-confidence.",
+      "Clear line crossings and dots that create subconscious hurdles and health blockages."
+    ],
+    process: [
+      { title: "Stroke Analysis", description: "Evaluating your current handwriting and signature angles, pressure points, and stroke loops." },
+      { title: "Subconscious Alignment", description: "Identifying self-limiting graphic traits and alignment faults causing career stagnation." },
+      { title: "Signature Blueprint", description: "Designing 2-3 custom signature templates with precise ascents and stroke flows to boost focus and abundance." }
+    ],
+    spikyBadgeText: "Destiny Shift"
+  },
   "residential-vastu": {
     importance: "Your home is the soil where your energy grows. Poor residential Vastu drains health, causes financial blocks, and disrupts family dynamics. Residential Vastu aligns structural zones to unlock health, stability, and deep peace.",
     importancePoints: [

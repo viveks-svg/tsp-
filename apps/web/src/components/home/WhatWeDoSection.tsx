@@ -44,11 +44,11 @@ export default function WhatWeDoSection() {
   return (
     <section
       id="what-we-do"
-      className="relative py-16 lg:py-24 overflow-hidden bg-gradient-to-br from-[#F7ECD4] via-[#F1E0B6] to-[#E5C774] border-t border-[#E7D29B]/70"
+      className="relative w-full py-12 md:py-16 lg:py-24 overflow-hidden bg-gradient-to-br from-[#F7ECD4] via-[#F1E0B6] to-[#E5C774] border-t border-[#E7D29B]/70"
     >
       <div className="absolute inset-0 bg-noise pointer-events-none opacity-35" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-16 xl:px-24 relative z-10">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -57,17 +57,17 @@ export default function WhatWeDoSection() {
             hidden: { opacity: 0, y: 30 },
             visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
           }}
-          className="text-center mb-14"
+          className="text-center mb-12 md:mb-14 overflow-hidden break-words"
         >
           <span className="text-[#8B6914] font-poppins text-xs md:text-sm font-semibold uppercase tracking-[0.3em] mb-3 block">
             What We Do
           </span>
-          <h2 className="font-heading text-4xl md:text-5xl font-bold text-[#1E1A16] text-balance">
+          <h2 className="font-heading text-2xl md:text-3xl lg:text-4xl font-bold text-[#1E1A16] text-balance">
             Holistic Solutions For Businesses & Leaders
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {services.map((service, index) => (
             <motion.div
               key={index}
@@ -76,7 +76,7 @@ export default function WhatWeDoSection() {
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               variants={fadeUpVariant}
-              className="group relative overflow-hidden bg-gradient-to-b from-[#FFFDF8] to-[#F8F1E2] rounded-3xl p-7 border border-[#E6D3A3] shadow-[0_20px_60px_rgba(0,0,0,0.08)] hover:-translate-y-2 hover:shadow-[0_28px_80px_rgba(0,0,0,0.12)] transition-all duration-500 text-center flex flex-col h-full"
+              className="group relative overflow-hidden bg-gradient-to-b from-[#FFFDF8] to-[#F8F1E2] rounded-3xl p-5 md:p-6 lg:p-8 border border-[#E6D3A3] shadow-[0_20px_60px_rgba(0,0,0,0.08)] hover:-translate-y-2 hover:shadow-[0_28px_80px_rgba(0,0,0,0.12)] transition-all duration-500 text-center flex flex-col h-full"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-white/70 via-transparent to-transparent pointer-events-none" />
 
@@ -146,7 +146,7 @@ export default function WhatWeDoSection() {
         >
           <Link
             href="/solutions"
-            className="inline-flex items-center gap-2 bg-[#1E1A16] text-white border border-[#1E1A16] px-8 py-3.5 rounded-full text-sm font-semibold hover:bg-[#D4AF37] hover:text-[#1E1A16] hover:border-[#D4AF37] hover:shadow-[0_12px_40px_rgba(212,175,55,0.30)] active:scale-[0.98] transition-all duration-300"
+            className="inline-flex w-full sm:w-auto justify-center items-center gap-2 bg-[#1E1A16] text-white border border-[#1E1A16] px-8 py-4 sm:py-3.5 rounded-full text-sm font-semibold hover:bg-[#D4AF37] hover:text-[#1E1A16] hover:border-[#D4AF37] hover:shadow-[0_12px_40px_rgba(212,175,55,0.30)] active:scale-[0.98] transition-all duration-300"
           >
             View All Solutions
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

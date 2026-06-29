@@ -51,14 +51,14 @@ export default function AstrologersSection() {
   }, []);
 
   return (
-    <section className="w-full bg-[#FFFDF9] py-16 md:py-24 overflow-hidden relative">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1400px]">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-14">
-          <div className="max-w-2xl">
+    <section className="relative w-full py-12 md:py-16 lg:py-24 bg-[#FFFDF9] overflow-hidden">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-16 xl:px-24">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-12">
+          <div className="max-w-2xl overflow-hidden break-words">
             <span className="text-[#C8A04A] font-poppins text-[11px] font-semibold uppercase tracking-widest mb-3 block">
               TOP RATED CONSULTANTS
             </span>
-            <h2 className="font-playfair text-[28px] md:text-[38px] leading-tight text-[#1E1A16]">
+            <h2 className="font-playfair text-2xl md:text-3xl lg:text-4xl leading-tight text-[#1E1A16]">
               Consult With Our Handpicked Experts
             </h2>
           </div>
@@ -86,19 +86,19 @@ export default function AstrologersSection() {
           </div>
         </div>
 
-        <div className="flex overflow-x-auto pb-8 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pb-0 lg:grid lg:grid-cols-4 gap-4 md:gap-6 snap-x snap-mandatory scrollbar-hide">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="min-w-[260px] md:min-w-[230px] lg:min-w-0 flex-shrink-0 snap-start">
+              <div key={i} className="w-full">
                 <AstrologerCardSkeleton key={i} />
               </div>
             ))
           ) : error ? (
-            <div className="col-span-4 p-8 text-center text-rose-600 bg-rose-50 rounded-xl border border-rose-200 w-full font-inter text-sm">
+            <div className="col-span-1 md:col-span-2 lg:col-span-4 p-8 text-center text-rose-600 bg-rose-50 rounded-xl border border-rose-200 w-full font-inter text-sm">
               Failed to load experts: {error}
             </div>
           ) : astrologers.length === 0 ? (
-            <div className="col-span-4 p-8 text-center text-[#6B5F52] bg-[#FFFDF9] rounded-xl border border-[#E6D3A3]/30 w-full font-inter text-sm">
+            <div className="col-span-1 md:col-span-2 lg:col-span-4 p-8 text-center text-[#6B5F52] bg-[#FFFDF9] rounded-xl border border-[#E6D3A3]/30 w-full font-inter text-sm">
               No experts are currently available. Please try again later.
             </div>
           ) : (
@@ -110,7 +110,7 @@ export default function AstrologersSection() {
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.2 }}
                 variants={fadeUpVariant}
-                className="min-w-[260px] md:min-w-[230px] lg:min-w-0 flex-shrink-0 snap-start"
+                className="w-full"
               >
                 <AstrologerCard astrologer={astrologer} mode="chat" className="h-full border-[#E6D3A3]/30 bg-white" />
               </motionFramer.div>

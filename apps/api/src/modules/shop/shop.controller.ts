@@ -1,8 +1,9 @@
-import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Req } from '@nestjs/common';
 import { ShopService, CreateShopOrderDto } from './shop.service';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Public } from '../../common/decorators/public.decorator';
 import { Request } from 'express';
 
+@Public()
 @Controller('shop')
 export class ShopController {
   constructor(private readonly shopService: ShopService) {}

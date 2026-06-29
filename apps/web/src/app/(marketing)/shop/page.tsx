@@ -1,25 +1,22 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Search, ShoppingBag, Star, X, Plus, Minus, Heart, ArrowUpDown, ArrowRight, MessageCircle, MapPin, Truck } from "lucide-react";
 import Image from "next/image";
 import Script from "next/script";
+import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { apiClient } from "@/lib/http/client";
 import { SHOP_PRODUCTS, type Product } from "@/lib/data/shop";
+import { useCart } from "@/providers/CartProvider";
 import { div } from "framer-motion/client";
-
-interface CartItem {
-  product: Product;
-  quantity: number;
-}
 
 export default function ShopPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState<"popular" | "price-asc" | "price-desc">("popular");
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [cartOpen, setCartOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const { cart, cartOpen, addToCart, updateQuantity, removeFromCart, clearCart, setCartOpen, totalItems, subtotal } = useCart();
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [checkoutStep, setCheckoutStep] = useState<"cart" | "shipping" | "success">("cart");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -37,18 +34,22 @@ export default function ShopPage() {
 
   const [isMounted, setIsMounted] = useState(false);
 
+  // Open cart drawer when coming from home checkout flow
+  useEffect(() => {
+    if (searchParams?.get("checkout") === "true") {
+      setCartOpen(true);
+      setCheckoutStep("shipping");
+    }
+  }, [searchParams, setCartOpen]);
+
   // Load initial cart and shipping details from localStorage
   React.useEffect(() => {
     try {
-      const savedCart = localStorage.getItem("tsp_shop_cart");
-      if (savedCart) {
-        setCart(JSON.parse(savedCart));
-      }
       const savedShipping = localStorage.getItem("tsp_shop_shipping");
       if (savedShipping) {
         setShippingData((prev) => ({
           ...prev,
-          ...JSON.parse(savedShipping)
+          ...JSON.parse(savedShipping),
         }));
       }
     } catch (e) {
@@ -56,16 +57,6 @@ export default function ShopPage() {
     }
     setIsMounted(true);
   }, []);
-
-  // Save cart to localStorage when it changes
-  React.useEffect(() => {
-    if (!isMounted) return;
-    try {
-      localStorage.setItem("tsp_shop_cart", JSON.stringify(cart));
-    } catch (e) {
-      console.error("Failed to save cart to localStorage", e);
-    }
-  }, [cart, isMounted]);
 
   // Save shipping details to localStorage when they change
   React.useEffect(() => {
@@ -111,36 +102,20 @@ export default function ShopPage() {
   }, [search, selectedCategory, sortBy]);
 
   // Cart actions
-  const addToCart = (product: Product) => {
-    setCart((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
-      }
-      return [...prev, { product, quantity: 1 }];
+  const addProductToCart = (product: Product) => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      type: "product",
+      image: product.image,
+      description: product.description,
     });
-    setCartOpen(true);
     setCheckoutStep("cart");
   };
 
-  const updateQuantity = (productId: string, delta: number) => {
-    setCart((prev) =>
-      prev
-        .map((item) => {
-          if (item.product.id === productId) {
-            const newQty = item.quantity + delta;
-            return newQty > 0 ? { ...item, quantity: newQty } : null;
-          }
-          return item;
-        })
-        .filter((item): item is CartItem => item !== null)
-    );
-  };
-
-  const removeFromCart = (productId: string) => {
-    setCart((prev) => prev.filter((item) => item.product.id !== productId));
+  const removeProductFromCart = (productId: string) => {
+    removeFromCart(productId);
   };
 
   const toggleWishlist = (productId: string) => {
@@ -159,13 +134,14 @@ export default function ShopPage() {
     try {
       const orderPayload = {
         ...shippingData,
-        items: cart.map(item => ({
-          productId: item.product.id,
-          productName: item.product.name,
-          price: item.product.price,
-          quantity: item.quantity
+        items: cart.map((item) => ({
+          productId: item.id,
+          productName: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          itemType: item.type,
         })),
-        totalAmount: subtotal
+        totalAmount: subtotal,
       };
 
       const res: any = await apiClient.post('/shop/orders', orderPayload);
@@ -185,7 +161,7 @@ export default function ShopPage() {
               signature: response.razorpay_signature
             });
             setCheckoutStep("success");
-            setCart([]);
+            clearCart();
           } catch (verifyError) {
             alert("Payment verification failed.");
             setIsProcessing(false);
@@ -213,9 +189,6 @@ export default function ShopPage() {
       setIsProcessing(false);
     }
   };
-
-  const totalItems = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart]);
-  const subtotal = useMemo(() => cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0), [cart]);
 
   return (
     <div className="min-h-screen bg-cream pb-20 relative">
@@ -404,7 +377,7 @@ export default function ShopPage() {
 
                           {/* Add to Cart Button */}
                           <button
-                            onClick={() => addToCart(product)}
+                            onClick={() => addProductToCart(product)}
                             className="w-full bg-navy text-white hover:bg-navy-hover py-2.5 rounded-button text-xs font-semibold font-poppins flex items-center justify-center gap-1.5 transition-all shadow-sm"
                           >
                             <ShoppingBag className="w-3.5 h-3.5" />
@@ -588,32 +561,36 @@ export default function ShopPage() {
             ) : (
               cart.map((item) => (
                 <div
-                  key={item.product.id}
+                  key={item.id}
                   className="flex gap-4 p-3 border border-border rounded-lg bg-cream/10"
                 >
                   <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-border">
-                    <Image
-                      src={item.product.image}
-                      alt={item.product.name}
-                      fill
-                      className="object-cover"
-                    />
+                    {item.image ? (
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-cream" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-between">
                     <div>
                       <div className="flex justify-between items-start gap-1">
                         <h4 className="text-xs font-semibold text-dark truncate font-poppins">
-                          {item.product.name}
+                          {item.name}
                         </h4>
                         <button
-                          onClick={() => removeFromCart(item.product.id)}
+                          onClick={() => removeProductFromCart(item.id)}
                           className="text-muted hover:text-rose-500 p-0.5"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
                       <p className="text-xs text-navy font-bold font-poppins mt-0.5">
-                        ₹{item.product.price}
+                        ₹{item.price}
                       </p>
                     </div>
 
@@ -621,7 +598,7 @@ export default function ShopPage() {
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center border border-border rounded bg-white">
                         <button
-                          onClick={() => updateQuantity(item.product.id, -1)}
+                          onClick={() => updateQuantity(item.id, -1)}
                           className="p-1 hover:bg-cream"
                         >
                           <Minus className="w-3 h-3 text-paragraph" />
@@ -630,14 +607,14 @@ export default function ShopPage() {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.product.id, 1)}
+                          onClick={() => updateQuantity(item.id, 1)}
                           className="p-1 hover:bg-cream"
                         >
                           <Plus className="w-3 h-3 text-paragraph" />
                         </button>
                       </div>
                       <span className="text-xs font-bold text-dark font-poppins">
-                        ₹{item.product.price * item.quantity}
+                        ₹{item.price * item.quantity}
                       </span>
                     </div>
                   </div>

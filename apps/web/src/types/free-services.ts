@@ -11,7 +11,7 @@ export interface FreeServiceItem {
 export interface FormField {
   name: string;
   label: string;
-  type: "text" | "date" | "time" | "select";
+  type: "text" | "date" | "time" | "select" | "places-autocomplete" | "button-group";
   placeholder?: string;
   options?: string[];
   required?: boolean;

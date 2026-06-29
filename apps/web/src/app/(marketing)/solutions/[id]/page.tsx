@@ -16,7 +16,8 @@ import {
   Target, Handshake, TrendingUp, Type,
   Briefcase, Heart, Activity, Users,
   Home as HomeIcon, Building, Castle, HardHat,
-  ChevronRight, ArrowLeft, Check, Sparkles
+  ChevronRight, ArrowLeft, Check, Sparkles,
+  Phone, PenTool
 } from "lucide-react";
 
 import BusinessVastuPage from "@/features/solutions/components/BusinessVastuPage";
@@ -28,6 +29,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Target, Handshake, TrendingUp, Type,
   Briefcase, Heart, Activity, Users,
   Home: HomeIcon, Building, Castle, HardHat,
+  Phone, PenTool
 };
 
 const fadeUp = {

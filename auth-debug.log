@@ -950,3 +950,125 @@
 [me] upstream NestJS status=200
 [me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[access_token,rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
 [me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/book?service=business-vastu&plan=celestial | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/solutions/business-vastu | hasAccessToken=false | cookies=[rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/free-services/kundali | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/free-services/kundali | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/free-services/kundali | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/free-services/kundali | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/free-services/kundali | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/free-services/kundali | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/free-services/kundali | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/free-services/kundali | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/book?service=business-vastu&plan=celestial | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/book | hasAccessToken=true | cookies=[rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/book | hasAccessToken=true | cookies=[rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/book | hasAccessToken=true | cookies=[rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/solutions | hasAccessToken=true | cookies=[rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=true | cookies=[rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/dashboard/consultations/0ad4a484-fff5-4f4f-a0ed-8b22a47bd154/chat | hasAccessToken=true | cookies=[rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/dashboard/consultations | hasAccessToken=true | cookies=[rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/dashboard/consultations | hasAccessToken=true | cookies=[rzp_unified_session_id,access_token] | rawCookieHeader=present
+[me] upstream NestJS status=200
+[me] hit | referer=http://localhost:3000/book?service=office-vastu&plan=standard | hasAccessToken=false | cookies=[rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/solutions/office-vastu | hasAccessToken=false | cookies=[rzp_unified_session_id] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/reports/astro-swot | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/reports/astro-swot | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[] | rawCookieHeader=ABSENT
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/shop | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/shop?checkout=true | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)

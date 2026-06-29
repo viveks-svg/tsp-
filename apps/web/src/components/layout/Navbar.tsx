@@ -125,14 +125,14 @@ export default function Navbar() {
     <>
       <nav
         className={cn(
-          "fixed top-1 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-24px)] max-w-7xl rounded-full transition-all duration-500 ease-out",
+          "fixed top-0 left-0 right-0 md:top-4 md:left-1/2 md:-translate-x-1/2 z-50 w-full md:w-[calc(100%-32px)] max-w-7xl md:rounded-full transition-all duration-500 ease-out",
           mounted && (scrolled || pathname !== "/")
-            ? "bg-[#0F0E0C]/85 backdrop-blur-xl border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.18)]"
+            ? "bg-[#0F0E0C]/85 backdrop-blur-xl border-b border-white/10 md:border md:border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.18)]"
             : "bg-transparent border-transparent shadow-none"
         )}
       >
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between min-h-[72px]">
+          <div className="flex items-center justify-between h-16 md:min-h-[72px]">
             {/* Logo */}
             <Link href="/" className="flex items-center shrink-0">
               <Image src="/logo/Group 2.svg" alt="Time Space & Planets" width={60} height={60}
@@ -373,7 +373,7 @@ export default function Navbar() {
             <div className="flex items-center gap-3">
               {/* Bell / Notification */}
               <button
-                className="hidden sm:flex w-9 h-9 items-center justify-center rounded-full hover:bg-white/[0.08] transition-colors duration-200"
+                className="hidden md:flex w-9 h-9 items-center justify-center rounded-full hover:bg-white/[0.08] transition-colors duration-200"
                 aria-label="Notifications"
               >
                 <Bell className="w-4.5 h-4.5 text-white/60" />
@@ -382,7 +382,7 @@ export default function Navbar() {
               {/* User / Auth */}
               {isAuthenticated && user ? (
                 /* --- Logged In: Initials Avatar + Dropdown --- */
-                <div className="relative hidden sm:block group" ref={dropdownRef}>
+                <div className="relative hidden md:block group" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     className="w-9 h-9 flex items-center justify-center rounded-full bg-[#C8A04A]/20 text-[#C8A04A] text-xs font-bold hover:bg-[#C8A04A]/30 transition-colors duration-200 border border-[#C8A04A]/20"
@@ -485,7 +485,7 @@ export default function Navbar() {
                 /* --- Logged Out: User Icon → opens modal --- */
                 <button
                   onClick={() => authModal.open("login")}
-                  className="hidden sm:flex w-9 h-9 items-center justify-center rounded-full hover:bg-white/[0.08] transition-colors duration-200"
+                  className="hidden md:flex w-9 h-9 items-center justify-center rounded-full hover:bg-white/[0.08] transition-colors duration-200"
                   aria-label="Login"
                 >
                   <User className="w-5 h-5 text-white/60" />
@@ -626,9 +626,9 @@ export default function Navbar() {
                                 setExpandedLinks((prev) => ({ ...prev, [link.label]: !prev[link.label] }))
                               }
                               className={cn(
-                                "flex items-center justify-between text-base font-medium py-3 px-4 rounded-[12px] transition-colors font-poppins w-full text-left",
+                                "flex items-center justify-between text-base font-medium py-3 px-4 rounded-[12px] transition-colors font-poppins w-full text-left relative",
                                 active
-                                  ? "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold"
+                                  ? "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-[#C8A04A] before:rounded-r"
                                   : "text-white/70 hover:bg-white/[0.05] hover:text-white"
                               )}
                             >
@@ -788,9 +788,9 @@ export default function Navbar() {
                           href={link.href}
                           onClick={() => setMobileOpen(false)}
                           className={cn(
-                            "text-base font-medium py-3 px-4 rounded-[12px] transition-colors font-poppins",
+                            "block text-base font-medium py-3 px-4 rounded-[12px] transition-colors font-poppins relative",
                             active
-                              ? "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold"
+                              ? "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-[#C8A04A] before:rounded-r"
                               : "text-white/70 hover:bg-white/[0.05] hover:text-white"
                           )}
                         >

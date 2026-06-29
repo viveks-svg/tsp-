@@ -1,0 +1,1946 @@
+{
+  "info": {
+    "_postman_id": "4943de67-c469-4497-9f35-96147ffa058e",
+    "name": "Tenant Template",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52018994"
+  },
+  "item": [
+    {
+      "name": "Directories",
+      "item": [
+        {
+          "name": "Routes",
+          "item": [
+            {
+              "name": "Get All Routes",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Tenant-Schema",
+                    "value": "tenant_template",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-API-KEY",
+                    "value": "dlm_live_bf4d829934363e50daee3ff79f6ebe8e",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseURL}}api/routes",
+                  "host": [
+                    "{{baseURL}}api"
+                  ],
+                  "path": [
+                    "routes"
+                  ]
+                },
+                "description": "Retrieve all routes for the active tenant with pagination, filtering, and sorting support."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Route by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/routes/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "routes",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Retrieve a single route record by its unique identifier for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Create Route",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "disabled": false
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"name\":\"North Zone Morning Run\",\"code\":\"RT-1001\",\"originDepotId\":\"{{depotId}}\",\"driverId\":\"{{driverId}}\",\"vehicleId\":\"{{vehicleId}}\",\"stops\":[{\"sequence\":1,\"customerId\":\"{{customerId1}}\",\"addressId\":\"{{addressId1}}\",\"eta\":\"2026-04-15T09:30:00Z\"},{\"sequence\":2,\"customerId\":\"{{customerId2}}\",\"addressId\":\"{{addressId2}}\",\"eta\":\"2026-04-15T10:15:00Z\"}],\"plannedStartTime\":\"2026-04-15T08:00:00Z\",\"status\":\"active\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/routes",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "routes"
+                  ]
+                },
+                "description": "Create a new route record for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Route",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "disabled": false
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"name\":\"North Zone Morning Run - Revised\",\"plannedStartTime\":\"2026-04-15T08:30:00Z\",\"status\":\"active\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/routes/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "routes",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Update an existing route record by ID for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Soft Delete Route",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/routes/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "routes",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Soft delete the route record by marking its status field instead of permanently deleting it."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Vehicle",
+          "item": [
+            {
+              "name": "Get All Vehicle",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/vehicle",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "vehicle"
+                  ]
+                },
+                "description": "Retrieve all vehicles for the active tenant with pagination, filtering, and sorting support."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Vehicle by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/vehicle/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "vehicle",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Retrieve a single vehicle record by its unique identifier for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Create Vehicle",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "disabled": false
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"registrationNumber\":\"MH12AB1234\",\"type\":\"truck\",\"capacity\":{\"weight\":3500,\"volume\":18},\"carrierId\":\"{{carrierId}}\",\"status\":\"active\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/vehicle",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "vehicle"
+                  ]
+                },
+                "description": "Create a new vehicle record for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Vehicle",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "disabled": false
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"type\":\"truck\",\"capacity\":{\"weight\":4000,\"volume\":20},\"status\":\"active\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/vehicle/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "vehicle",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Update an existing vehicle record by ID for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Soft Delete Vehicle",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/vehicle/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "vehicle",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Soft delete the vehicle record by marking its status field instead of permanently deleting it."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Carrier",
+          "item": [
+            {
+              "name": "Get All Carriers",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/carrier",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "carrier"
+                  ]
+                },
+                "description": "Retrieve all carriers for the active tenant with pagination, filtering, and sorting support."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Carrier by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/carrier/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "carrier",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Retrieve a single carrier record by its unique identifier for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Create Carrier",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "disabled": false
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"name\":\"FastMove Logistics\",\"contactName\":\"Amit Verma\",\"phone\":\"+919900112233\",\"email\":\"ops@fastmove.example\",\"status\":\"active\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/carrier",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "carrier"
+                  ]
+                },
+                "description": "Create a new carrier record for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Carrier",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "disabled": false
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"contactName\":\"Amit Kumar Verma\",\"phone\":\"+919900112244\",\"status\":\"active\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/carrier/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "carrier",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Update an existing carrier record by ID for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Soft Delete Carrier",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/carrier/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "carrier",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Soft delete the carrier record by marking its status field instead of permanently deleting it."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Depots",
+          "item": [
+            {
+              "name": "Get All Depots",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/depots",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "depots"
+                  ]
+                },
+                "description": "Retrieve all depots for the active tenant with pagination, filtering, and sorting support."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Depot by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/depots/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "depots",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Retrieve a single depot record by its unique identifier for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Create Depot",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "disabled": false
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"name\":\"Bengaluru Central Depot\",\"code\":\"DEP-001\",\"addressId\":\"{{addressId}}\",\"contactNumber\":\"+918888777666\",\"status\":\"active\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/depots",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "depots"
+                  ]
+                },
+                "description": "Create a new depot record for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Depot",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "disabled": false
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"contactNumber\":\"+918888777000\",\"status\":\"active\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/depots/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "depots",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Update an existing depot record by ID for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Soft Delete Depot",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/depots/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "depots",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Soft delete the depot record by marking its status field instead of permanently deleting it."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Customer",
+          "item": [
+            {
+              "name": "Get All Customers",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/customer",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "customer"
+                  ]
+                },
+                "description": "Retrieve all customers for the active tenant with pagination, filtering, and sorting support."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Customer by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/customer/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "customer",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Retrieve a single customer record by its unique identifier for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Create Customer",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "disabled": false
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"name\":\"Acme Retail\",\"contactName\":\"Neha Jain\",\"phone\":\"+917700112233\",\"email\":\"supply@acme.example\",\"status\":\"active\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/customer",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "customer"
+                  ]
+                },
+                "description": "Create a new customer record for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Customer",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "disabled": false
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"contactName\":\"Neha R Jain\",\"status\":\"active\"}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/customer/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "customer",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Update an existing customer record by ID for the active tenant."
+              },
+              "response": []
+            },
+            {
+              "name": "Soft Delete Customer",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "disabled": false
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/customer/{{id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "customer",
+                    "{{id}}"
+                  ]
+                },
+                "description": "Soft delete the customer record by marking its status field instead of permanently deleting it."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Addresses",
+          "item": []
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "User Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "email",
+                  "value": "vivek@google.com",
+                  "type": "text",
+                  "uuid": "c7adf06c-53e9-4779-89eb-311938e150a6"
+                },
+                {
+                  "key": "password",
+                  "value": "Vivek123",
+                  "type": "text",
+                  "uuid": "6e1f35d8-538f-4ec4-a2d5-59b72a54d834"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseURL}}api/auth/login",
+              "host": [
+                "{{baseURL}}api"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Driver Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "email",
+                  "value": "cello@cello.com",
+                  "type": "text",
+                  "uuid": "88877803-37a9-4ef8-9771-f7003cc23920"
+                },
+                {
+                  "key": "password",
+                  "value": "123456",
+                  "type": "text",
+                  "uuid": "03e7c829-55fd-4c3d-bc90-acd57391ed0b"
+                },
+                {
+                  "key": "device_id",
+                  "value": "6flU91eCRDbXq/htjmntX49PpeHC4qhNtQSFXxz+MaE=",
+                  "type": "text",
+                  "uuid": "6f4ac917-3386-4319-ad58-216d0c30080a"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseURL}}api/auth/driver-login",
+              "host": [
+                "{{baseURL}}api"
+              ],
+              "path": [
+                "auth",
+                "driver-login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User By Role",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{driver_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              },
+              {
+                "key": "X-API-KEY",
+                "value": "dlm_live_bf4d829934363e50daee3ff79f6ebe8e",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}api/users/by-role/{{role}}",
+              "host": [
+                "{{baseURL}}api"
+              ],
+              "path": [
+                "users",
+                "by-role",
+                "{{role}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "New Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"user_id\": \"c79f7ee7-aa48-42c4-beba-12888b037e79\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}api/admin/reset-driver-device",
+              "host": [
+                "{{baseURL}}api"
+              ],
+              "path": [
+                "admin",
+                "reset-driver-device"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create new User",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "email",
+                  "value": "admin@delidel.com",
+                  "type": "text"
+                },
+                {
+                  "key": "phone_country_code",
+                  "value": "91",
+                  "type": "text"
+                },
+                {
+                  "key": "phone_national",
+                  "value": "9311536630",
+                  "type": "text"
+                },
+                {
+                  "key": "full_name",
+                  "value": "Admin",
+                  "type": "text"
+                },
+                {
+                  "key": "status",
+                  "value": "active",
+                  "type": "text"
+                },
+                {
+                  "key": "password_raw",
+                  "value": "Admin123",
+                  "type": "text"
+                },
+                {
+                  "key": "role_code",
+                  "value": "admin",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/users",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Get Orders",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}api/orders?limit=80&page=2",
+              "host": [
+                "{{baseURL}}api"
+              ],
+              "path": [
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "80"
+                },
+                {
+                  "key": "page",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Orders",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n      \"client_name\": \"Ahmed Al Mansouri\",\r\n      \"address\": \"Villa 12, Al Barsha 1, Dubai\",\r\n      \"geom\": \"POINT(55.1975 25.1124)\",\r\n      \"meta\": { \"order_type\": \"delivery\", \"note\": \"Call before arrival\" },\r\n      \"payment_status\":\"paid\",\r\n      \"payment_mode\":\"netbanking\",\r\n      \"items\": [\r\n        { \"qty\": 3, \"unit_price\": 45.00, \"currency\": \"AED\", \"meta\": { \"name\": \"Mineral Water 6L\", \"unit\": \"ctn\", \"note\": \"\" } },\r\n        { \"qty\": 2, \"unit_price\": 120.00, \"currency\": \"AED\", \"meta\": { \"name\": \"Fresh Juice Pack\", \"unit\": \"pcs\", \"note\": \"\" } }\r\n      ]\r\n    }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}api/orders",
+              "host": [
+                "{{baseURL}}api"
+              ],
+              "path": [
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Collect Payment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "order_id",
+                  "value": "b7dee78c-fcfb-4b9c-8c68-d3f431f9e153",
+                  "type": "text",
+                  "uuid": "85984233-6f64-41c2-b709-d20ea64285ef"
+                },
+                {
+                  "key": "payment_mode",
+                  "value": "pos",
+                  "type": "text",
+                  "uuid": "92b8ee0b-755c-4df7-82a8-0abac5e7c756"
+                },
+                {
+                  "key": "amount",
+                  "value": "579",
+                  "type": "text",
+                  "uuid": "ccdc4f41-6d56-4858-a5a6-d3b05dd62541"
+                },
+                {
+                  "key": "photos[]",
+                  "type": "file",
+                  "uuid": "7bde3118-b48a-40fd-8fb8-a7b312991a2e",
+                  "src": "/C:/Users/VIVEK/Pictures/Acer/Acer_Wallpaper_02_3840x2400.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseURL}}api/orders/{{orderId}}/collect-payment",
+              "host": [
+                "{{baseURL}}api"
+              ],
+              "path": [
+                "orders",
+                "{{orderId}}",
+                "collect-payment"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Return Order Items",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{driver_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "product_id",
+                  "value": "01a768f5-8217-4ea4-a97e-7348be7738da",
+                  "type": "text"
+                },
+                {
+                  "key": "returned_qty",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "reason",
+                  "value": " \"client refused to accept\"",
+                  "type": "text"
+                },
+                {
+                  "key": "photos",
+                  "type": "file",
+                  "uuid": "bfdae741-0f0e-48c6-9196-f9d2326e639a",
+                  "src": "/C:/Users/VIVEK/Pictures/Acer/Acer_Wallpaper_03_3840x2400.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/orders/{{id}}/return-item",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{id}}",
+                "return-item"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Order",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{driver_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"order_status\": \"completed\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/orders/{{id}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Driver Mobile API",
+      "item": [
+        {
+          "name": "Driver Summary",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{driver_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/api/driver/summary",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "driver",
+                "summary"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Driver Summary",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Tenant-Schema",
+                    "value": "tenant_template",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseURL}}/api/driver/summary",
+                  "host": [
+                    "{{baseURL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "driver",
+                    "summary"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.24.0 (Ubuntu)"
+                },
+                {
+                  "key": "Date",
+                  "value": "Wed, 27 May 2026 11:58:12 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Access-Control-Allow-Headers",
+                  "value": "Content-Type, Authorization, X-Tenant-Schema,X-API-Key"
+                },
+                {
+                  "key": "Access-Control-Allow-Methods",
+                  "value": "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"ok\": true,\n    \"message\": \"Success\",\n    \"data\": {\n        \"date\": \"2026-05-27\",\n        \"name\": null,\n        \"vehicle_number\": null,\n        \"total_orders\": 0,\n        \"total_delivered\": 0,\n        \"total_undelivered\": 0,\n        \"total\": 0,\n        \"currency\": \"AED\",\n        \"route_plan_id\": \"c10bd2e1-7f43-4ec4-8230-14ea0e6568d2\",\n        \"route_plan_status\": \"in_progress\",\n        \"has_active_plan\": true,\n        \"cash\": {\n            \"today_balance\": null,\n            \"limit\": 1500,\n            \"remaining_limit\": 1500\n        }\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Driver Summary New",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{driver_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/api/driver/summary",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "driver",
+                "summary"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Route Stops",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{driver_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/api/driver/active-plans?service_date=2026-06-05",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "driver",
+                "active-plans"
+              ],
+              "query": [
+                {
+                  "key": "service_date",
+                  "value": "2026-06-05"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Route Stops",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Tenant-Schema",
+                    "value": "tenant_template",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseURL}}/api/driver/active-plans?service_date=2026-05-28",
+                  "host": [
+                    "{{baseURL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "driver",
+                    "active-plans"
+                  ],
+                  "query": [
+                    {
+                      "key": "service_date",
+                      "value": "2026-05-28"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.24.0 (Ubuntu)"
+                },
+                {
+                  "key": "Date",
+                  "value": "Thu, 28 May 2026 06:18:10 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "30"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "29"
+                },
+                {
+                  "key": "X-RateLimit-Window",
+                  "value": "60"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Access-Control-Allow-Headers",
+                  "value": "Content-Type, Authorization, X-Tenant-Schema,X-API-Key"
+                },
+                {
+                  "key": "Access-Control-Allow-Methods",
+                  "value": "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"ok\": true,\n    \"message\": \"Success\",\n    \"data\": {\n        \"data\": [\n            {\n                \"stop_id\": \"d9d4216e-1354-4cf8-b58d-a1913f152d34\",\n                \"plan_id\": \"18b1bb38-1869-419c-8e96-098967498b2e\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 1,\n                \"lat\": 28.57024,\n                \"lng\": 77.32601,\n                \"arrived_at\": \"2026-05-28 11:40:24\",\n                \"departed_at\": \"2026-05-28 11:40:55\",\n                \"task_status\": \"completed\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"736a9b07-e447-4d94-bc3f-ee42a14a6a9d\",\n                        \"customer_name\": \"Bikanervala\",\n                        \"address\": \"Noida Sector 18, Atta Market\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"501.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": \"cash\",\n                        \"order_type\": \"cod\",\n                        \"delivery_instructions\": \"Call on arrival\",\n                        \"delivery_id\": \"c43c3af2-8a74-4ee8-a193-d32e7034227f\",\n                        \"delivery_status\": \"delivered\",\n                        \"delivered_qty\": {\n                            \"a095f1e7-1ad5-4184-8a1c-b3b27ea33f20\": 2,\n                            \"b340d8d7-ca08-4d4d-88fc-c2674c013918\": 1\n                        },\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": \"2026-05-28 11:40:53\",\n                        \"order_status\": \"delivered\",\n                        \"items\": [\n                            {\n                                \"id\": \"5ace0a36-e76e-435c-ba11-c39221894121\",\n                                \"product_id\": \"b340d8d7-ca08-4d4d-88fc-c2674c013918\",\n                                \"qty\": 1,\n                                \"unit_price\": 97,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Mutton\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 97\n                            },\n                            {\n                                \"id\": \"c7867497-a067-432d-a9c4-7d7791ef9bbd\",\n                                \"product_id\": \"a095f1e7-1ad5-4184-8a1c-b3b27ea33f20\",\n                                \"qty\": 2,\n                                \"unit_price\": 202,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Milk\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 2,\n                                \"effective_price\": 404\n                            }\n                        ],\n                        \"delivery_count\": 2,\n                        \"pod_summary\": {\n                            \"submitted\": true,\n                            \"has_signature\": false,\n                            \"photo_count\": 1,\n                            \"note\": \"hfuug\"\n                        },\n                        \"effective_price_total\": 501,\n                        \"payment\": {\n                            \"type\": \"cod\",\n                            \"status\": \"paid\",\n                            \"mode\": \"cash\",\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"4f81666e-9047-40a9-90eb-639ed3896a29\",\n                \"plan_id\": \"16a65930-588d-42b6-ada5-f6a31ccafacc\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 1,\n                \"lat\": 28.63485,\n                \"lng\": 77.3765,\n                \"arrived_at\": \"2026-05-28 10:54:39\",\n                \"departed_at\": \"2026-05-28 11:21:23\",\n                \"task_status\": \"completed\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"4a91e5f3-d7ad-4ff0-940a-2ba0a1270015\",\n                        \"customer_name\": \"Barbeque Nation\",\n                        \"address\": \"Noida Sector 71, Block 11\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"446.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"prepaid\",\n                        \"delivery_instructions\": \"Beware of dogs\",\n                        \"delivery_id\": \"c1f8bbf5-f47e-408a-b3ec-f18ed668851e\",\n                        \"delivery_status\": \"delivered\",\n                        \"delivered_qty\": {\n                            \"63d87e32-efef-4b4c-9b1d-c74ddebfb921\": 5,\n                            \"d1942d29-c731-44d8-a7bd-4ed8f182503d\": 3\n                        },\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": \"2026-05-28 10:56:23\",\n                        \"order_status\": \"delivered\",\n                        \"items\": [\n                            {\n                                \"id\": \"8854b971-2881-4dfe-b68f-7912e3c737d7\",\n                                \"product_id\": \"d1942d29-c731-44d8-a7bd-4ed8f182503d\",\n                                \"qty\": 3,\n                                \"unit_price\": 107,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Pepsi\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 321\n                            },\n                            {\n                                \"id\": \"0eaca59a-50a8-459b-a61f-1514e81952bb\",\n                                \"product_id\": \"63d87e32-efef-4b4c-9b1d-c74ddebfb921\",\n                                \"qty\": 5,\n                                \"unit_price\": 25,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Salt\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 5,\n                                \"effective_price\": 125\n                            }\n                        ],\n                        \"delivery_count\": 2,\n                        \"pod_summary\": {\n                            \"submitted\": true,\n                            \"has_signature\": false,\n                            \"photo_count\": 1,\n                            \"note\": \"kbjvjg\"\n                        },\n                        \"effective_price_total\": 446,\n                        \"payment\": {\n                            \"type\": \"prepaid\",\n                            \"status\": \"paid\",\n                            \"mode\": null,\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"caa7ddb7-f190-4873-987d-66de4414d84c\",\n                \"plan_id\": \"18b1bb38-1869-419c-8e96-098967498b2e\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 2,\n                \"lat\": 28.62791,\n                \"lng\": 77.36472,\n                \"arrived_at\": null,\n                \"departed_at\": null,\n                \"task_status\": \"pending\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"d4fee121-ea1e-4dd9-aacf-8df4018de977\",\n                        \"customer_name\": \"Bikanervala\",\n                        \"address\": \"Noida Sector 62, NSEZ\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"239.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"prepaid\",\n                        \"delivery_instructions\": \"Leave at doorstep\",\n                        \"delivery_id\": null,\n                        \"delivery_status\": null,\n                        \"delivered_qty\": null,\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": null,\n                        \"order_status\": \"scheduled\",\n                        \"items\": [\n                            {\n                                \"id\": \"926d97aa-b602-4fbb-acce-4d737754ee8f\",\n                                \"product_id\": \"893a885d-2fd6-4646-bb54-50a0432c4ecb\",\n                                \"qty\": 1,\n                                \"unit_price\": 157,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Tea\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 157\n                            },\n                            {\n                                \"id\": \"19355db3-8bf3-46cf-9642-150148a6d5ec\",\n                                \"product_id\": \"a7b0e0b2-ba1d-4257-b3ca-d6ce75c1ec9f\",\n                                \"qty\": 1,\n                                \"unit_price\": 82,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Cold Drink\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 82\n                            }\n                        ],\n                        \"delivery_count\": 2,\n                        \"pod_summary\": {\n                            \"submitted\": false\n                        },\n                        \"effective_price_total\": 239,\n                        \"payment\": {\n                            \"type\": \"prepaid\",\n                            \"status\": \"paid\",\n                            \"mode\": null,\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"e2a03e7f-b645-4771-b3e6-308f9d2b4b3a\",\n                \"plan_id\": \"16a65930-588d-42b6-ada5-f6a31ccafacc\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 2,\n                \"lat\": 28.6362,\n                \"lng\": 77.378,\n                \"arrived_at\": \"2026-05-28 11:21:41\",\n                \"departed_at\": \"2026-05-28 11:25:28\",\n                \"task_status\": \"completed\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"97d0bc49-a241-4f12-8b93-8b5b1e0e8f63\",\n                        \"customer_name\": \"Chaayos\",\n                        \"address\": \"Noida Sector 72, Block 12\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"887.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": \"cash\",\n                        \"order_type\": \"cod\",\n                        \"delivery_instructions\": \"Beware of dogs\",\n                        \"delivery_id\": \"44bafcee-4bd4-4182-9cf0-ce4d496ad30c\",\n                        \"delivery_status\": \"delivered\",\n                        \"delivered_qty\": {\n                            \"47938c49-f70a-4087-be95-95068e0f5bff\": 4,\n                            \"b340d8d7-ca08-4d4d-88fc-c2674c013918\": 5,\n                            \"d1942d29-c731-44d8-a7bd-4ed8f182503d\": 1\n                        },\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": \"2026-05-28 11:21:57\",\n                        \"order_status\": \"delivered\",\n                        \"items\": [\n                            {\n                                \"id\": \"86ddf28a-5310-4c3f-8ad5-6ae6644e6965\",\n                                \"product_id\": \"b340d8d7-ca08-4d4d-88fc-c2674c013918\",\n                                \"qty\": 5,\n                                \"unit_price\": 86,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Mutton\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 5,\n                                \"effective_price\": 430\n                            },\n                            {\n                                \"id\": \"f7cb1b38-b072-499d-9895-626bcd598088\",\n                                \"product_id\": \"47938c49-f70a-4087-be95-95068e0f5bff\",\n                                \"qty\": 4,\n                                \"unit_price\": 96,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Tomatoes\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=880&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 4,\n                                \"effective_price\": 384\n                            },\n                            {\n                                \"id\": \"3160876b-1615-435a-9d12-00e8384bbfe6\",\n                                \"product_id\": \"d1942d29-c731-44d8-a7bd-4ed8f182503d\",\n                                \"qty\": 1,\n                                \"unit_price\": 73,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Pepsi\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=880&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 73\n                            }\n                        ],\n                        \"delivery_count\": 3,\n                        \"pod_summary\": {\n                            \"submitted\": true,\n                            \"has_signature\": false,\n                            \"photo_count\": 1,\n                            \"note\": \"dghr\"\n                        },\n                        \"effective_price_total\": 887,\n                        \"payment\": {\n                            \"type\": \"cod\",\n                            \"status\": \"paid\",\n                            \"mode\": \"cash\",\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"c26ff75f-1f9d-4cef-a335-c25f8a65a6fd\",\n                \"plan_id\": \"18b1bb38-1869-419c-8e96-098967498b2e\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 3,\n                \"lat\": 28.52341,\n                \"lng\": 77.37982,\n                \"arrived_at\": null,\n                \"departed_at\": null,\n                \"task_status\": \"pending\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"9be4ab6b-ccd6-4e2a-96f4-448f148cd488\",\n                        \"customer_name\": \"Chaayos\",\n                        \"address\": \"Noida Sector 137, Advant Tower\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"63.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"unpaid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"cod\",\n                        \"delivery_instructions\": null,\n                        \"delivery_id\": null,\n                        \"delivery_status\": null,\n                        \"delivered_qty\": null,\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": null,\n                        \"order_status\": \"scheduled\",\n                        \"items\": [\n                            {\n                                \"id\": \"9940c416-e5dc-4a02-8354-ac62152b4530\",\n                                \"product_id\": \"d1cfb191-97ca-4339-a40e-431b327163a0\",\n                                \"qty\": 3,\n                                \"unit_price\": 21,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Sugar\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 63\n                            }\n                        ],\n                        \"delivery_count\": 1,\n                        \"pod_summary\": {\n                            \"submitted\": false\n                        },\n                        \"effective_price_total\": 63,\n                        \"payment\": {\n                            \"type\": \"cod\",\n                            \"status\": \"unpaid\",\n                            \"mode\": null,\n                            \"amount_due\": 63,\n                            \"currency\": \"AED\",\n                            \"collect_required\": true\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"aae6a7b6-2704-4575-a1a4-b07edc705454\",\n                \"plan_id\": \"16a65930-588d-42b6-ada5-f6a31ccafacc\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 3,\n                \"lat\": 28.63755,\n                \"lng\": 77.3795,\n                \"arrived_at\": \"2026-05-28 11:25:39\",\n                \"departed_at\": \"2026-05-28 11:26:07\",\n                \"task_status\": \"completed\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"3c23cdf6-0494-4ffb-83b6-ff198a0650e4\",\n                        \"customer_name\": \"Tandoori Flames\",\n                        \"address\": \"Noida Sector 73, Block 13\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"138.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"prepaid\",\n                        \"delivery_instructions\": \"Do not ring the bell\",\n                        \"delivery_id\": \"2a639a18-5da0-473a-ba73-edd5ef42e9f6\",\n                        \"delivery_status\": \"delivered\",\n                        \"delivered_qty\": {\n                            \"01a768f5-8217-4ea4-a97e-7348be7738da\": 3\n                        },\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": \"2026-05-28 11:26:05\",\n                        \"order_status\": \"delivered\",\n                        \"items\": [\n                            {\n                                \"id\": \"7717ccb6-e11e-4993-ab56-a2895c3d1439\",\n                                \"product_id\": \"01a768f5-8217-4ea4-a97e-7348be7738da\",\n                                \"qty\": 3,\n                                \"unit_price\": 46,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Onions\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=880&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 138\n                            }\n                        ],\n                        \"delivery_count\": 1,\n                        \"pod_summary\": {\n                            \"submitted\": true,\n                            \"has_signature\": false,\n                            \"photo_count\": 1,\n                            \"note\": \"chfhc\"\n                        },\n                        \"effective_price_total\": 138,\n                        \"payment\": {\n                            \"type\": \"prepaid\",\n                            \"status\": \"paid\",\n                            \"mode\": null,\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"5b3bd481-7312-435c-a5c9-0eb095bf5c71\",\n                \"plan_id\": \"18b1bb38-1869-419c-8e96-098967498b2e\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 4,\n                \"lat\": 28.6074,\n                \"lng\": 77.4271,\n                \"arrived_at\": null,\n                \"departed_at\": null,\n                \"task_status\": \"pending\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"8f94c4ff-d516-4b9b-a994-f318c6b70dc1\",\n                        \"customer_name\": \"Dum Pukht\",\n                        \"address\": \"Greater Noida West, Gaur Chowk\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"196.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"prepaid\",\n                        \"delivery_instructions\": \"Do not ring bell\",\n                        \"delivery_id\": null,\n                        \"delivery_status\": null,\n                        \"delivered_qty\": null,\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": null,\n                        \"order_status\": \"scheduled\",\n                        \"items\": [\n                            {\n                                \"id\": \"f039926a-d9d4-4427-9300-37f3efb75786\",\n                                \"product_id\": \"c23d904e-46eb-4076-887b-2d93ab584f7f\",\n                                \"qty\": 1,\n                                \"unit_price\": 196,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Chicken\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 196\n                            }\n                        ],\n                        \"delivery_count\": 1,\n                        \"pod_summary\": {\n                            \"submitted\": false\n                        },\n                        \"effective_price_total\": 196,\n                        \"payment\": {\n                            \"type\": \"prepaid\",\n                            \"status\": \"paid\",\n                            \"mode\": null,\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"c4e64e81-2bd4-4bcb-b8ec-cd9b86d78e34\",\n                \"plan_id\": \"16a65930-588d-42b6-ada5-f6a31ccafacc\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 4,\n                \"lat\": 28.6389,\n                \"lng\": 77.381,\n                \"arrived_at\": \"2026-05-28 11:27:04\",\n                \"departed_at\": \"2026-05-28 11:28:17\",\n                \"task_status\": \"completed\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"48e66aa6-2030-41ff-87ae-fa04e6d75884\",\n                        \"customer_name\": \"Moti Mahal\",\n                        \"address\": \"Noida Sector 74, Block 14\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"332.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"prepaid\",\n                        \"delivery_instructions\": \"Leave at doorstep\",\n                        \"delivery_id\": \"cc770d75-7524-43b1-8db0-351a6eaa19e8\",\n                        \"delivery_status\": \"delivered\",\n                        \"delivered_qty\": {\n                            \"3ab2db66-e18f-4627-a36b-b5a0f16fd35a\": 4\n                        },\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": \"2026-05-28 11:28:15\",\n                        \"order_status\": \"delivered\",\n                        \"items\": [\n                            {\n                                \"id\": \"7d0be8df-4211-40ca-a735-131e6a8e587d\",\n                                \"product_id\": \"3ab2db66-e18f-4627-a36b-b5a0f16fd35a\",\n                                \"qty\": 4,\n                                \"unit_price\": 83,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Tea Leaves\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=880&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 4,\n                                \"effective_price\": 332\n                            }\n                        ],\n                        \"delivery_count\": 1,\n                        \"pod_summary\": {\n                            \"submitted\": true,\n                            \"has_signature\": false,\n                            \"photo_count\": 1,\n                            \"note\": \"ufyd\"\n                        },\n                        \"effective_price_total\": 332,\n                        \"payment\": {\n                            \"type\": \"prepaid\",\n                            \"status\": \"paid\",\n                            \"mode\": null,\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"fb02f813-7528-4a37-8e5f-0e8a1ef8b358\",\n                \"plan_id\": \"18b1bb38-1869-419c-8e96-098967498b2e\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 5,\n                \"lat\": 28.64622,\n                \"lng\": 77.37089,\n                \"arrived_at\": null,\n                \"departed_at\": null,\n                \"task_status\": \"pending\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"a810b9ad-c961-41a3-840c-e550900f89ce\",\n                        \"customer_name\": \"Sagar Ratna\",\n                        \"address\": \"Indirapuram Habitat Centre\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"296.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"prepaid\",\n                        \"delivery_instructions\": \"Use back gate\",\n                        \"delivery_id\": null,\n                        \"delivery_status\": null,\n                        \"delivered_qty\": null,\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": null,\n                        \"order_status\": \"scheduled\",\n                        \"items\": [\n                            {\n                                \"id\": \"6a1004b9-9576-4e04-ac87-618098b1dce3\",\n                                \"product_id\": \"4f266806-b087-4ad8-872b-b6f436403801\",\n                                \"qty\": 2,\n                                \"unit_price\": 85,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Potatoes\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 2,\n                                \"effective_price\": 170\n                            },\n                            {\n                                \"id\": \"b150ce69-4878-4a87-8adf-2f1958b7ab76\",\n                                \"product_id\": \"a7b0e0b2-ba1d-4257-b3ca-d6ce75c1ec9f\",\n                                \"qty\": 1,\n                                \"unit_price\": 85,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Cold Drink\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 85\n                            },\n                            {\n                                \"id\": \"41957f5c-33a4-42fe-b5cb-ae3a6889fdb9\",\n                                \"product_id\": \"01a768f5-8217-4ea4-a97e-7348be7738da\",\n                                \"qty\": 1,\n                                \"unit_price\": 41,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Onions\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 41\n                            }\n                        ],\n                        \"delivery_count\": 3,\n                        \"pod_summary\": {\n                            \"submitted\": false\n                        },\n                        \"effective_price_total\": 296,\n                        \"payment\": {\n                            \"type\": \"prepaid\",\n                            \"status\": \"paid\",\n                            \"mode\": null,\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"a49c58a6-7ef3-4143-8375-b9d9796ab59d\",\n                \"plan_id\": \"18b1bb38-1869-419c-8e96-098967498b2e\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 6,\n                \"lat\": 28.61765,\n                \"lng\": 77.2789,\n                \"arrived_at\": null,\n                \"departed_at\": null,\n                \"task_status\": \"pending\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"807ec5f7-90eb-46c6-8c77-50ea39c90082\",\n                        \"customer_name\": \"Paradise Biryani\",\n                        \"address\": \"Akshardham Metro Station\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"999.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"prepaid\",\n                        \"delivery_instructions\": null,\n                        \"delivery_id\": null,\n                        \"delivery_status\": null,\n                        \"delivered_qty\": null,\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": null,\n                        \"order_status\": \"scheduled\",\n                        \"items\": [\n                            {\n                                \"id\": \"a1fc6d77-6cab-4faa-a9ad-0dc8653cd5b3\",\n                                \"product_id\": \"a13f98b8-ee9b-400e-aee5-1752f9b3a381\",\n                                \"qty\": 3,\n                                \"unit_price\": 24,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Rice\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 72\n                            },\n                            {\n                                \"id\": \"16b11e56-4a05-40fa-a041-0669d75b922f\",\n                                \"product_id\": \"f15561f2-c0e5-4390-8e59-58aba5aa0cb1\",\n                                \"qty\": 3,\n                                \"unit_price\": 136,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Paneer\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 408\n                            },\n                            {\n                                \"id\": \"6731543e-1f4b-42d3-b4f9-7d231a503cfb\",\n                                \"product_id\": \"b340d8d7-ca08-4d4d-88fc-c2674c013918\",\n                                \"qty\": 3,\n                                \"unit_price\": 47,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Mutton\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 141\n                            },\n                            {\n                                \"id\": \"92db3c35-8f17-4d07-a0b4-7ebcbeb837ef\",\n                                \"product_id\": \"a13f98b8-ee9b-400e-aee5-1752f9b3a381\",\n                                \"qty\": 3,\n                                \"unit_price\": 126,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Rice\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 378\n                            }\n                        ],\n                        \"delivery_count\": 4,\n                        \"pod_summary\": {\n                            \"submitted\": false\n                        },\n                        \"effective_price_total\": 999,\n                        \"payment\": {\n                            \"type\": \"prepaid\",\n                            \"status\": \"paid\",\n                            \"mode\": null,\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"3901b4e9-ec98-40eb-addf-2b23bb2cb104\",\n                \"plan_id\": \"18b1bb38-1869-419c-8e96-098967498b2e\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 7,\n                \"lat\": 28.47621,\n                \"lng\": 77.49832,\n                \"arrived_at\": \"2026-05-28 11:34:09\",\n                \"departed_at\": \"2026-05-28 11:34:37\",\n                \"task_status\": \"completed\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"e77826c7-b805-49d3-98bd-c1be0e5615f8\",\n                        \"customer_name\": \"Dum Pukht\",\n                        \"address\": \"Greater Noida Alpha 1 Market\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"372.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": \"cash\",\n                        \"order_type\": \"cod\",\n                        \"delivery_instructions\": \"Leave near reception\",\n                        \"delivery_id\": \"58b0c819-cc86-48cf-b0e2-18e331b1bb20\",\n                        \"delivery_status\": \"delivered\",\n                        \"delivered_qty\": {\n                            \"4f266806-b087-4ad8-872b-b6f436403801\": 1,\n                            \"90c5a6e1-51af-4b82-a228-d5d0ee3b4371\": 1,\n                            \"a7b0e0b2-ba1d-4257-b3ca-d6ce75c1ec9f\": 1\n                        },\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": \"2026-05-28 11:34:24\",\n                        \"order_status\": \"delivered\",\n                        \"items\": [\n                            {\n                                \"id\": \"6522122f-38da-4582-9a2b-c470ff72b27c\",\n                                \"product_id\": \"a7b0e0b2-ba1d-4257-b3ca-d6ce75c1ec9f\",\n                                \"qty\": 1,\n                                \"unit_price\": 114,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Cold Drink\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 114\n                            },\n                            {\n                                \"id\": \"1bd452f0-10ff-4dc1-a9d6-36877a3b33f0\",\n                                \"product_id\": \"4f266806-b087-4ad8-872b-b6f436403801\",\n                                \"qty\": 1,\n                                \"unit_price\": 48,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Potatoes\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 48\n                            },\n                            {\n                                \"id\": \"63415f15-4cfd-41d4-a3b1-cca55f12a488\",\n                                \"product_id\": \"90c5a6e1-51af-4b82-a228-d5d0ee3b4371\",\n                                \"qty\": 1,\n                                \"unit_price\": 210,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Oil\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 210\n                            }\n                        ],\n                        \"delivery_count\": 3,\n                        \"pod_summary\": {\n                            \"submitted\": true,\n                            \"has_signature\": false,\n                            \"photo_count\": 1,\n                            \"note\": \"dgrhr\"\n                        },\n                        \"effective_price_total\": 372,\n                        \"payment\": {\n                            \"type\": \"cod\",\n                            \"status\": \"paid\",\n                            \"mode\": \"cash\",\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    },\n                    {\n                        \"order_id\": \"65802d0a-dc59-442c-bfd3-7075ef571634\",\n                        \"customer_name\": \"Barbeque Nation\",\n                        \"address\": \"Greater Noida Alpha 1 Market\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"1157.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"unpaid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"cod\",\n                        \"delivery_instructions\": \"Security gate closes after 10 PM\",\n                        \"delivery_id\": \"24684fe6-91b7-418d-b84e-6b40c0514773\",\n                        \"delivery_status\": \"not_delivered\",\n                        \"delivered_qty\": [],\n                        \"delivery_reason\": [\n                            {\n                                \"reason\": \"customer_not_available\",\n                                \"cancelled_at\": \"2026-05-28T06:04:36+00:00\"\n                            }\n                        ],\n                        \"delivery_completed_at\": \"2026-05-28 11:34:36\",\n                        \"order_status\": \"cancelled\",\n                        \"items\": [\n                            {\n                                \"id\": \"9e804618-17ae-47e9-a28e-b42fa901028e\",\n                                \"product_id\": \"a095f1e7-1ad5-4184-8a1c-b3b27ea33f20\",\n                                \"qty\": 1,\n                                \"unit_price\": 143,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Milk\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 0,\n                                \"effective_price\": 0\n                            },\n                            {\n                                \"id\": \"91e13033-9b85-40cf-9d27-597a96362246\",\n                                \"product_id\": \"01a768f5-8217-4ea4-a97e-7348be7738da\",\n                                \"qty\": 3,\n                                \"unit_price\": 178,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Onions\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 0,\n                                \"effective_price\": 0\n                            },\n                            {\n                                \"id\": \"0ad49499-95cd-46a3-be96-c7060bd5e7c3\",\n                                \"product_id\": \"4f266806-b087-4ad8-872b-b6f436403801\",\n                                \"qty\": 2,\n                                \"unit_price\": 156,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Potatoes\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 0,\n                                \"effective_price\": 0\n                            },\n                            {\n                                \"id\": \"806f551a-f59e-4e34-a569-d0dc0dd8a699\",\n                                \"product_id\": \"47938c49-f70a-4087-be95-95068e0f5bff\",\n                                \"qty\": 1,\n                                \"unit_price\": 168,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Tomatoes\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 0,\n                                \"effective_price\": 0\n                            }\n                        ],\n                        \"delivery_count\": 4,\n                        \"pod_summary\": {\n                            \"submitted\": false\n                        },\n                        \"effective_price_total\": 0,\n                        \"payment\": {\n                            \"type\": \"cod\",\n                            \"status\": \"unpaid\",\n                            \"mode\": null,\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": true\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"0894003c-c956-492e-b675-40c8f85922fd\",\n                \"plan_id\": \"18b1bb38-1869-419c-8e96-098967498b2e\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 8,\n                \"lat\": 28.61024,\n                \"lng\": 77.35812,\n                \"arrived_at\": \"2026-05-28 11:45:42\",\n                \"departed_at\": \"2026-05-28 11:46:51\",\n                \"task_status\": \"completed\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"7ac20260-90c1-4024-a222-47fb453684b9\",\n                        \"customer_name\": \"Chaayos\",\n                        \"address\": \"Noida Sector 50, Shipra Mall\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"150.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"prepaid\",\n                        \"delivery_instructions\": \"Leave at doorstep\",\n                        \"delivery_id\": \"74f9165e-5fec-4201-acbe-8bdee92d59e5\",\n                        \"delivery_status\": \"delivered\",\n                        \"delivered_qty\": {\n                            \"a13f98b8-ee9b-400e-aee5-1752f9b3a381\": 2,\n                            \"d1cfb191-97ca-4339-a40e-431b327163a0\": 2\n                        },\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": \"2026-05-28 11:46:48\",\n                        \"order_status\": \"delivered\",\n                        \"items\": [\n                            {\n                                \"id\": \"86679326-e07f-4787-b0b0-40f224c68f5b\",\n                                \"product_id\": \"a13f98b8-ee9b-400e-aee5-1752f9b3a381\",\n                                \"qty\": 2,\n                                \"unit_price\": 23,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Rice\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 2,\n                                \"effective_price\": 46\n                            },\n                            {\n                                \"id\": \"960748f4-0c7a-46c8-affb-af16dc3def00\",\n                                \"product_id\": \"d1cfb191-97ca-4339-a40e-431b327163a0\",\n                                \"qty\": 2,\n                                \"unit_price\": 52,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Sugar\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 2,\n                                \"effective_price\": 104\n                            }\n                        ],\n                        \"delivery_count\": 2,\n                        \"pod_summary\": {\n                            \"submitted\": true,\n                            \"has_signature\": false,\n                            \"photo_count\": 1,\n                            \"note\": \"dgrqh\"\n                        },\n                        \"effective_price_total\": 150,\n                        \"payment\": {\n                            \"type\": \"prepaid\",\n                            \"status\": \"paid\",\n                            \"mode\": null,\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    },\n                    {\n                        \"order_id\": \"6e21f287-2579-4f78-b4d3-56d05ef10dd1\",\n                        \"customer_name\": \"Pind Balluchi\",\n                        \"address\": \"Noida Sector 50, Shipra Mall\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"1285.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"prepaid\",\n                        \"delivery_instructions\": \"Security gate closes after 10 PM\",\n                        \"delivery_id\": \"6ddfe11f-01ff-4a0e-a514-8067ca8091ad\",\n                        \"delivery_status\": \"not_delivered\",\n                        \"delivered_qty\": [],\n                        \"delivery_reason\": [\n                            {\n                                \"reason\": \"customer_not_available\",\n                                \"cancelled_at\": \"2026-05-28T06:16:11+00:00\"\n                            }\n                        ],\n                        \"delivery_completed_at\": \"2026-05-28 11:46:11\",\n                        \"order_status\": \"cancelled\",\n                        \"items\": [\n                            {\n                                \"id\": \"d5d0efe3-de68-4827-a572-73b7220d28ba\",\n                                \"product_id\": \"90c5a6e1-51af-4b82-a228-d5d0ee3b4371\",\n                                \"qty\": 3,\n                                \"unit_price\": 139,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Oil\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 0,\n                                \"effective_price\": 0\n                            },\n                            {\n                                \"id\": \"59132882-995a-40f9-8d28-2caf5cfcf881\",\n                                \"product_id\": \"b340d8d7-ca08-4d4d-88fc-c2674c013918\",\n                                \"qty\": 3,\n                                \"unit_price\": 165,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Mutton\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 0,\n                                \"effective_price\": 0\n                            },\n                            {\n                                \"id\": \"d9d6274b-7b1d-4844-b28d-dc24aa49158e\",\n                                \"product_id\": \"d1cfb191-97ca-4339-a40e-431b327163a0\",\n                                \"qty\": 3,\n                                \"unit_price\": 67,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Sugar\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 0,\n                                \"effective_price\": 0\n                            },\n                            {\n                                \"id\": \"d690a809-9199-49f1-8b22-48e482a8dda4\",\n                                \"product_id\": \"4f266806-b087-4ad8-872b-b6f436403801\",\n                                \"qty\": 2,\n                                \"unit_price\": 86,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Potatoes\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 0,\n                                \"effective_price\": 0\n                            }\n                        ],\n                        \"delivery_count\": 4,\n                        \"pod_summary\": {\n                            \"submitted\": false\n                        },\n                        \"effective_price_total\": 0,\n                        \"payment\": {\n                            \"type\": \"prepaid\",\n                            \"status\": \"paid\",\n                            \"mode\": null,\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"3272c29e-e1a4-4de7-b3d6-424635397b5b\",\n                \"plan_id\": \"18b1bb38-1869-419c-8e96-098967498b2e\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 9,\n                \"lat\": 28.60688,\n                \"lng\": 77.29415,\n                \"arrived_at\": null,\n                \"departed_at\": null,\n                \"task_status\": \"pending\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"ee503b00-6007-4c04-8a75-ef64204f07c6\",\n                        \"customer_name\": \"Wenger's\",\n                        \"address\": \"Mayur Vihar Phase 1\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"1584.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"unpaid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"cod\",\n                        \"delivery_instructions\": null,\n                        \"delivery_id\": null,\n                        \"delivery_status\": null,\n                        \"delivered_qty\": null,\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": null,\n                        \"order_status\": \"scheduled\",\n                        \"items\": [\n                            {\n                                \"id\": \"c46233d0-8ad4-439e-b958-fe55f53481d0\",\n                                \"product_id\": \"a7b0e0b2-ba1d-4257-b3ca-d6ce75c1ec9f\",\n                                \"qty\": 2,\n                                \"unit_price\": 199,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Cold Drink\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 2,\n                                \"effective_price\": 398\n                            },\n                            {\n                                \"id\": \"d834ad7c-4ef0-4a49-922b-82f28a989d8a\",\n                                \"product_id\": \"893a885d-2fd6-4646-bb54-50a0432c4ecb\",\n                                \"qty\": 3,\n                                \"unit_price\": 199,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Tea\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 597\n                            },\n                            {\n                                \"id\": \"e261fa74-35e7-418c-a3d3-4202d73fdeb8\",\n                                \"product_id\": \"a095f1e7-1ad5-4184-8a1c-b3b27ea33f20\",\n                                \"qty\": 3,\n                                \"unit_price\": 162,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Milk\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 486\n                            },\n                            {\n                                \"id\": \"dd0652c7-4498-43cc-bb77-a10974045970\",\n                                \"product_id\": \"f15561f2-c0e5-4390-8e59-58aba5aa0cb1\",\n                                \"qty\": 1,\n                                \"unit_price\": 103,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Paneer\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 103\n                            }\n                        ],\n                        \"delivery_count\": 4,\n                        \"pod_summary\": {\n                            \"submitted\": false\n                        },\n                        \"effective_price_total\": 1584,\n                        \"payment\": {\n                            \"type\": \"cod\",\n                            \"status\": \"unpaid\",\n                            \"mode\": null,\n                            \"amount_due\": 1584,\n                            \"currency\": \"AED\",\n                            \"collect_required\": true\n                        }\n                    },\n                    {\n                        \"order_id\": \"fbebb8ac-a1a7-47ea-930e-4d9799ba071c\",\n                        \"customer_name\": \"Pind Balluchi\",\n                        \"address\": \"Mayur Vihar Phase 1\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"289.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"prepaid\",\n                        \"delivery_instructions\": \"Security gate closes after 10 PM\",\n                        \"delivery_id\": null,\n                        \"delivery_status\": null,\n                        \"delivered_qty\": null,\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": null,\n                        \"order_status\": \"scheduled\",\n                        \"items\": [\n                            {\n                                \"id\": \"dbdd6a1c-c016-4b13-90f0-5b2492d52f47\",\n                                \"product_id\": \"47938c49-f70a-4087-be95-95068e0f5bff\",\n                                \"qty\": 1,\n                                \"unit_price\": 152,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Tomatoes\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 152\n                            },\n                            {\n                                \"id\": \"1b884e91-521b-474c-b28b-3901998ffae6\",\n                                \"product_id\": \"893a885d-2fd6-4646-bb54-50a0432c4ecb\",\n                                \"qty\": 1,\n                                \"unit_price\": 137,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Tea\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 137\n                            }\n                        ],\n                        \"delivery_count\": 2,\n                        \"pod_summary\": {\n                            \"submitted\": false\n                        },\n                        \"effective_price_total\": 289,\n                        \"payment\": {\n                            \"type\": \"prepaid\",\n                            \"status\": \"paid\",\n                            \"mode\": null,\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"099454df-62a8-4b69-a42f-aa5f6589e56b\",\n                \"plan_id\": \"18b1bb38-1869-419c-8e96-098967498b2e\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 10,\n                \"lat\": 28.58933,\n                \"lng\": 77.33201,\n                \"arrived_at\": null,\n                \"departed_at\": null,\n                \"task_status\": \"pending\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"89dd0eb2-f7b2-4ae7-8098-15ecdd4a0026\",\n                        \"customer_name\": \"Wenger's\",\n                        \"address\": \"Noida Sector 38A, DND Flyway End\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"733.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"prepaid\",\n                        \"delivery_instructions\": \"Customer prefers message only\",\n                        \"delivery_id\": null,\n                        \"delivery_status\": null,\n                        \"delivered_qty\": null,\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": null,\n                        \"order_status\": \"scheduled\",\n                        \"items\": [\n                            {\n                                \"id\": \"d5f2c010-6012-410f-9751-e96800523600\",\n                                \"product_id\": \"c23d904e-46eb-4076-887b-2d93ab584f7f\",\n                                \"qty\": 2,\n                                \"unit_price\": 59,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Chicken\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 2,\n                                \"effective_price\": 118\n                            },\n                            {\n                                \"id\": \"8ece0fa7-639c-40c1-a608-18824dac9ef0\",\n                                \"product_id\": \"4f266806-b087-4ad8-872b-b6f436403801\",\n                                \"qty\": 3,\n                                \"unit_price\": 205,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Potatoes\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 615\n                            }\n                        ],\n                        \"delivery_count\": 2,\n                        \"pod_summary\": {\n                            \"submitted\": false\n                        },\n                        \"effective_price_total\": 733,\n                        \"payment\": {\n                            \"type\": \"prepaid\",\n                            \"status\": \"paid\",\n                            \"mode\": null,\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    },\n                    {\n                        \"order_id\": \"58146e52-201a-41f0-a197-c204f8e1e196\",\n                        \"customer_name\": \"Moti Mahal\",\n                        \"address\": \"Noida Sector 38A, DND Flyway End\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"889.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"unpaid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"cod\",\n                        \"delivery_instructions\": null,\n                        \"delivery_id\": null,\n                        \"delivery_status\": null,\n                        \"delivered_qty\": null,\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": null,\n                        \"order_status\": \"scheduled\",\n                        \"items\": [\n                            {\n                                \"id\": \"3297068c-4f84-42ac-9978-f4fb387f5eba\",\n                                \"product_id\": \"a095f1e7-1ad5-4184-8a1c-b3b27ea33f20\",\n                                \"qty\": 1,\n                                \"unit_price\": 211,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Milk\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 211\n                            },\n                            {\n                                \"id\": \"1153c4e6-8f6b-4c6d-85f9-55b23834827a\",\n                                \"product_id\": \"d1cfb191-97ca-4339-a40e-431b327163a0\",\n                                \"qty\": 2,\n                                \"unit_price\": 114,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Sugar\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 2,\n                                \"effective_price\": 228\n                            },\n                            {\n                                \"id\": \"1f1ce3d8-1364-44c0-bdac-fe0d58cdd8f4\",\n                                \"product_id\": \"4f266806-b087-4ad8-872b-b6f436403801\",\n                                \"qty\": 3,\n                                \"unit_price\": 150,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Potatoes\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 450\n                            }\n                        ],\n                        \"delivery_count\": 3,\n                        \"pod_summary\": {\n                            \"submitted\": false\n                        },\n                        \"effective_price_total\": 889,\n                        \"payment\": {\n                            \"type\": \"cod\",\n                            \"status\": \"unpaid\",\n                            \"mode\": null,\n                            \"amount_due\": 889,\n                            \"currency\": \"AED\",\n                            \"collect_required\": true\n                        }\n                    },\n                    {\n                        \"order_id\": \"6b8b7f13-917a-4b3b-b90a-78bac16aa210\",\n                        \"customer_name\": \"Pind Balluchi\",\n                        \"address\": \"Noida Sector 38A, DND Flyway End\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"1052.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"unpaid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"cod\",\n                        \"delivery_instructions\": \"Customer prefers message only\",\n                        \"delivery_id\": null,\n                        \"delivery_status\": null,\n                        \"delivered_qty\": null,\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": null,\n                        \"order_status\": \"scheduled\",\n                        \"items\": [\n                            {\n                                \"id\": \"b0a92a24-d91d-44dd-be4a-ef939f570915\",\n                                \"product_id\": \"893a885d-2fd6-4646-bb54-50a0432c4ecb\",\n                                \"qty\": 3,\n                                \"unit_price\": 189,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Tea\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 567\n                            },\n                            {\n                                \"id\": \"c802f99c-aab9-4abb-9660-3fc304f9b650\",\n                                \"product_id\": \"d1cfb191-97ca-4339-a40e-431b327163a0\",\n                                \"qty\": 3,\n                                \"unit_price\": 53,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Sugar\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 159\n                            },\n                            {\n                                \"id\": \"9b5693e6-c593-4b0b-b7f7-3d183dce75b8\",\n                                \"product_id\": \"a13f98b8-ee9b-400e-aee5-1752f9b3a381\",\n                                \"qty\": 1,\n                                \"unit_price\": 178,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Rice\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 178\n                            },\n                            {\n                                \"id\": \"5f2e2620-2b02-441c-baf8-398e1c38ac5e\",\n                                \"product_id\": \"a13f98b8-ee9b-400e-aee5-1752f9b3a381\",\n                                \"qty\": 2,\n                                \"unit_price\": 74,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Rice\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 2,\n                                \"effective_price\": 148\n                            }\n                        ],\n                        \"delivery_count\": 4,\n                        \"pod_summary\": {\n                            \"submitted\": false\n                        },\n                        \"effective_price_total\": 1052,\n                        \"payment\": {\n                            \"type\": \"cod\",\n                            \"status\": \"unpaid\",\n                            \"mode\": null,\n                            \"amount_due\": 1052,\n                            \"currency\": \"AED\",\n                            \"collect_required\": true\n                        }\n                    }\n                ]\n            },\n            {\n                \"stop_id\": \"3a774aa0-77a3-4879-8956-b70bbbbfd783\",\n                \"plan_id\": \"18b1bb38-1869-419c-8e96-098967498b2e\",\n                \"service_date\": \"2026-05-28\",\n                \"seq\": 11,\n                \"lat\": 28.46524,\n                \"lng\": 77.50265,\n                \"arrived_at\": null,\n                \"departed_at\": null,\n                \"task_status\": \"pending\",\n                \"orders\": [\n                    {\n                        \"order_id\": \"ce946c9f-44f1-46f9-a5ed-97bf75c7a4c3\",\n                        \"customer_name\": \"Nirula's\",\n                        \"address\": \"Pari Chowk, Greater Noida\",\n                        \"customer_contact_no\": \"91 9140578812\",\n                        \"price_total\": \"757.00\",\n                        \"currency\": \"AED\",\n                        \"payment_status\": \"paid\",\n                        \"payment_mode\": null,\n                        \"order_type\": \"prepaid\",\n                        \"delivery_instructions\": \"Leave near reception\",\n                        \"delivery_id\": null,\n                        \"delivery_status\": null,\n                        \"delivered_qty\": null,\n                        \"delivery_reason\": null,\n                        \"delivery_completed_at\": null,\n                        \"order_status\": \"scheduled\",\n                        \"items\": [\n                            {\n                                \"id\": \"f2e0f0d3-70d5-4c53-b2a6-92d918670555\",\n                                \"product_id\": \"90c5a6e1-51af-4b82-a228-d5d0ee3b4371\",\n                                \"qty\": 2,\n                                \"unit_price\": 97,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Oil\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 2,\n                                \"effective_price\": 194\n                            },\n                            {\n                                \"id\": \"9e9b21a2-cc92-4f46-8596-6b06ed1f89d1\",\n                                \"product_id\": \"4f266806-b087-4ad8-872b-b6f436403801\",\n                                \"qty\": 2,\n                                \"unit_price\": 148,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Potatoes\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 2,\n                                \"effective_price\": 296\n                            },\n                            {\n                                \"id\": \"12018f3b-c235-456e-ac3e-7d411aa0ea77\",\n                                \"product_id\": \"47938c49-f70a-4087-be95-95068e0f5bff\",\n                                \"qty\": 1,\n                                \"unit_price\": 165,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Tomatoes\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=765&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 1,\n                                \"effective_price\": 165\n                            },\n                            {\n                                \"id\": \"3085f1eb-f6c9-421b-99de-faa1906f82e6\",\n                                \"product_id\": \"a095f1e7-1ad5-4184-8a1c-b3b27ea33f20\",\n                                \"qty\": 3,\n                                \"unit_price\": 34,\n                                \"currency\": \"AED\",\n                                \"meta\": {\n                                    \"name\": \"Milk\",\n                                    \"note\": \"\",\n                                    \"unit\": \"pcs\",\n                                    \"image_url\": \"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop\"\n                                },\n                                \"effective_qty\": 3,\n                                \"effective_price\": 102\n                            }\n                        ],\n                        \"delivery_count\": 4,\n                        \"pod_summary\": {\n                            \"submitted\": false\n                        },\n                        \"effective_price_total\": 757,\n                        \"payment\": {\n                            \"type\": \"prepaid\",\n                            \"status\": \"paid\",\n                            \"mode\": null,\n                            \"amount_due\": 0,\n                            \"currency\": \"AED\",\n                            \"collect_required\": false\n                        }\n                    }\n                ]\n            }\n        ],\n        \"cash\": {\n            \"today_balance\": 501,\n            \"limit\": 1500,\n            \"remaining_limit\": 999\n        },\n        \"cursor\": {\n            \"next\": \"eyJjcmVhdGVkX2F0IjoiMjAyNi0wNS0yOCAwNToyMzo1OC42Nzg1NDkrMDAiLCJzZXEiOjQsImlkIjoiYzRlNjRlODEtMmJkNC00YmNiLWI4ZWMtY2Q5Yjg2ZDc4ZTM0In0\",\n            \"prev\": \"eyJjcmVhdGVkX2F0IjoiMjAyNi0wNS0yOCAwNjowMzozNy42Nzc3NDUrMDAiLCJzZXEiOjEsImlkIjoiZDlkNDIxNmUtMTM1NC00Y2Y4LWI1OGQtYTE5MTNmMTUyZDM0In0\",\n            \"limit\": 20,\n            \"direction\": \"next\",\n            \"filter\": \"all\"\n        }\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Route Stops New",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{driver_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/api/driver/active-plans?service_date=2026-06-04&limit=20&cusror={{cursor_next}}&direction=next",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "driver",
+                "active-plans"
+              ],
+              "query": [
+                {
+                  "key": "service_date",
+                  "value": "2026-06-04"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "cusror",
+                  "value": "{{cursor_next}}"
+                },
+                {
+                  "key": "direction",
+                  "value": "next"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cash Summary",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}api/driver/cash-summary",
+              "host": [
+                "{{baseURL}}api"
+              ],
+              "path": [
+                "driver",
+                "cash-summary"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Driver Device Reset",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"user_id\":\"4a031360-4e75-473b-ab11-8c3746ba9f5f\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}api/admin/reset-driver-device",
+              "host": [
+                "{{baseURL}}api"
+              ],
+              "path": [
+                "admin",
+                "reset-driver-device"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Collect Cash",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{driver_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}api/driver/orders/{{order_id}}/collect-payment",
+              "host": [
+                "{{baseURL}}api"
+              ],
+              "path": [
+                "driver",
+                "orders",
+                "{{order_id}}",
+                "collect-payment"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deposit Cash",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "amount",
+                  "value": "300",
+                  "type": "text",
+                  "uuid": "56e97a13-dc64-4de1-aeb7-0b5821604c6e"
+                },
+                {
+                  "key": "photos[]",
+                  "type": "file",
+                  "uuid": "803b00aa-250b-4f49-a122-22b600ceda80",
+                  "src": "/C:/Users/VIVEK/Pictures/Acer/Acer_Wallpaper_01_3840x2400.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseURL}}api/driver/cash-deposit",
+              "host": [
+                "{{baseURL}}api"
+              ],
+              "path": [
+                "driver",
+                "cash-deposit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Driver Arrival/Departure",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{driver_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"stop_id\": \"fc6a87cd-2fea-4649-9aa6-ffe837db2549\",\r\n                \"plan_id\": \"62964c5b-86f0-49bc-999f-f6b8f669f971\",\r\n    \"event_type\": \"arrived\",\r\n    \"lat\": 25.164559,\r\n    \"lng\": 55.40781\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/driver/active-plans/events",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "driver",
+                "active-plans",
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POD API",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{driver_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Schema",
+                "value": "tenant_template",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "order_id",
+                  "value": "0d55fc08-f409-4919-99d8-73a1d4945611",
+                  "type": "text",
+                  "uuid": "311da08b-9ff9-4235-955e-ab0c0a0e94aa"
+                },
+                {
+                  "key": "note",
+                  "value": "hello",
+                  "type": "text",
+                  "uuid": "2b621d45-5b1a-44b1-9cb1-b49b5e01a5fc"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "uuid": "97d40a9f-dfb3-4529-8512-362eebc79ac3",
+                  "src": "/C:/Users/VIVEK/Pictures/Acer/Acer_Wallpaper_03_3840x2400.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/pod",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "pod"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "search stops",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "New Request",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/api/driver/active-plans/search",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "api",
+                "driver",
+                "active-plans",
+                "search"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": []
+    },
+    {
+      "name": "Drivers Log",
+      "item": []
+    }
+  ]
+}

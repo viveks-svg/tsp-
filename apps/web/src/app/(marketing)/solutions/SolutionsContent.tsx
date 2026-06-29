@@ -15,7 +15,8 @@ import {
   Building2, Landmark, Factory, ShoppingBag, Hotel, Map, Laptop,
   Target, Handshake, TrendingUp, Type,
   Briefcase, Heart, Activity, Users,
-  Home, Building, Castle, HardHat, ArrowRight
+  Home, Building, Castle, HardHat, ArrowRight,
+  Phone, PenTool
 } from "lucide-react";
 
 /* Icon lookup from lucide icon name strings */
@@ -24,6 +25,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Target, Handshake, TrendingUp, Type,
   Briefcase, Heart, Activity, Users,
   Home, Building, Castle, HardHat,
+  Phone, PenTool
 };
 
 const CATEGORY_ORDER: ServiceCategory[] = ['business', 'leadership', 'personal', 'property'];
@@ -39,6 +41,8 @@ function ServiceCard({ service, index }: { service: ServiceDefinition; index: nu
     ? service.plans.reduce((min, p) => Math.min(min, p.priceINR), Infinity)
     : null;
 
+  const isNew = ['mobile-analysis', 'signature-analysis'].includes(service.id);
+
   return (
     <motion.div
       variants={fadeUp}
@@ -46,13 +50,19 @@ function ServiceCard({ service, index }: { service: ServiceDefinition; index: nu
       whileInView="visible"
       viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.5, delay: index * 0.04, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative p-8 bg-white border-r border-b border-[#E6D3A3]/25 hover:bg-[#FFFDF9] transition-all duration-500 flex flex-col justify-between min-h-[280px]"
+      className="group relative p-8 bg-gradient-to-b from-white to-white hover:from-[#FFFDF9] hover:to-[#FDF9F2] border-r border-b border-[#E6D3A3]/20 hover:shadow-[inset_0_0_24px_rgba(200,160,74,0.015),0_12px_36px_rgba(200,160,74,0.06)] transition-all duration-500 flex flex-col justify-between min-h-[290px] overflow-hidden"
     >
+      {isNew && (
+        <span className="absolute top-4 right-4 bg-gradient-to-r from-[#C8A04A] to-[#8B6914] text-white text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-full uppercase font-poppins shadow-sm z-10">
+          NEW
+        </span>
+      )}
+
       <div className="space-y-4">
         {/* Header: Icon & Category */}
         <div className="flex items-center justify-between">
-          <div className="w-10 h-10 rounded-lg bg-[#C8A04A]/10 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            {Icon && <Icon className="w-4.5 h-4.5 text-[#8B6914]" />}
+          <div className="w-10 h-10 rounded-lg bg-[#C8A04A]/10 group-hover:bg-gradient-to-br group-hover:from-[#C8A04A] group-hover:to-[#8B6914] flex items-center justify-center transition-all duration-300 shadow-[0_2px_10px_rgba(200,160,74,0.05)]">
+            {Icon && <Icon className="w-4.5 h-4.5 text-[#8B6914] group-hover:text-white transition-colors duration-300" />}
           </div>
           <span className="text-[9px] font-bold tracking-widest uppercase text-[#C8A04A]/70 font-poppins">
             {service.category}
@@ -103,25 +113,26 @@ export default function SolutionsContent() {
   return (
     <div className="min-h-screen bg-[#F7F4EE] pb-24">
       {/* Luxury Consulting Header */}
-      <section className="relative pt-32 pb-16 lg:pt-40 lg:pb-24 overflow-hidden bg-[#1E1A16] text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(200,160,74,0.05)_0%,transparent_50%)]" />
+      <section className="relative w-full pt-28 pb-12 md:pt-32 md:pb-16 lg:pt-40 lg:pb-24 overflow-hidden bg-[#1E1A16] text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(200,160,74,0.08)_0%,transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(200,160,74,0.04)_0%,transparent_50%)]" />
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-16 xl:px-24 text-center space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="space-y-4"
+            className="space-y-4 overflow-hidden break-words"
           >
-            <span className="inline-block text-[#C8A04A] text-xs font-semibold tracking-[0.25em] uppercase font-poppins">
+            <span className="inline-block text-[#C8A04A] text-[10px] md:text-xs font-semibold tracking-[0.25em] uppercase font-poppins">
               Cosmic Calibration Portfolio
             </span>
-            <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.12] tracking-tight">
+            <h1 className="font-heading text-3xl md:text-5xl lg:text-6xl font-bold leading-[1.12] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-[#FFF8E7] to-[#C8A04A]">
               Solutions Calibrated for
               <br />
               <span className="text-[#C8A04A]">Organizational Velocity</span>
             </h1>
-            <p className="text-white/40 text-sm sm:text-base max-w-2xl mx-auto font-inter leading-relaxed">
+            <p className="text-white/50 text-xs md:text-sm lg:text-base max-w-2xl mx-auto font-inter leading-relaxed">
               Dr. Pradeep Sharma combines spatial physics, celestial timings, and strategic business consulting to remove operational friction and attract structural prosperity.
             </p>
           </motion.div>
@@ -129,8 +140,8 @@ export default function SolutionsContent() {
       </section>
 
       {/* Categories Filter Tabs */}
-      <section className="sticky top-[72px] z-30 bg-[#F7F4EE]/95 backdrop-blur-md border-b border-[#E6D3A3]/25 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="sticky top-[64px] md:top-[72px] z-30 bg-[#F7F4EE]/95 backdrop-blur-md border-b border-[#E6D3A3]/25 shadow-sm w-full">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-16 xl:px-24">
           <div className="flex items-center gap-2 py-4 overflow-x-auto no-scrollbar font-poppins">
             <button
               onClick={() => setActiveCategory('all')}
@@ -160,8 +171,8 @@ export default function SolutionsContent() {
       </section>
 
       {/* Architectural Border Grid Services Layout */}
-      <section className="py-12 lg:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative w-full py-12 md:py-16 lg:py-24">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-16 xl:px-24">
           {activeCategory === 'all' ? (
             /* Grouped Sections layout */
             CATEGORY_ORDER.map((cat) => {
@@ -206,7 +217,7 @@ export default function SolutionsContent() {
       </section>
 
       {/* Bottom McKinsey style CTA */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+      <section className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-16 xl:px-24 mt-12 mb-12">
         <div className="bg-[#FFFDF9] border border-[#E6D3A3]/50 rounded-3xl p-8 md:p-12 shadow-[0_12px_40px_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="space-y-3 text-center md:text-left">
             <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#1E1A16]">
@@ -218,7 +229,7 @@ export default function SolutionsContent() {
           </div>
           <Link
             href="/book"
-            className="shrink-0 bg-[#1E1A16] hover:bg-[#C8A04A] hover:shadow-[0_8px_24px_rgba(200,160,74,0.2)] text-white px-8 py-4 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 font-poppins"
+            className="shrink-0 w-full md:w-auto text-center bg-[#1E1A16] hover:bg-[#C8A04A] hover:shadow-[0_8px_24px_rgba(200,160,74,0.2)] text-white px-8 py-4 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 font-poppins"
           >
             Launch Consultation Vetting
           </Link>

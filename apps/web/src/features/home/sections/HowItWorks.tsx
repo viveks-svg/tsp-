@@ -3,9 +3,9 @@ import { howItWorksSteps } from "@/lib/data/home";
 
 export default function HowItWorks() {
   return (
-    <section className="relative overflow-visible bg-gradient-to-b from-[#FAF8F5] to-cream pt-16 pb-12">
-      <div className="max-w-7xl max-h-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 lg:gap-8 overflow-visible">
+    <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#FAF8F5] to-cream py-12 md:py-16 lg:py-24 pt-24 md:pt-28">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-16 xl:px-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-24 gap-x-8 lg:gap-8 mt-12 md:mt-8">
           {howItWorksSteps.map((step) => (
             <div
               key={step.step}
@@ -24,13 +24,14 @@ export default function HowItWorks() {
                   src={step.imageUrl}
                   alt={step.title}
                   fill
+                  sizes="160px"
                   className="object-cover"
                 />
               </div>
 
               {/* Content area */}
-              <div className="mt-14 space-y-3 max-w-[70%]">
-                <h3 className="font-playfair text-[1.5rem] font-bold leading-tight text-[#1A1A1A]">
+              <div className="mt-14 space-y-3 max-w-[70%] overflow-hidden break-words">
+                <h3 className="font-playfair text-xl sm:text-2xl font-bold leading-tight text-[#1A1A1A]">
                   {step.title}
                 </h3>
                 <p className="font-inter text-sm font-normal leading-7 text-[#8A8A8A]">

@@ -46,7 +46,7 @@ export default function AuthModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4"
           onClick={close}
         >
           {/* Backdrop */}
@@ -59,7 +59,7 @@ export default function AuthModal() {
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-cream shadow-2xl z-10"
+            className="relative w-full sm:max-w-md max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-cream shadow-2xl z-10 mt-auto sm:mt-0"
           >
             {/* Close button */}
             <button

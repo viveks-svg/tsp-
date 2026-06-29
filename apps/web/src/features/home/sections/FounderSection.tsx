@@ -7,8 +7,8 @@ import Image from "next/image";
 
 export default function FounderSection() {
   return (
-    <section className="py-16 lg:py-24 bg-cream" id="experts">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="relative w-full py-12 md:py-16 lg:py-24 bg-cream overflow-hidden" id="experts">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-16 xl:px-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* LEFT — Founder Image */}
           <FadeUp>
@@ -55,7 +55,7 @@ export default function FounderSection() {
           {/* RIGHT — Content */}
           <div>
             <FadeUp>
-              <h2 className="font-heading text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-[#1A1A1A] leading-tight mb-6 text-balance">
+              <h2 className="font-heading text-2xl md:text-3xl lg:text-4xl font-bold text-[#1A1A1A] leading-tight mb-6 text-balance overflow-hidden break-words">
                 Guiding Global Leaders with Divine Intelligence
               </h2>
             </FadeUp>
@@ -90,7 +90,7 @@ export default function FounderSection() {
 
             {/* Stats */}
             <FadeUp delay={0.3}>
-              <div className="flex gap-8 mb-8">
+              <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 mb-8">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-gold/[0.07] flex items-center justify-center">
                     <Users className="w-5 h-5 text-gold" />
@@ -116,7 +116,7 @@ export default function FounderSection() {
             <FadeUp delay={0.4}>
               <a
                 href="#"
-                className="btn-shine inline-flex items-center gap-3 bg-gradient-to-r from-[#F6A000] to-[#E89500] hover:from-[#E89500] hover:to-[#D88D14] text-white font-semibold text-sm md:text-base px-8 py-4 rounded-full shadow-[0_8px_30px_rgba(246,160,0,0.25)] hover:shadow-[0_12px_40px_rgba(246,160,0,0.3)] transition-all duration-300 group hover:scale-[1.02]"
+                className="btn-shine flex w-full sm:w-auto justify-center sm:inline-flex items-center gap-3 bg-gradient-to-r from-[#F6A000] to-[#E89500] hover:from-[#E89500] hover:to-[#D88D14] text-white font-semibold text-sm md:text-base px-8 py-4 rounded-full shadow-[0_8px_30px_rgba(246,160,0,0.25)] hover:shadow-[0_12px_40px_rgba(246,160,0,0.3)] transition-all duration-300 group hover:scale-[1.02]"
               >
                 Learn More About Our Methodology
 

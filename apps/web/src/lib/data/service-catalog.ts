@@ -122,6 +122,20 @@ const GENERIC_CONSULTATION_FIELDS: FormField[] = [
   { name: 'concerns', label: 'What would you like guidance on? (optional)', type: 'textarea', required: false, section: 'Your Concerns' },
 ];
 
+const MOBILE_ANALYSIS_FIELDS: FormField[] = [
+  ...COMMON_FIELDS,
+  { name: 'currentMobileNumber', label: 'Current Mobile Number', type: 'text', required: true, section: 'Analysis Details' },
+  { name: 'dateOfBirth', label: 'Date of Birth', type: 'date', required: true, section: 'Birth Details' },
+  { name: 'concerns', label: 'Any specific challenges or financial/health goals? (optional)', type: 'textarea', required: false, section: 'Your Goals' },
+];
+
+const SIGNATURE_ANALYSIS_FIELDS: FormField[] = [
+  ...COMMON_FIELDS,
+  { name: 'signatureImage', label: 'Upload Signature Image (optional)', type: 'file', required: false, section: 'Analysis Details' },
+  { name: 'dateOfBirth', label: 'Date of Birth', type: 'date', required: true, section: 'Birth Details' },
+  { name: 'concerns', label: 'What would you like to improve? (e.g. confidence, career, wealth) (optional)', type: 'textarea', required: false, section: 'Your Goals' },
+];
+
 // ── SERVICE CATALOG ──────────────────────────────────────────────────────────
 
 export const SERVICE_CATALOG: ServiceDefinition[] = [
@@ -511,6 +525,62 @@ export const SERVICE_CATALOG: ServiceDefinition[] = [
         priceLabel: '₹9,999',
         features: ['Family chart analysis', 'Conflict resolution guidance', '60-min consultation', 'Written recommendations'],
         ctaText: 'Book Session →',
+        variant: 'featured',
+      },
+    ],
+  },
+  {
+    id: 'mobile-analysis',
+    category: 'personal',
+    name: 'Mobile Number Analysis',
+    shortDescription: 'Discover the hidden vibrational frequency of your phone number and align it with your destiny.',
+    icon: 'Phone',
+    requiresSlot: true,
+    tags: ['mobile', 'number', 'numerology', 'personal'],
+    formFields: MOBILE_ANALYSIS_FIELDS,
+    plans: [
+      {
+        slug: 'standard',
+        name: 'Standard',
+        tagline: 'Complete Mobile Number Vetting',
+        priceINR: 4999,
+        priceLabel: '₹4,999',
+        features: [
+          'Current number vibration analysis',
+          'Astro-numerological chart matching',
+          '3 custom lucky alternative number suggestions',
+          '45-min one-on-one consultation',
+          'Detailed PDF recommendation report',
+        ],
+        ctaText: 'Book Analysis →',
+        variant: 'featured',
+      },
+    ],
+  },
+  {
+    id: 'signature-analysis',
+    category: 'personal',
+    name: 'Signature & Handwriting Analysis',
+    shortDescription: 'Calibrate your signature and handwriting strokes to unlock confidence, leadership, and prosperity.',
+    icon: 'PenTool',
+    requiresSlot: true,
+    tags: ['signature', 'handwriting', 'alignment', 'personal'],
+    formFields: SIGNATURE_ANALYSIS_FIELDS,
+    plans: [
+      {
+        slug: 'standard',
+        name: 'Standard',
+        tagline: 'Signature & Stroke Alignment',
+        priceINR: 4999,
+        priceLabel: '₹4,999',
+        features: [
+          'Analysis of your current signature and handwriting',
+          'Stroke-by-stroke vibration and angle check',
+          'Optimized signature design templates',
+          '45-min one-on-one consultation',
+          'Written guidelines for handwriting correctives',
+        ],
+        ctaText: 'Book Analysis →',
         variant: 'featured',
       },
     ],

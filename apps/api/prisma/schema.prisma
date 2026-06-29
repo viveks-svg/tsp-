@@ -599,3 +599,17 @@ model ShopOrderItem {
   
   createdAt       DateTime     @default(now())
 }
+
+model EphemerisCache {
+  id          String   @id @default(cuid())
+  cacheKey    String   @unique  // sha256 of input params
+  inputHash   String
+  computedAt  DateTime @default(now())
+  expiresAt   DateTime
+  data        Json     // the full computed response
+  hitCount    Int      @default(0)
+
+  @@index([cacheKey])
+  @@index([expiresAt])
+  @@map("ephemeris_cache")
+}
