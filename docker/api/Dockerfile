@@ -1,21 +1,24 @@
 FROM node:22-alpine AS builder
 
-# Build tools for native packages (swisseph requires Python + gcc)
-RUN apk add --no-cache python3 make g++
+# Build tools — setuptools provides 'distutils' removed in Python 3.12+
+RUN apk add --no-cache python3 make g++ py3-setuptools
 
 # Install pnpm
 RUN npm install -g pnpm@9.1.4
 
 WORKDIR /app
 
-# Copy workspace config files
+# Copy workspace config
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml turbo.json tsconfig.base.json ./
 
-# Copy all package.json files first (layer caching)
+# Copy package.json files for all workspaces
 COPY apps/api/package.json ./apps/api/
 COPY packages/ ./packages/
 
-# Install all dependencies (native packages compiled here)
+# Upgrade node-gyp before install to fix distutils issue
+RUN npm install -g node-gyp@10
+
+# Install all dependencies
 RUN pnpm install --frozen-lockfile
 
 # Copy API source
@@ -24,25 +27,22 @@ COPY apps/api/ ./apps/api/
 # Generate Prisma client
 RUN pnpm --filter @tsp/api exec prisma generate
 
-# Build API
+# Build
 RUN pnpm --filter @tsp/api run build
 
 # ---- Production image ----
 FROM node:22-alpine
 
-# Runtime deps for swisseph (compiled .node binary needs these)
 RUN apk add --no-cache libstdc++ libgcc
 
 RUN npm install -g pnpm@9.1.4
 
 WORKDIR /app
 
-# Copy workspace manifests
 COPY package.json pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/ ./packages/
 
-# Copy built artifacts from builder
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
