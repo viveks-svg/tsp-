@@ -17,9 +17,8 @@ class ApiClient {
   }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const url = endpoint.startsWith("/auth/")
-      ? `/api${endpoint}`
-      : `${this.baseUrl}${endpoint}`;
+    // Rely on Next.js rewrites for all API requests. This ensures Same-Origin for cookies.
+    const url = `/api${endpoint}`;
 
     const response = await fetch(url, {
       ...options,

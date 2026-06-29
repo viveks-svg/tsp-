@@ -174,19 +174,33 @@ export default function ShopPage() {
         },
         theme: {
           color: "#0A2540"
+        },
+        modal: {
+          ondismiss: () => {
+            setIsProcessing(false);
+            document.body.style.overflow = 'auto';
+            const rzpContainer = document.querySelector('.razorpay-container');
+            if (rzpContainer) rzpContainer.remove();
+          },
         }
       };
 
       const rzp = new (window as any).Razorpay(options);
-      rzp.on('payment.failed', function () {
-        alert("Payment failed or cancelled.");
+      rzp.on('payment.failed', function (response: any) {
+        alert(response?.error?.description || "Payment failed or cancelled.");
         setIsProcessing(false);
+        document.body.style.overflow = 'auto';
+        const container = document.querySelector('.razorpay-container');
+        if (container) container.remove();
       });
       rzp.open();
 
     } catch (error) {
       alert("Failed to initiate checkout. Please try again.");
       setIsProcessing(false);
+      document.body.style.overflow = 'auto';
+      const container = document.querySelector('.razorpay-container');
+      if (container) container.remove();
     }
   };
 

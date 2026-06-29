@@ -427,14 +427,26 @@ export default function BookingFlow() {
             // Razorpay test mode sometimes fails to clean up the overflow hidden
             // when closed or when throwing an error.
             document.body.style.overflow = 'auto';
+            const rzpContainer = document.querySelector('.razorpay-container');
+            if (rzpContainer) rzpContainer.remove();
           },
         },
       };
       const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        alert(response?.error?.description || 'Payment failed');
+        setIsLoading(false);
+        document.body.style.overflow = 'auto';
+        const container = document.querySelector('.razorpay-container');
+        if (container) container.remove();
+      });
       rzp.open();
     } catch (err: any) {
       alert(err.message ?? 'Failed to initiate booking.');
       setIsLoading(false);
+      document.body.style.overflow = 'auto';
+      const container = document.querySelector('.razorpay-container');
+      if (container) container.remove();
     }
   };
 
