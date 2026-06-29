@@ -1,33 +1,22 @@
 FROM node:22-alpine AS builder
 
-# Build tools — setuptools provides 'distutils' removed in Python 3.12+
 RUN apk add --no-cache python3 make g++ py3-setuptools
 
-# Install pnpm
-RUN npm install -g pnpm@9.1.4
+RUN npm install -g pnpm@9.1.4 node-gyp@10
 
 WORKDIR /app
 
-# Copy workspace config
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml turbo.json tsconfig.base.json ./
-
-# Copy package.json files for all workspaces
 COPY apps/api/package.json ./apps/api/
 COPY packages/ ./packages/
 
-# Upgrade node-gyp before install to fix distutils issue
-RUN npm install -g node-gyp@10
-
-# Install all dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy API source
 COPY apps/api/ ./apps/api/
 
-# Generate Prisma client
-RUN pnpm --filter @tsp/api exec prisma generate
+# Dummy DATABASE_URL only needed for prisma generate at build time
+RUN DATABASE_URL="postgresql://user:pass@localhost:5432/db" pnpm --filter @tsp/api exec prisma generate
 
-# Build
 RUN pnpm --filter @tsp/api run build
 
 # ---- Production image ----

@@ -11,7 +11,6 @@ if (fs.existsSync(envPath)) {
     if (firstEquals === -1) continue;
     const key = trimmed.slice(0, firstEquals).trim();
     let val = trimmed.slice(firstEquals + 1).trim();
-    // Remove quotes
     if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
       val = val.slice(1, -1);
     }
@@ -19,7 +18,7 @@ if (fs.existsSync(envPath)) {
   }
 }
 
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
 export default defineConfig({
   schema: "apps/api/prisma/schema.prisma",
@@ -27,6 +26,6 @@ export default defineConfig({
     path: "apps/api/prisma/migrations",
   },
   datasource: {
-    url: env("DATABASE_URL"),
+    url: process.env.DATABASE_URL ?? "postgresql://placeholder:placeholder@localhost:5432/placeholder",
   },
 });
