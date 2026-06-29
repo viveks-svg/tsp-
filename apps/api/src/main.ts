@@ -9,21 +9,22 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>("PORT", 3001);
-  const frontendUrl = configService.get<string>("FRONTEND_URL", "http://localhost:3000");
 
-  // Cookie parser — must be before routes so req.cookies is populated
+  const frontendUrl = configService
+    .get<string>("FRONTEND_URL", "http://localhost:3000")
+    .replace(/\/$/, "");
+
   app.use(cookieParser());
 
-  // CORS
   app.enableCors({
-    origin: frontendUrl,
+    origin: [frontendUrl, "http://localhost:3000"],
     credentials: true,
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
   });
 
-  // Global prefix
   app.setGlobalPrefix("api/v1");
 
-  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -33,7 +34,7 @@ async function bootstrap() {
   );
 
   await app.listen(port);
-  console.log(` TSP API running on http://localhost:${port}/api/v1`);
+  console.log(`TSP API running on http://localhost:${port}/api/v1`);
 }
 
 bootstrap();
