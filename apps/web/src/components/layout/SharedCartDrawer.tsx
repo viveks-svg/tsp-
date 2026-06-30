@@ -4,6 +4,8 @@ import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ShoppingBag, X, Plus, Minus } from "lucide-react";
 import { useCart } from "@/providers/CartProvider";
+import { useAuth } from "@/providers/AuthProvider";
+import { useAuthModal } from "@/hooks/useAuthModal";
 
 export default function SharedCartDrawer() {
   const pathname = usePathname();
@@ -17,6 +19,8 @@ export default function SharedCartDrawer() {
     removeFromCart,
     updateQuantity,
   } = useCart();
+  const { isAuthenticated, setPendingAction } = useAuth();
+  const authModal = useAuthModal();
 
   if (pathname?.startsWith("/shop")) {
     return null;
@@ -73,7 +77,7 @@ export default function SharedCartDrawer() {
                         src={item.image}
                         alt={item.name}
                         fill
-                        sizes="100vw"
+                        sizes="64px"
                         className="object-cover"
                       />
                     ) : null}
@@ -136,6 +140,14 @@ export default function SharedCartDrawer() {
               <button
                 type="button"
                 onClick={() => {
+                  if (!isAuthenticated) {
+                    setPendingAction(() => {
+                      setCartOpen(false);
+                      router.push("/shop?checkout=true");
+                    });
+                    authModal.open("login");
+                    return;
+                  }
                   setCartOpen(false);
                   router.push("/shop?checkout=true");
                 }}

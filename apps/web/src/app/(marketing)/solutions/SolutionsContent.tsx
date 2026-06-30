@@ -50,7 +50,7 @@ function ServiceCard({ service, index }: { service: ServiceDefinition; index: nu
       whileInView="visible"
       viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.5, delay: index * 0.04, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative p-8 bg-gradient-to-b from-white to-white hover:from-[#FFFDF9] hover:to-[#FDF9F2] border-r border-b border-[#E6D3A3]/20 hover:shadow-[inset_0_0_24px_rgba(200,160,74,0.015),0_12px_36px_rgba(200,160,74,0.06)] transition-all duration-500 flex flex-col justify-between min-h-[290px] overflow-hidden"
+      className="group relative p-8 bg-white hover:bg-gradient-to-b hover:from-[#FFFDF9] hover:to-[#FDF9F2] border border-[#E6D3A3]/40 rounded-2xl shadow-sm hover:shadow-[0_12px_36px_rgba(200,160,74,0.08)] transition-all duration-500 flex flex-col justify-between min-h-[290px] overflow-hidden"
     >
       {isNew && (
         <span className="absolute top-4 right-4 bg-gradient-to-r from-[#C8A04A] to-[#8B6914] text-white text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-full uppercase font-poppins shadow-sm z-10">
@@ -196,8 +196,8 @@ export default function SolutionsContent() {
                     </p>
                   </motion.div>
 
-                  {/* Architectural border grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 border-t border-l border-[#E6D3A3]/25 rounded-2xl overflow-hidden bg-white shadow-[0_4px_30px_rgba(0,0,0,0.015)]">
+                  {/* Cards grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {services.map((service, i) => (
                       <ServiceCard key={service.id} service={service} index={i} />
                     ))}
@@ -207,7 +207,7 @@ export default function SolutionsContent() {
             })
           ) : (
             /* Filtered Flat Grid layout */
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 border-t border-l border-[#E6D3A3]/25 rounded-2xl overflow-hidden bg-white shadow-[0_4px_30px_rgba(0,0,0,0.015)]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredServices.map((service, i) => (
                 <ServiceCard key={service.id} service={service} index={i} />
               ))}

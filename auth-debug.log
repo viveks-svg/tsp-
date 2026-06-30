@@ -1072,3 +1072,5 @@
 [me] -> 401 (no access_token cookie reached the proxy)
 [me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[rzp_unified_session_id,__next_hmr_refresh_hash__] | rawCookieHeader=present
 [me] -> 401 (no access_token cookie reached the proxy)
+[me] hit | referer=http://localhost:3000/ | hasAccessToken=false | cookies=[__next_hmr_refresh_hash__] | rawCookieHeader=present
+[me] -> 401 (no access_token cookie reached the proxy)

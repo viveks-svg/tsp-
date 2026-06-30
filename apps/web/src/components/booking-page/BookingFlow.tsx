@@ -145,13 +145,57 @@ function DynamicFormStep({
     sections[section].push(field);
   }
 
-  // Validate required fields
-  const isValid = service.formFields
-    .filter((f) => f.required)
-    .every((f) => {
-      const val = formData[f.name];
-      return val && val.trim() !== '';
-    });
+  // Handle validation and proceed
+  const handleNext = () => {
+    // Check required fields
+    const missingFields = service.formFields.filter(
+      (f) => f.required && (!formData[f.name] || formData[f.name].trim() === '')
+    );
+    if (missingFields.length > 0) {
+      alert(`Please fill in required fields: ${missingFields.map((f) => f.label).join(', ')}`);
+      return;
+    }
+
+    // Check email
+    const emailField = service.formFields.find(
+      (f) => f.type === 'email' || f.name.toLowerCase().includes('email')
+    );
+    if (emailField) {
+      const email = formData[emailField.name];
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert('Please enter a valid email address.');
+        return;
+      }
+    }
+
+    // Check date and time
+    if (service.requiresSlot) {
+      if (!scheduledDate || !scheduledSlot) {
+        alert('Date and Time are required.');
+        return;
+      }
+
+      const selected = new Date(scheduledDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (selected < today) {
+        alert('Cannot select a past date for booking.');
+        return;
+      }
+
+      const minDate = new Date();
+      minDate.setDate(minDate.getDate() + 2);
+      minDate.setHours(0, 0, 0, 0);
+
+      if (selected < minDate && urgencyTier === 'STANDARD') {
+        alert('Standard booking requires at least 2 days advance notice.');
+        return;
+      }
+    }
+
+    onNext();
+  };
 
   return (
     <div className="p-6 sm:p-8">
@@ -243,7 +287,13 @@ function DynamicFormStep({
                       type={field.type}
                       placeholder={field.placeholder}
                       value={value}
-                      onChange={(e) => updateFormField(field.name, e.target.value)}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        if (field.type === 'tel' || field.name.toLowerCase().includes('phone')) {
+                          val = val.replace(/[^\d\s\+\-\(\)]/g, '');
+                        }
+                        updateFormField(field.name, val);
+                      }}
                       className="w-full px-4 py-2.5 bg-white border border-[#EFEBE1] rounded-xl text-sm text-[#1E1A16] focus:border-[#C8A04A] focus:ring-1 focus:ring-[#C8A04A]/20 focus:outline-none transition-all"
                     />
                   </div>
@@ -298,8 +348,7 @@ function DynamicFormStep({
       {/* Next Button */}
       <div className="mt-8 flex justify-end">
         <button
-          disabled={!isValid}
-          onClick={onNext}
+          onClick={handleNext}
           className="px-8 py-3 bg-[#1E1A16] text-white rounded-full text-sm font-semibold hover:bg-[#C8A04A] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Review Booking →

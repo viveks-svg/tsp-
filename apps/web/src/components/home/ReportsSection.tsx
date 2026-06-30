@@ -70,16 +70,16 @@ export default function ReportsSection() {
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               variants={fadeInRightVariant}
-              className="group w-full rounded-[22px] overflow-hidden border border-[#332D68]/55 shadow-[0_20px_60px_rgba(0,0,0,0.24)] hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(0,0,0,0.35)] transition-all duration-500 bg-[#11102A] h-[390px] md:h-[410px]"
+              className="group w-full rounded-[22px] overflow-hidden border border-[#332D68]/55 shadow-[0_20px_60px_rgba(0,0,0,0.24)] hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(0,0,0,0.35)] transition-all duration-500 bg-[#11102A] flex flex-col h-auto min-h-[390px] md:min-h-[410px]"
             >
               {/* Top visual area with integrated Next.js Image component */}
-              <div className="relative h-[57%] w-full overflow-hidden bg-gradient-to-br from-[#332D73] via-[#241F56] to-[#15142F]">
+              <div className="relative h-[220px] shrink-0 w-full overflow-hidden bg-gradient-to-br from-[#332D73] via-[#241F56] to-[#15142F]">
 
                 <Image
                   src={report.imagePlaceholder || ""}
                   alt={report.title}
                   fill
-                  sizes="(max-w-768px) 250px, (max-w-1024px) 230px, 250px"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   className="object-cover transition-transform duration-700 group-hover:scale-110"
                   priority={index < 2} // Optimizes loading speeds for above-the-fold elements
                 />
@@ -97,7 +97,7 @@ export default function ReportsSection() {
               </div>
 
               {/* Bottom content area */}
-              <div className="h-[43%] bg-gradient-to-b from-[#FFFEFB] to-[#F4EEE3] px-4 py-4 md:px-5 md:py-5 flex flex-col justify-between">
+              <div className="flex-1 bg-gradient-to-b from-[#FFFEFB] to-[#F4EEE3] px-4 py-4 md:px-5 md:py-5 flex flex-col justify-between">
                 <div>
                   <h3 className="font-playfair text-[16px] md:text-[17px] text-[#1E1A16] font-semibold leading-tight line-clamp-2">
                     {report.title}

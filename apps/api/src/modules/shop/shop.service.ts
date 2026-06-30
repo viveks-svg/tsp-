@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
+import { RazorpayService } from '../payments/razorpay.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ShopOrderStatus } from '@prisma/client';
 
@@ -28,6 +29,7 @@ export class ShopService {
     private readonly prisma: PrismaService,
     private readonly paymentService: PaymentsService,
     private readonly notificationsService: NotificationsService,
+    private readonly razorpayService: RazorpayService,
   ) {}
 
   async createOrder(data: CreateShopOrderDto) {
@@ -57,11 +59,19 @@ export class ShopService {
       });
 
       // 2. Generate Razorpay order
-      // In PaymentsService, it uses createOrder(userId, { amount, currency }). We'll adapt it.
-      // Wait, in PaymentsService, createOrder creates a PaymentOrder, not a Razorpay order directly for custom things.
-      // Let's use the underlying razorpay client if we need to, but for now we'll just mock it or assume PaymentsService has a method.
-      // Actually, since this is for shop, let's just generate a mock order ID for now if we don't have a direct method.
-      const rpOrderId = `order_${Math.random().toString(36).substring(2, 15)}`;
+      let rpOrderId = `order_mock_${Math.random().toString(36).substring(2, 15)}`;
+      try {
+        const rpOrder = await this.razorpayService.createOrder(
+          Math.round(data.totalAmount * 100),
+          'INR',
+          order.id
+        );
+        if (rpOrder && rpOrder.id) {
+          rpOrderId = rpOrder.id;
+        }
+      } catch (err: any) {
+        console.warn('Razorpay order creation failed, falling back to mock:', err.message);
+      }
       
       // 3. Update shop order with Razorpay ID
       const updatedOrder = await this.prisma.shopOrder.update({

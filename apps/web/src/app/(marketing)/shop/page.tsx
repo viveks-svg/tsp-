@@ -4,11 +4,13 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Search, ShoppingBag, Star, X, Plus, Minus, Heart, ArrowUpDown, ArrowRight, MessageCircle, MapPin, Truck } from "lucide-react";
 import Image from "next/image";
 import Script from "next/script";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { apiClient } from "@/lib/http/client";
 import { SHOP_PRODUCTS, type Product } from "@/lib/data/shop";
 import { useCart } from "@/providers/CartProvider";
+import { useAuth } from "@/providers/AuthProvider";
+import { useAuthModal } from "@/hooks/useAuthModal";
 import { div } from "framer-motion/client";
 
 export default function ShopPage() {
@@ -16,10 +18,24 @@ export default function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState<"popular" | "price-asc" | "price-desc">("popular");
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { cart, cartOpen, addToCart, updateQuantity, removeFromCart, clearCart, setCartOpen, totalItems, subtotal } = useCart();
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [checkoutStep, setCheckoutStep] = useState<"cart" | "shipping" | "success">("cart");
   const [isProcessing, setIsProcessing] = useState(false);
+  const { isAuthenticated, setPendingAction } = useAuth();
+  const authModal = useAuthModal();
+
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      if (typeof window !== "undefined" && (window as any).Razorpay) return resolve(true);
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
 
   // Shipping form state
   const [shippingData, setShippingData] = useState({
@@ -39,8 +55,10 @@ export default function ShopPage() {
     if (searchParams?.get("checkout") === "true") {
       setCartOpen(true);
       setCheckoutStep("shipping");
+      // Remove checkout param from URL to prevent infinite re-triggering or freeze on back navigation
+      router.replace("/shop");
     }
-  }, [searchParams, setCartOpen]);
+  }, [searchParams, setCartOpen, router]);
 
   // Load initial cart and shipping details from localStorage
   React.useEffect(() => {
@@ -125,6 +143,12 @@ export default function ShopPage() {
   };
 
   const handleCheckout = async () => {
+    if (!isAuthenticated) {
+      setPendingAction(() => handleCheckout());
+      authModal.open("login");
+      return;
+    }
+
     if (!shippingData.customerName || !shippingData.customerPhone || !shippingData.shippingAddress) {
       alert("Please fill in all required shipping details.");
       return;
@@ -145,6 +169,31 @@ export default function ShopPage() {
       };
 
       const res: any = await apiClient.post('/shop/orders', orderPayload);
+
+      if (res.razorpayOrderId?.startsWith("order_mock_") || !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+        // Simulate successful payment for mock orders
+        try {
+          await apiClient.post('/shop/orders/verify', {
+            razorpayOrderId: res.razorpayOrderId,
+            paymentId: `pay_mock_${Math.random().toString(36).substring(2, 15)}`,
+            signature: "mock_signature"
+          });
+          setCheckoutStep("success");
+          clearCart();
+        } catch (verifyError) {
+          alert("Payment verification failed.");
+        } finally {
+          setIsProcessing(false);
+        }
+        return;
+      }
+
+      const isLoaded = await loadRazorpay();
+      if (!isLoaded) {
+        alert("Payment gateway failed to load. Please check your internet connection.");
+        setIsProcessing(false);
+        return;
+      }
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'mock_key',
@@ -206,7 +255,6 @@ export default function ShopPage() {
 
   return (
     <div className="min-h-screen bg-cream pb-20 relative">
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       {/* Hero Banner Section */}
       <section className="bg-gradient-navy text-white pt-[125px] pb-16 lg:pt-[140px] relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gold via-transparent to-transparent" />
@@ -497,6 +545,17 @@ export default function ShopPage() {
                   Continue Shopping
                 </button>
               </div>
+            ) : cart.length === 0 ? (
+              <div className="text-center py-20 text-muted space-y-2">
+                <ShoppingBag className="w-10 h-10 mx-auto opacity-30" />
+                <p className="text-sm font-poppins">Your cart is empty.</p>
+                <button
+                  onClick={() => setCartOpen(false)}
+                  className="text-navy text-xs font-semibold hover:underline"
+                >
+                  Browse products
+                </button>
+              </div>
             ) : checkoutStep === "shipping" ? (
               <div className="space-y-4">
                 <button onClick={() => setCheckoutStep("cart")} className="text-xs font-medium text-muted hover:text-dark flex items-center gap-1 mb-2">
@@ -561,17 +620,6 @@ export default function ShopPage() {
                   </div>
                 </div>
               </div>
-            ) : cart.length === 0 ? (
-              <div className="text-center py-20 text-muted space-y-2">
-                <ShoppingBag className="w-10 h-10 mx-auto opacity-30" />
-                <p className="text-sm font-poppins">Your cart is empty.</p>
-                <button
-                  onClick={() => setCartOpen(false)}
-                  className="text-navy text-xs font-semibold hover:underline"
-                >
-                  Browse products
-                </button>
-              </div>
             ) : (
               cart.map((item) => (
                 <div
@@ -584,6 +632,7 @@ export default function ShopPage() {
                         src={item.image}
                         alt={item.name}
                         fill
+                        sizes="64px"
                         className="object-cover"
                       />
                     ) : (
@@ -661,7 +710,14 @@ export default function ShopPage() {
 
               <button
                 onClick={() => {
-                  if (checkoutStep === "cart") setCheckoutStep("shipping");
+                  if (checkoutStep === "cart") {
+                    if (!isAuthenticated) {
+                      setPendingAction(() => setCheckoutStep("shipping"));
+                      authModal.open("login");
+                      return;
+                    }
+                    setCheckoutStep("shipping");
+                  }
                   else handleCheckout();
                 }}
                 disabled={isProcessing}

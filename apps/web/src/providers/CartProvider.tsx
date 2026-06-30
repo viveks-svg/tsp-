@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useAuth } from "@/providers/AuthProvider";
+import { useAuthModal } from "@/hooks/useAuthModal";
 
 export interface CartItem {
   id: string;
@@ -40,6 +42,8 @@ export default function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const { isAuthenticated, setPendingAction } = useAuth();
+  const authModal = useAuthModal();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -55,6 +59,22 @@ export default function CartProvider({ children }: { children: ReactNode }) {
 
     setIsMounted(true);
   }, []);
+
+  const [prevAuth, setPrevAuth] = useState(isAuthenticated);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
+    if (prevAuth && !isAuthenticated) {
+      setCart([]);
+      try {
+        localStorage.removeItem(CART_STORAGE_KEY);
+      } catch {
+        // ignore storage errors
+      }
+    }
+    setPrevAuth(isAuthenticated);
+  }, [isAuthenticated, prevAuth, isMounted]);
 
   useEffect(() => {
     if (!isMounted) return;
