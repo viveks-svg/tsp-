@@ -428,6 +428,24 @@ export default function BookingFlow() {
     if (!selectedService || !selectedPlan) return;
     setIsLoading(true);
 
+    const loadRazorpay = () => {
+      return new Promise((resolve) => {
+        if (typeof window !== "undefined" && (window as any).Razorpay) return resolve(true);
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+      });
+    };
+
+    const isLoaded = await loadRazorpay();
+    if (!isLoaded) {
+      alert("Razorpay SDK failed to load. Are you offline?");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Build a composite slug for the API
       const serviceSlug = selectedService.plans.length > 1

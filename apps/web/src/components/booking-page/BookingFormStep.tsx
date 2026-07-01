@@ -35,6 +35,25 @@ export default function BookingFormStep({ form, updateForm, onBack, onSuccess }:
   const handleBookNow = async () => {
     if (!form.config) return;
     setIsLoading(true);
+
+    const loadRazorpay = () => {
+      return new Promise((resolve) => {
+        if (typeof window !== "undefined" && (window as any).Razorpay) return resolve(true);
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+      });
+    };
+
+    const isLoaded = await loadRazorpay();
+    if (!isLoaded) {
+      alert("Razorpay SDK failed to load. Are you offline?");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const data = await apiClient.post<any>('/bookings/initiate', {
         serviceCategory: form.config.category,
