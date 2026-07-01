@@ -41,21 +41,26 @@ function getCompatibilityScore(sign1: string, sign2: string): number {
 
 function HoroscopeCardSkeleton() {
   return (
-    <div className="space-y-8">
-      <Card className="rounded-card-lg shadow-card border-border">
-        <CardHeader>
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-4 w-64 mt-2" />
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-          <div className="grid grid-cols-3 gap-4 pt-4">
-             <Skeleton className="h-10 w-full" />
-             <Skeleton className="h-10 w-full" />
-             <Skeleton className="h-10 w-full" />
+    <div className="space-y-8 animate-in fade-in duration-300">
+      <Card className="rounded-card-lg shadow-card border-border min-h-[400px] flex flex-col items-center justify-center bg-white relative overflow-hidden">
+        {/* Background glow effect for depth */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-100/30 via-white to-white" />
+
+        <div className="text-center relative z-10 flex flex-col items-center">
+          <div className="relative w-32 h-32 mb-6">
+            <img 
+              src="/images/cosmic-wheel.png" 
+              alt="Aligning cosmic energies..." 
+              className="w-full h-full object-contain animate-spin-clockwise-60 filter drop-shadow-[0_0_15px_rgba(147,51,234,0.15)]"
+            />
           </div>
-        </CardContent>
+          <h2 className="font-heading text-xl font-bold text-dark mb-1 tracking-wide">
+            Consulting the Stars
+          </h2>
+          <p className="text-sm font-medium tracking-wider uppercase opacity-50 animate-pulse text-purple-700">
+            Aligning your cosmic path...
+          </p>
+        </div>
       </Card>
     </div>
   );

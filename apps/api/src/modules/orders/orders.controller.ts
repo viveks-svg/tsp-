@@ -11,6 +11,6 @@ export class OrdersController {
   @Get('my-orders')
   async getMyOrders(@Req() req: Request) {
     const user = req.user as any;
-    return this.ordersService.getUserOrders(user.email);
+    return this.ordersService.getUserOrders(user);
   }
 }

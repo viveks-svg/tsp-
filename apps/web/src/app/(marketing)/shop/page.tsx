@@ -23,7 +23,7 @@ export default function ShopPage() {
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [checkoutStep, setCheckoutStep] = useState<"cart" | "shipping" | "success">("cart");
   const [isProcessing, setIsProcessing] = useState(false);
-  const { isAuthenticated, setPendingAction } = useAuth();
+  const { isAuthenticated, setPendingAction, user } = useAuth();
   const authModal = useAuthModal();
 
   const loadRazorpay = () => {
@@ -166,6 +166,7 @@ export default function ShopPage() {
           itemType: item.type,
         })),
         totalAmount: subtotal,
+        userId: user?.id || undefined
       };
 
       const res: any = await apiClient.post('/shop/orders', orderPayload);
@@ -227,29 +228,19 @@ export default function ShopPage() {
         modal: {
           ondismiss: () => {
             setIsProcessing(false);
-            document.body.style.overflow = 'auto';
-            const rzpContainer = document.querySelector('.razorpay-container');
-            if (rzpContainer) rzpContainer.remove();
           },
         }
       };
 
       const rzp = new (window as any).Razorpay(options);
       rzp.on('payment.failed', function (response: any) {
-        alert(response?.error?.description || "Payment failed or cancelled.");
-        setIsProcessing(false);
-        document.body.style.overflow = 'auto';
-        const container = document.querySelector('.razorpay-container');
-        if (container) container.remove();
+        console.error("Payment failed:", response?.error?.description);
       });
       rzp.open();
 
     } catch (error) {
       alert("Failed to initiate checkout. Please try again.");
       setIsProcessing(false);
-      document.body.style.overflow = 'auto';
-      const container = document.querySelector('.razorpay-container');
-      if (container) container.remove();
     }
   };
 
