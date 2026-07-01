@@ -10,12 +10,12 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   constructor(private configService: ConfigService) {}
 
   onModuleInit() {
+    const url = this.configService.get<string>('redis.url');
     const host = this.configService.get<string>('redis.host') || 'localhost';
     const port = this.configService.get<number>('redis.port') || 6379;
+    const password = this.configService.get<string>('redis.password');
     
-    this.redis = new Redis({
-      host,
-      port,
+    const options = {
       retryStrategy: (times: number) => {
         if (times > 5) {
           this.logger.warn('Redis connection failed after 5 retries. Caching will be disabled.');
@@ -24,7 +24,18 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         return Math.min(times * 100, 2000);
       },
       maxRetriesPerRequest: 1, // Don't hang requests indefinitely
-    });
+    };
+
+    if (url) {
+      this.redis = new Redis(url, options);
+    } else {
+      this.redis = new Redis({
+        host,
+        port,
+        password,
+        ...options,
+      });
+    }
 
     this.redis.on('error', (err) => {
       // Suppress unhandled error event spam in the console

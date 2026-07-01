@@ -34,12 +34,20 @@ import configuration from "./config/configuration";
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        connection: {
-          host: configService.get<string>('redis.host', 'localhost'),
-          port: configService.get<number>('redis.port', 6379),
-        },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const url = configService.get<string>('redis.url');
+        const connectionConfig = url 
+          ? { url }
+          : {
+              host: configService.get<string>('redis.host', 'localhost'),
+              port: configService.get<number>('redis.port', 6379),
+              password: configService.get<string>('redis.password'),
+            };
+
+        return {
+          connection: connectionConfig,
+        };
+      },
       inject: [ConfigService],
     }),
     DatabaseModule,
