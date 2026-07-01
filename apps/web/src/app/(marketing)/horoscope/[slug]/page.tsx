@@ -3,23 +3,17 @@ import { notFound } from "next/navigation";
 import HoroscopePageContent from "@/features/horoscope/components/HoroscopePageContent";
 import { zodiacSigns } from "@/lib/data/zodiac";
 import type { HoroscopePeriod } from "@/types/horoscope";
+import { PERIOD_SLUG_MAP } from "@/types/horoscope";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
-const timeframes: Record<string, HoroscopePeriod> = {
-  daily: "today",
-  weekly: "weekly",
-  monthly: "monthly",
-  yearly: "this-year",
-};
-
 export async function generateStaticParams() {
   const signParams = zodiacSigns.map((sign) => ({
     slug: sign.toLowerCase(),
   }));
-  const timeframeParams = Object.keys(timeframes).map((tf) => ({
+  const timeframeParams = Object.keys(PERIOD_SLUG_MAP).map((tf) => ({
     slug: tf,
   }));
   return [...signParams, ...timeframeParams];
@@ -27,7 +21,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const timeframePeriod = timeframes[slug];
+  const timeframePeriod = PERIOD_SLUG_MAP[slug];
 
   if (timeframePeriod) {
     return {
@@ -49,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function HoroscopeSlugPage({ params }: Props) {
   const { slug } = await params;
-  const timeframePeriod = timeframes[slug];
+  const timeframePeriod = PERIOD_SLUG_MAP[slug];
 
   if (timeframePeriod) {
     return <HoroscopePageContent initialPeriod={timeframePeriod} />;

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import PageWrapper from "@/components/layout/PageWrapper";
 import ZodiacPicker from "./ZodiacPicker";
 import HoroscopeTabNav from "./HoroscopeTabNav";
 import HoroscopeCard from "./HoroscopeCard";
-import { getHoroscopeReading } from "@/lib/data/horoscope";
-import type { HoroscopePeriod } from "@/types/horoscope";
+import { apiClient } from "@/lib/http/client";
+import { ENDPOINTS } from "@/lib/constants/http/endpoints";
+import type { HoroscopePeriod, HoroscopeReading } from "@/types/horoscope";
 
 interface HoroscopePageContentProps {
   initialSign?: string;
@@ -15,11 +16,13 @@ interface HoroscopePageContentProps {
 
 export default function HoroscopePageContent({
   initialSign = "Aries",
-  initialPeriod = "today",
+  initialPeriod = "DAILY",
 }: HoroscopePageContentProps) {
   const [sign, setSign] = useState(initialSign);
   const [period, setPeriod] = useState<HoroscopePeriod>(initialPeriod);
   const [isPending, startTransition] = useTransition();
+  const [reading, setReading] = useState<HoroscopeReading | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const handleSignChange = (newSign: string) => {
     startTransition(() => {
@@ -33,7 +36,30 @@ export default function HoroscopePageContent({
     });
   };
 
-  const reading = getHoroscopeReading(sign, period);
+  useEffect(() => {
+    let isMounted = true;
+    const fetchReading = async () => {
+      setLoading(true);
+      try {
+        const data = await apiClient.get<HoroscopeReading>(
+          ENDPOINTS.HOROSCOPE.GET(sign.toUpperCase(), period)
+        );
+        if (isMounted) {
+          setReading(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch horoscope:", error);
+        if (isMounted) setReading(null);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchReading();
+    return () => {
+      isMounted = false;
+    };
+  }, [sign, period]);
 
   return (
     <PageWrapper
@@ -51,7 +77,7 @@ export default function HoroscopePageContent({
               sign={sign}
               period={period}
               data={reading}
-              loading={isPending}
+              loading={isPending || loading}
             />
           </HoroscopeTabNav>
         </div>

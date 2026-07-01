@@ -10,18 +10,25 @@ export class RazorpayService implements OnModuleInit {
   constructor(private config: ConfigService) {}
 
   onModuleInit() {
+    const keyId = this.config.get('razorpay.keyId') || this.config.get('RAZORPAY_KEY_ID') || '';
+    const keySecret = this.config.get('razorpay.keySecret') || this.config.get('RAZORPAY_KEY_SECRET') || '';
     this.razorpay = new Razorpay({
-      key_id: this.config.get('razorpay.keyId') || this.config.get('RAZORPAY_KEY_ID') || '',
-      key_secret: this.config.get('razorpay.keySecret') || this.config.get('RAZORPAY_KEY_SECRET') || '',
+      key_id: keyId.trim(),
+      key_secret: keySecret.trim(),
     });
   }
 
   async createOrder(amountPaise: number, currency = 'INR', receiptId: string) {
-    return this.razorpay.orders.create({
-      amount: amountPaise,
-      currency,
-      receipt: receiptId,
-    });
+    try {
+      return await this.razorpay.orders.create({
+        amount: amountPaise,
+        currency,
+        receipt: receiptId,
+      });
+    } catch (error: any) {
+      console.error('[RazorpayService] Order creation error:', error);
+      throw error;
+    }
   }
 
   verifySignature(orderId: string, paymentId: string, signature: string): boolean {

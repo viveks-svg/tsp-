@@ -48,8 +48,8 @@ export const ENDPOINTS = {
 
   // Horoscope
   HOROSCOPE: {
-    DAILY: "/horoscope/daily",
-    WEEKLY: "/horoscope/weekly",
+    GET: (sign: string, period: string) => `/horoscope/${sign}/${period}`,
+    PERSONALIZED: "/horoscope/personalized",
   },
 
   // Kundli

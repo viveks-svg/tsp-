@@ -3,28 +3,16 @@ import { notFound } from "next/navigation";
 import HoroscopePageContent from "@/features/horoscope/components/HoroscopePageContent";
 import { zodiacSigns } from "@/lib/data/zodiac";
 import type { HoroscopePeriod } from "@/types/horoscope";
+import { PERIOD_SLUG_MAP } from "@/types/horoscope";
 
 interface Props {
   params: Promise<{ slug: string; period: string }>;
 }
 
-const timeframes: Record<string, HoroscopePeriod> = {
-  daily: "today",
-  today: "today",
-  tomorrow: "tomorrow",
-  yesterday: "yesterday",
-  weekly: "weekly",
-  monthly: "monthly",
-  yearly: "this-year",
-  "this-year": "this-year",
-  "next-month": "next-month",
-  "next-year": "next-year",
-};
-
 export async function generateStaticParams() {
   const paramsList: { slug: string; period: string }[] = [];
   zodiacSigns.forEach((sign) => {
-    Object.keys(timeframes).forEach((tf) => {
+    Object.keys(PERIOD_SLUG_MAP).forEach((tf) => {
       paramsList.push({
         slug: sign.toLowerCase(),
         period: tf,
@@ -37,7 +25,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, period } = await params;
   const sign = slug.charAt(0).toUpperCase() + slug.slice(1);
-  const mappedPeriod = timeframes[period];
+  const mappedPeriod = PERIOD_SLUG_MAP[period];
 
   if (!zodiacSigns.includes(sign) || !mappedPeriod) {
     return {};
@@ -52,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function HoroscopeSlugPeriodPage({ params }: Props) {
   const { slug, period } = await params;
   const sign = slug.charAt(0).toUpperCase() + slug.slice(1);
-  const mappedPeriod = timeframes[period];
+  const mappedPeriod = PERIOD_SLUG_MAP[period];
 
   if (!zodiacSigns.includes(sign) || !mappedPeriod) {
     notFound();

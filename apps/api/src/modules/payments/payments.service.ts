@@ -18,9 +18,9 @@ export class PaymentsService {
     private readonly walletService: WalletService,
     private readonly configService: ConfigService,
   ) {
-    this.keyId = this.configService.get<string>("razorpay.keyId") || "";
-    this.keySecret = this.configService.get<string>("razorpay.keySecret") || "";
-    this.webhookSecret = this.configService.get<string>("razorpay.webhookSecret") || "";
+    this.keyId = (this.configService.get<string>("razorpay.keyId") || "").trim();
+    this.keySecret = (this.configService.get<string>("razorpay.keySecret") || "").trim();
+    this.webhookSecret = (this.configService.get<string>("razorpay.webhookSecret") || "").trim();
   }
 
   private isMockMode(): boolean {

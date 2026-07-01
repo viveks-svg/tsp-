@@ -59,8 +59,10 @@ export class ShopService {
       });
 
       // 2. Generate Razorpay order
+      const hasKeys = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET;
       let rpOrderId = `order_mock_${Math.random().toString(36).substring(2, 15)}`;
-      try {
+      
+      if (hasKeys) {
         const rpOrder = await this.razorpayService.createOrder(
           Math.round(data.totalAmount * 100),
           'INR',
@@ -69,8 +71,8 @@ export class ShopService {
         if (rpOrder && rpOrder.id) {
           rpOrderId = rpOrder.id;
         }
-      } catch (err: any) {
-        console.warn('Razorpay order creation failed, falling back to mock:', err.message);
+      } else {
+        console.warn('Razorpay credentials missing. Running in MOCK Mode.');
       }
       
       // 3. Update shop order with Razorpay ID
@@ -91,8 +93,15 @@ export class ShopService {
 
   async verifyPayment(razorpayOrderId: string, paymentId: string, signature: string) {
     // 1. Verify signature
-    // Mock signature verification
-    const isValid = true;
+    const hasKeys = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET;
+    let isValid = false;
+
+    if (hasKeys) {
+      isValid = this.razorpayService.verifySignature(razorpayOrderId, paymentId, signature);
+    } else {
+      // If no keys configured, allow mock verification for mock orders
+      isValid = razorpayOrderId.startsWith('order_mock_') && signature === 'mock_signature';
+    }
     
     if (!isValid) {
       throw new InternalServerErrorException('Invalid payment signature');

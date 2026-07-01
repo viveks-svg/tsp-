@@ -75,6 +75,7 @@ model User {
   shopOrders          ShopOrder[]
   queues              ConsultationQueue[]
   reviews             ConsultationReview[]
+  horoscopePreference UserHoroscopePreference?
 }
 
 model Wallet {
@@ -612,4 +613,83 @@ model EphemerisCache {
   @@index([cacheKey])
   @@index([expiresAt])
   @@map("ephemeris_cache")
+}
+
+// ─── HOROSCOPE ENGINE ─────────────────────────────────────────────────────────
+
+enum ZodiacSign {
+  ARIES
+  TAURUS
+  GEMINI
+  CANCER
+  LEO
+  VIRGO
+  LIBRA
+  SCORPIO
+  SAGITTARIUS
+  CAPRICORN
+  AQUARIUS
+  PISCES
+}
+
+enum HoroscopePeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum GrahaName {
+  SUN
+  MOON
+  MARS
+  MERCURY
+  JUPITER
+  VENUS
+  SATURN
+  RAHU
+  KETU
+}
+
+model HoroscopeReading {
+  id              String          @id @default(cuid())
+  sign            ZodiacSign
+  period          HoroscopePeriod
+  periodStartDate DateTime        @db.Date
+  periodEndDate   DateTime        @db.Date
+
+  overallText     String
+  loveText        String
+  careerText      String
+  healthText      String
+  financeText     String
+
+  luckyColor      String
+  luckyNumber     Int
+  luckyTime       String?
+  moodTag         String
+  rating          Int             // 1-5, drives star display
+
+  themeTags       String[]        // theme tags used for this assembly, for debugging/audit
+  transitSnapshot Json            // raw {graha: {sign, degree, retrograde, houseFromMoonSign}}[] used
+
+  generatedAt     DateTime        @default(now())
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([sign, period, periodStartDate])
+  @@index([sign, period])
+  @@index([periodStartDate])
+}
+
+model UserHoroscopePreference {
+  id            String      @id @default(cuid())
+  userId        String      @unique
+  natalMoonSign ZodiacSign? // resolved once from user's saved kundali; nullable until kundali generated
+  natalSunSign  ZodiacSign?
+  notifyDaily   Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

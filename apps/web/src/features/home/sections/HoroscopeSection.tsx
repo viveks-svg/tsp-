@@ -1,12 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import FadeUp from "@/components/animations/FadeUp";
-import { zodiacEmojis, horoscopeTexts, row1Signs, row2Signs } from "@/lib/data/zodiac";
+import { zodiacEmojis, row1Signs, row2Signs } from "@/lib/data/zodiac";
+import { apiClient } from "@/lib/http/client";
+import { ENDPOINTS } from "@/lib/constants/http/endpoints";
+import type { HoroscopeReading } from "@/types/horoscope";
 
 export default function HoroscopeSection() {
   const [activeSign, setActiveSign] = useState("Aries");
+  const [reading, setReading] = useState<string>("Loading your cosmic insights...");
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchReading = async () => {
+      setLoading(true);
+      try {
+        const data = await apiClient.get<HoroscopeReading>(
+          ENDPOINTS.HOROSCOPE.GET(activeSign.toUpperCase(), "DAILY")
+        );
+        if (isMounted) {
+          setReading(data.overallText);
+        }
+      } catch (error) {
+        console.error("Failed to fetch daily horoscope:", error);
+        if (isMounted) {
+          setReading("The stars are currently aligning. Check back later for your reading.");
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchReading();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeSign]);
 
   return (
     <section className="py-16 lg:py-20 bg-gradient-to-b from-cream to-white overflow-visible" id="kundli">
@@ -120,8 +152,12 @@ export default function HoroscopeSection() {
                 </p>
 
                 {/* Horoscope Description */}
-                <p className="font-inter text-sm md:text-base font-normal text-[#6B6B6B] leading-relaxed max-w-xl mx-auto px-4">
-                  {horoscopeTexts[activeSign]}
+                <p className="font-inter text-sm md:text-base font-normal text-[#6B6B6B] leading-relaxed max-w-xl mx-auto px-4 min-h-[80px]">
+                  {loading ? (
+                    <span className="animate-pulse">Consulting the stars...</span>
+                  ) : (
+                    reading
+                  )}
                 </p>
               </motion.div>
             </AnimatePresence>

@@ -49,6 +49,21 @@ import {
   MangalDoshaResult,
   AyanamsaResult,
 } from './ephemeris.types';
+import { ZodiacSign, GrahaName } from '@prisma/client';
+
+/** Maps rashi index (0-11) to the Prisma ZodiacSign enum value */
+const ZODIAC_SIGN_FROM_INDEX: ZodiacSign[] = [
+  'ARIES', 'TAURUS', 'GEMINI', 'CANCER', 'LEO', 'VIRGO',
+  'LIBRA', 'SCORPIO', 'SAGITTARIUS', 'CAPRICORN', 'AQUARIUS', 'PISCES',
+];
+
+/** Lightweight planetary position for transit/horoscope calculations */
+export interface TransitPlanetaryPosition {
+  graha: GrahaName;
+  longitude: number;
+  sign: ZodiacSign;
+  retrograde: boolean;
+}
 
 @Injectable()
 export class EphemerisService implements OnModuleInit {
@@ -86,6 +101,53 @@ export class EphemerisService implements OnModuleInit {
   onModuleInit() {
     // Set Lahiri ayanamsa
     swisseph.swe_set_sid_mode(swisseph.SE_SIDM_LAHIRI, 0, 0);
+  }
+
+  /**
+   * Returns sidereal (Lahiri Ayanamsa) positions for all 9 Vedic Grahas for the given date.
+   * Does NOT require a birth place — only needs a date for transit calculations.
+   * Ketu is computed as 180° from Rahu.
+   */
+  getPlanetaryPositions(date: Date): TransitPlanetaryPosition[] {
+    const julianDay = this.getJulianDay(date);
+    const SIDEREAL_FLAG = swisseph.SEFLG_SIDEREAL | swisseph.SEFLG_SPEED;
+
+    const GRAHA_MAP: { name: GrahaName; swissephId: number }[] = [
+      { name: 'SUN', swissephId: swisseph.SE_SUN },
+      { name: 'MOON', swissephId: swisseph.SE_MOON },
+      { name: 'MARS', swissephId: swisseph.SE_MARS },
+      { name: 'MERCURY', swissephId: swisseph.SE_MERCURY },
+      { name: 'JUPITER', swissephId: swisseph.SE_JUPITER },
+      { name: 'VENUS', swissephId: swisseph.SE_VENUS },
+      { name: 'SATURN', swissephId: swisseph.SE_SATURN },
+      { name: 'RAHU', swissephId: swisseph.SE_TRUE_NODE },
+    ];
+
+    const positions: TransitPlanetaryPosition[] = [];
+
+    for (const { name, swissephId } of GRAHA_MAP) {
+      const result = swisseph.swe_calc_ut(julianDay, swissephId, SIDEREAL_FLAG);
+      const rashiIndex = Math.floor(result.longitude / 30);
+      positions.push({
+        graha: name,
+        longitude: result.longitude,
+        sign: ZODIAC_SIGN_FROM_INDEX[rashiIndex],
+        retrograde: result.speedInLongitude < 0,
+      });
+    }
+
+    // Ketu is 180° from Rahu
+    const rahuPosition = positions.find((p) => p.graha === 'RAHU')!;
+    const ketuLongitude = (rahuPosition.longitude + 180) % 360;
+    const ketuRashiIndex = Math.floor(ketuLongitude / 30);
+    positions.push({
+      graha: 'KETU',
+      longitude: ketuLongitude,
+      sign: ZODIAC_SIGN_FROM_INDEX[ketuRashiIndex],
+      retrograde: true, // Ketu is always retrograde by nature
+    });
+
+    return positions;
   }
 
   getJulianDay(date: Date): number {
