@@ -114,6 +114,11 @@ export class HoroscopeService {
         transits,
       );
       generated++;
+      
+      // Clear the cache for this sign and period so the new reading is served
+      const istOffset = 5.5 * 60 * 60 * 1000;
+      const todayKey = new Date(Date.now() + istOffset).toISOString().split('T')[0];
+      await this.redisService.del(`horoscope:${sign}:${period}:${todayKey}`);
     }
 
     this.logger.log(
