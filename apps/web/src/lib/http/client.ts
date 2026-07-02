@@ -7,7 +7,7 @@
  */
 
 const envUrl = process.env.NEXT_PUBLIC_API_URL;
-const API_BASE_URL = (envUrl && envUrl !== "undefined") ? envUrl : "http://localhost:3001/api/v1";
+const API_BASE_URL = (envUrl && envUrl !== "undefined") ? envUrl : "http://127.0.0.1:3001/api/v1";
 
 class ApiClient {
   private baseUrl: string;

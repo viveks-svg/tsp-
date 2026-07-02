@@ -29,8 +29,11 @@ export class HoroscopeRepository {
     assembled: AssembledReading,
     transitSnapshot: unknown,
   ): Promise<HoroscopeReading> {
-    // Normalize to date-only (strip time component)
-    const periodStartDate = new Date(date.toISOString().split('T')[0]);
+    // Normalize to date-only (strip time component) based on IST
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(date.getTime() + istOffset);
+    const dateStringIST = istDate.toISOString().split('T')[0];
+    const periodStartDate = new Date(dateStringIST);
     const periodEndDate = this.computePeriodEndDate(period, periodStartDate);
 
     return this.prisma.horoscopeReading.upsert({
@@ -68,7 +71,9 @@ export class HoroscopeRepository {
     });
 
     if (reading) {
-      const todayKey = new Date().toISOString().split('T')[0];
+      const istOffset = 5.5 * 60 * 60 * 1000;
+      const todayIST = new Date(Date.now() + istOffset);
+      const todayKey = todayIST.toISOString().split('T')[0];
       const readingKey = reading.periodStartDate.toISOString().split('T')[0];
       if (readingKey !== todayKey && period === 'DAILY') {
         this.logger.warn(

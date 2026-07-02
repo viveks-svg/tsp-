@@ -23,7 +23,7 @@ const nextConfig = {
     ];
   },
   async rewrites() {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3001/api/v1";
     // Strip trailing slash if present to avoid double slashes
     const cleanBackendUrl = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
     return [

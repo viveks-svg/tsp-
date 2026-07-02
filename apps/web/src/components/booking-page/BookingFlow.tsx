@@ -87,19 +87,17 @@ function StepIndicator({ currentStep }: { currentStep: BookingPageStep }) {
             )}
             <div className="flex flex-col items-center gap-1">
               <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                  isActive
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive
                     ? 'bg-[#C8A04A] text-white shadow-[0_0_0_3px_rgba(200,160,74,0.2)]'
                     : isCompleted
                       ? 'bg-[#C8A04A] text-white'
                       : 'bg-[#EFEBE1] text-[#9CA3AF]'
-                }`}
+                  }`}
               >
                 {isCompleted ? '✓' : stepIndex + 1}
               </div>
-              <span className={`text-[10px] font-medium hidden sm:block ${
-                isActive ? 'text-[#C8A04A]' : isCompleted ? 'text-[#8B6914]' : 'text-[#9CA3AF]'
-              }`}>
+              <span className={`text-[10px] font-medium hidden sm:block ${isActive ? 'text-[#C8A04A]' : isCompleted ? 'text-[#8B6914]' : 'text-[#9CA3AF]'
+                }`}>
                 {step.label}
               </span>
             </div>

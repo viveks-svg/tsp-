@@ -48,7 +48,7 @@ export const freeServicesConfigs: Record<string, FreeServiceConfig> = {
       let sunHouse = 3;
       let moonHouse = 8;
       
-      let finalData;
+      let finalData: any;
       try {
         const { fetchBirthChart } = await import("@/lib/api/ephemeris");
         finalData = await fetchBirthChart({
@@ -62,6 +62,7 @@ export const freeServicesConfigs: Record<string, FreeServiceConfig> = {
         const { getKundaliMockData } = await import("../utils/ephemeris-mock");
         finalData = getKundaliMockData(name, values.birthDate, values.birthTime, values.birthPlace);
       }
+      finalData.gender = values.gender || "Male";
 
       const { KundaliDashboard } = await import("@/features/calculators/components/KundaliDashboard");
       

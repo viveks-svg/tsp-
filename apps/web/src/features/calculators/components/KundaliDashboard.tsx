@@ -85,7 +85,7 @@ function BasicTab({ data }: { data: any }) {
       <SectionCard title="Birth Details">
         <DataGrid>
           <DataRow label="Name" value={data.name || "-"} />
-          <DataRow label="Gender" value={"Male"} />
+          <DataRow label="Gender" value={data.gender || "Male"} />
           <DataRow label="Date of Birth" value={data.birthDate} />
           <DataRow label="Time of Birth" value={data.birthTime} />
           <DataRow label="Place of Birth" value={data.birthPlace || "-"} />
