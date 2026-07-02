@@ -26,6 +26,13 @@ interface CallRoomProps {
 export default function CallRoom({ consultationId }: CallRoomProps) {
   const router = useRouter();
 
+  // ── Strict Mode safety ──
+  // This ref tracks whether the component is "truly mounted" vs a Strict Mode
+  // phantom mount/unmount cycle. It is set to true on mount and false on unmount.
+  // The cleanup timeout checks this ref — if the component remounted (Strict Mode),
+  // the ref will be true again and the cleanup is skipped.
+  const isMountedRef = useRef(true);
+
   // Refs for video containers using callback refs to trigger useEffect when they mount
   const [localContainer, setLocalContainer] = useState<HTMLDivElement | null>(null);
   const [remoteContainer, setRemoteContainer] = useState<HTMLDivElement | null>(null);
@@ -60,7 +67,7 @@ export default function CallRoom({ consultationId }: CallRoomProps) {
   } = useCallStore();
 
   // Hooks
-  const { initiateCall, endCall, toggleMedia, joinCallRoom } = useCallSocket();
+  const { initiateCall, endCall, cancelCall, toggleMedia, joinCallRoom } = useCallSocket();
   const {
     joinRoom,
     leaveRoom,
@@ -86,6 +93,9 @@ export default function CallRoom({ consultationId }: CallRoomProps) {
   // ── 1. Load session data and initiate the call ──
   useEffect(() => {
     let cancelled = false;
+    isMountedRef.current = true;
+
+    console.log(`[CallRoom] Mount — consultationId=${consultationId}, status=${useCallStore.getState().status}`);
 
     const initCall = async () => {
       try {
@@ -101,6 +111,9 @@ export default function CallRoom({ consultationId }: CallRoomProps) {
         });
 
         const currentStoreStatus = useCallStore.getState().status;
+        console.log(
+          `[CallRoom] Session loaded — DB status: ${session.callSession?.status}, store status: ${currentStoreStatus}`,
+        );
 
         // If the call session is already active (reconnection), we need the token
         if (session.callSession?.status === "ACTIVE") {
@@ -151,13 +164,16 @@ export default function CallRoom({ consultationId }: CallRoomProps) {
         } else if (
           session.callSession?.status === "COMPLETED" ||
           session.callSession?.status === "MISSED" ||
-          session.callSession?.status === "REJECTED"
+          session.callSession?.status === "REJECTED" ||
+          session.callSession?.status === "CANCELLED"
         ) {
-          setEnded(session.callSession.status);
+          setEnded(session.callSession.endReason || session.callSession.status);
         }
       } catch (err) {
-        console.error("Failed to load call session:", err);
-        setEnded("LOAD_FAILED");
+        console.error("[CallRoom] Failed to load call session:", err);
+        if (!cancelled) {
+          setEnded("LOAD_FAILED");
+        }
       }
     };
 
@@ -170,7 +186,7 @@ export default function CallRoom({ consultationId }: CallRoomProps) {
 
   // ── 2. Join TRTC when we have credentials ──
   useEffect(() => {
-    console.log("[CallRoom] useEffect triggered. Status:", status, {
+    console.log("[CallRoom] TRTC join check — Status:", status, {
       channelName,
       userSig: userSig ? "EXISTS" : "MISSING",
       trtcUserId,
@@ -229,6 +245,7 @@ export default function CallRoom({ consultationId }: CallRoomProps) {
   // ── 4. Cleanup on call end ──
   useEffect(() => {
     if (status === "ended" || status === "failed") {
+      console.log(`[CallRoom] Call ended/failed — leaving TRTC room, reason: ${endReason}`);
       void leaveRoom();
       void hydrateAuth(); // Refresh wallet balance
     }
@@ -237,42 +254,66 @@ export default function CallRoom({ consultationId }: CallRoomProps) {
   // ── 5. Browser close/tab close handler ──
   useEffect(() => {
     const handleBeforeUnload = () => {
-      if (status === "active" || status === "ringing" || status === "connecting") {
+      const currentStatus = useCallStore.getState().status;
+      if (currentStatus === "active") {
         endCall(consultationId);
+      } else if (currentStatus === "ringing" || currentStatus === "initiating") {
+        cancelCall(consultationId);
       }
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [status, consultationId, endCall]);
+  }, [consultationId, endCall, cancelCall]);
 
-  // ── 6. Cleanup on unmount ──
+  // ── 6. Cleanup on unmount — Strict Mode safe ──
   const unmountTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // On (re)mount, clear any pending cleanup timeout from a previous unmount.
+    // This is critical for React Strict Mode: the rapid unmount→remount cycle
+    // will set a timeout on unmount, and this line cancels it on remount.
+    isMountedRef.current = true;
     if (unmountTimeoutRef.current) {
+      console.log("[CallRoom] Clearing stale unmount timeout (Strict Mode remount detected)");
       clearTimeout(unmountTimeoutRef.current);
       unmountTimeoutRef.current = null;
     }
 
     return () => {
-      // Delay cleanup by 100ms. If this is a Strict Mode dummy unmount, the
-      // immediate remount will clear this timeout. If it's a real unmount
-      // (user navigated away), the timeout will execute and end the call.
+      isMountedRef.current = false;
+
+      // Delay cleanup to distinguish real unmount from Strict Mode teardown.
+      // If this is Strict Mode, the component will remount within ~1ms and
+      // the timeout will be cleared above. If it's a real unmount (navigation),
+      // the timeout fires after 200ms and we end/cancel the call.
       unmountTimeoutRef.current = setTimeout(() => {
-        const currentState = useCallStore.getState();
-        if (
-          currentState.status === "active" ||
-          currentState.status === "connecting" ||
-          currentState.status === "ringing" ||
-          currentState.status === "initiating"
-        ) {
-          endCall(consultationId);
+        // Double-check: if component remounted, isMountedRef will be true
+        if (isMountedRef.current) {
+          console.log("[CallRoom] Unmount timeout fired but component is mounted — skipping cleanup");
+          return;
         }
-        reset();
-      }, 100);
+
+        const currentState = useCallStore.getState();
+        console.log(`[CallRoom] Real unmount — cleaning up, status: ${currentState.status}`);
+
+        if (currentState.status === "active") {
+          endCall(consultationId);
+        } else if (
+          currentState.status === "ringing" ||
+          currentState.status === "initiating" ||
+          currentState.status === "connecting"
+        ) {
+          cancelCall(consultationId);
+        }
+        // Only reset if we actually did something, to avoid wiping state for
+        // components that are already in idle/ended state
+        if (currentState.status !== "idle" && currentState.status !== "ended" && currentState.status !== "failed") {
+          reset();
+        }
+      }, 200);
     };
-  }, [consultationId, endCall, reset]);
+  }, [consultationId, endCall, cancelCall, reset]);
 
   // ── Handlers ──
   const handleToggleAudio = () => {
@@ -284,12 +325,14 @@ export default function CallRoom({ consultationId }: CallRoomProps) {
   };
 
   const handleEndCall = () => {
+    console.log(`[CallRoom] User clicked end call — status: ${status}`);
     endCall(consultationId);
     setEnded("USER_ENDED");
   };
 
   const handleCancelRinging = () => {
-    endCall(consultationId);
+    console.log(`[CallRoom] User cancelled ringing — emitting call:cancel`);
+    cancelCall(consultationId);
     reset();
     router.push("/consultation/call");
   };

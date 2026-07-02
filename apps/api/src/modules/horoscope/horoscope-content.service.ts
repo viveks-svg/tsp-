@@ -138,25 +138,23 @@ export class HoroscopeContentService {
     sign: ZodiacSign,
     dateKey: string,
   ): string {
-    // Collect all candidate texts from all dominant tags for this category
     const candidates: string[] = [];
     for (const tag of tags) {
       const templates = TEXT_TEMPLATES[tag]?.[category];
       if (templates && templates.length > 0) {
-        candidates.push(...templates);
+        // Add a deterministic shuffle based on sign and date so different signs get different order
+        const shuffled = [...templates].sort(
+          (a, b) => this.hashString(a + sign + dateKey) - this.hashString(b + sign + dateKey)
+        );
+        candidates.push(...shuffled);
       }
     }
 
-    // Fallback if no templates match (should not happen with full coverage)
     if (candidates.length === 0) {
       return 'The celestial energies align to support your intentions today. Trust the path ahead.';
     }
 
-    // Deterministic seed: hash(sign + dateKey + category)
-    const seed = this.hashString(`${sign}:${dateKey}:${category}`);
-    const index = seed % candidates.length;
-
-    return candidates[index];
+    return candidates.join(' ');
   }
 
   /**

@@ -192,10 +192,16 @@ export function useTrtcClient() {
     }
   }, []);
 
-  // Cleanup on unmount
+  // Cleanup on unmount — only if we actually joined a room
   useEffect(() => {
     return () => {
-      void leaveRoom();
+      // Guard: only clean up if we actually joined a room.
+      // Prevents Strict Mode double-unmount from destroying a client
+      // that was never initialized.
+      if (isJoiningOrJoinedRef.current || trtcRef.current) {
+        console.log("[TRTC] Unmount cleanup — leaving room");
+        void leaveRoom();
+      }
     };
   }, [leaveRoom]);
 

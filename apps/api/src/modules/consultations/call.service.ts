@@ -2,14 +2,37 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 import { TrtcService } from "../../integrations/trtc/trtc.service";
 import { WalletService } from "../wallet/wallet.service";
 
+/**
+ * Terminal call session states — once a session enters one of these,
+ * no further transitions are allowed.
+ */
+const TERMINAL_STATUSES = ["COMPLETED", "MISSED", "REJECTED", "FAILED", "CANCELLED"] as const;
+
+/** Shared return type for endCall/cancelCall to break circular type inference. */
+export interface CallResult {
+  consultationId: string;
+  status: string;
+  durationSeconds?: number | null;
+  durationMin?: number;
+  cost?: string;
+  endReason: string;
+}
+
+function isTerminal(status: string): boolean {
+  return (TERMINAL_STATUSES as readonly string[]).includes(status);
+}
+
 @Injectable()
 export class CallService {
+  private readonly logger = new Logger("CallService");
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly trtcService: TrtcService,
@@ -59,9 +82,10 @@ export class CallService {
 
     for (const session of existingUserCalls) {
       if (session.status === "RINGING") {
+        this.logger.log(`[CALL:${session.consultationId}] Superseding stale RINGING session ${session.id}`);
         await this.prisma.callSession.update({
           where: { id: session.id },
-          data: { status: "MISSED", endReason: "SUPERSEDED" },
+          data: { status: "CANCELLED", endReason: "SUPERSEDED" },
         });
         await this.prisma.consultation.update({
           where: { id: session.consultationId },
@@ -72,6 +96,7 @@ export class CallService {
           await this.endCall(userId, session.consultationId, "SUPERSEDED");
         } catch (e) {
           // Fallback force cleanup if standard endCall fails
+          this.logger.warn(`[CALL:${session.consultationId}] Force cleanup of stale ACTIVE session`);
           await this.prisma.callSession.update({
             where: { id: session.id },
             data: { status: "FAILED", endReason: "SUPERSEDED_FORCE" },
@@ -124,6 +149,11 @@ export class CallService {
         },
       });
 
+      this.logger.log(
+        `[CALL:${consultation.id}] Initiated — callSessionId=${callSession.id}, ` +
+        `caller=${userId}, astrologer=${astrologer.userId}`,
+      );
+
       return {
         consultationId: consultation.id,
         callSessionId: callSession.id,
@@ -138,7 +168,8 @@ export class CallService {
 
   /**
    * Astrologer accepts the incoming call.
-   * Transitions CallSession to ACTIVE, generates TRTC userSig for both parties.
+   * Transitions CallSession RINGING → ACTIVE, generates TRTC userSig for both parties.
+   * Idempotent: if already ACTIVE, returns existing credentials.
    */
   async acceptCall(astrologerUserId: string, consultationId: string) {
     const consultation = await this.prisma.consultation.findUnique({
@@ -158,20 +189,76 @@ export class CallService {
       throw new ForbiddenException("You are not the astrologer for this consultation");
     }
 
-    if (!consultation.callSession || consultation.callSession.status !== "RINGING") {
-      throw new BadRequestException(
-        `Call cannot be accepted. Current status: ${consultation.callSession?.status ?? "NO_SESSION"}`,
-      );
+    if (!consultation.callSession) {
+      throw new BadRequestException("No call session found");
     }
 
     const callSession = consultation.callSession;
 
-    // Calculate max duration from user's wallet balance
+    // Idempotent: if already ACTIVE, regenerate credentials and return
+    if (callSession.status === "ACTIVE") {
+      this.logger.log(`[CALL:${consultationId}] Accept called but already ACTIVE — returning credentials`);
+      return this.generateAcceptResult(consultation, callSession);
+    }
+
+    // If already in a terminal state, reject the accept
+    if (isTerminal(callSession.status)) {
+      this.logger.warn(
+        `[CALL:${consultationId}] Accept rejected — session already in terminal state: ${callSession.status} (reason: ${callSession.endReason})`,
+      );
+      throw new BadRequestException(
+        `Call cannot be accepted. Current status: ${callSession.status}`,
+      );
+    }
+
+    if (callSession.status !== "RINGING") {
+      throw new BadRequestException(
+        `Call cannot be accepted. Current status: ${callSession.status}`,
+      );
+    }
+
+    // Use conditional update to prevent race with timeout job
+    const now = new Date();
+    const updateResult = await this.prisma.callSession.updateMany({
+      where: {
+        id: callSession.id,
+        status: "RINGING", // Only transition if still RINGING
+      },
+      data: { status: "ACTIVE", startedAt: now },
+    });
+
+    if (updateResult.count === 0) {
+      // Another event (timeout) already transitioned this session
+      const refreshed = await this.prisma.callSession.findUnique({ where: { id: callSession.id } });
+      this.logger.warn(
+        `[CALL:${consultationId}] Accept lost race — current status: ${refreshed?.status}`,
+      );
+      throw new BadRequestException(
+        `Call cannot be accepted. Current status: ${refreshed?.status ?? "UNKNOWN"}`,
+      );
+    }
+
+    await this.prisma.consultation.update({
+      where: { id: consultationId },
+      data: { status: "ACTIVE" },
+    });
+
+    this.logger.log(`[CALL:${consultationId}] Accepted — RINGING → ACTIVE by ${astrologerUserId}`);
+
+    return this.generateAcceptResult(consultation, callSession);
+  }
+
+  /**
+   * Generate the TRTC credentials response for an accepted call.
+   */
+  private generateAcceptResult(
+    consultation: any,
+    callSession: any,
+  ) {
     const rate = Number(consultation.lockedPricingPerMin);
     const balance = Number(consultation.user.wallet?.balance ?? 0);
     const maxDurationSeconds = Math.max(60, Math.floor((balance / rate) * 60));
 
-    // Generate TRTC userSig for both participants
     const tokenExpireSeconds = Math.min(maxDurationSeconds + 300, 7200);
     const userSig = this.trtcService.generateUserSig(
       callSession.trtcUserIdCaller,
@@ -182,21 +269,8 @@ export class CallService {
       tokenExpireSeconds,
     );
 
-    // Transition to ACTIVE
-    const now = new Date();
-    await this.prisma.$transaction([
-      this.prisma.callSession.update({
-        where: { id: callSession.id },
-        data: { status: "ACTIVE", startedAt: now },
-      }),
-      this.prisma.consultation.update({
-        where: { id: consultationId },
-        data: { status: "ACTIVE" },
-      }),
-    ]);
-
     return {
-      consultationId,
+      consultationId: consultation.id,
       channelName: callSession.channelName,
       sdkAppId: this.trtcService.getSdkAppId(),
       maxDurationSeconds,
@@ -215,6 +289,7 @@ export class CallService {
 
   /**
    * Astrologer rejects the call.
+   * Idempotent: if already in a terminal state, no-op.
    */
   async rejectCall(astrologerUserId: string, consultationId: string) {
     const consultation = await this.prisma.consultation.findUnique({
@@ -230,28 +305,118 @@ export class CallService {
       throw new ForbiddenException("You are not the astrologer for this consultation");
     }
 
-    if (!consultation.callSession || consultation.callSession.status !== "RINGING") {
+    if (!consultation.callSession) {
+      throw new BadRequestException("No call session found");
+    }
+
+    // Idempotent: already terminal → no-op
+    if (isTerminal(consultation.callSession.status)) {
+      this.logger.log(
+        `[CALL:${consultationId}] Reject no-op — already ${consultation.callSession.status}`,
+      );
+      return { consultationId, status: consultation.callSession.status };
+    }
+
+    if (consultation.callSession.status !== "RINGING") {
       throw new BadRequestException("Call is not in ringing state");
     }
 
-    await this.prisma.$transaction([
-      this.prisma.callSession.update({
-        where: { id: consultation.callSession.id },
-        data: { status: "REJECTED", endReason: "ASTROLOGER_REJECTED" },
-      }),
-      this.prisma.consultation.update({
+    // Conditional update to prevent race
+    const updateResult = await this.prisma.callSession.updateMany({
+      where: { id: consultation.callSession.id, status: "RINGING" },
+      data: { status: "REJECTED", endReason: "ASTROLOGER_REJECTED" },
+    });
+
+    if (updateResult.count > 0) {
+      await this.prisma.consultation.update({
         where: { id: consultationId },
         data: { status: "CANCELLED" },
-      }),
-    ]);
+      });
+      this.logger.log(`[CALL:${consultationId}] Rejected by ${astrologerUserId}`);
+    }
 
     return { consultationId, status: "REJECTED" };
   }
 
   /**
-   * End an active call. Calculates duration, handles billing, marks as COMPLETED.
+   * Caller cancels a ringing call before the callee accepts.
+   * Transitions RINGING → CANCELLED.
+   * Idempotent: if already terminal, returns current state.
    */
-  async endCall(userId: string, consultationId: string, endReason = "USER_ENDED") {
+  async cancelCall(userId: string, consultationId: string): Promise<CallResult> {
+    const consultation = await this.prisma.consultation.findUnique({
+      where: { id: consultationId },
+      include: { callSession: true },
+    });
+
+    if (!consultation) {
+      throw new NotFoundException("Consultation not found");
+    }
+
+    if (consultation.userId !== userId) {
+      throw new ForbiddenException("You are not the caller for this consultation");
+    }
+
+    if (!consultation.callSession) {
+      throw new BadRequestException("No call session found");
+    }
+
+    // Idempotent: already terminal → return current state
+    if (isTerminal(consultation.callSession.status)) {
+      this.logger.log(
+        `[CALL:${consultationId}] Cancel no-op — already ${consultation.callSession.status} (reason: ${consultation.callSession.endReason})`,
+      );
+      return {
+        consultationId,
+        status: consultation.callSession.status,
+        endReason: consultation.callSession.endReason || "ALREADY_ENDED",
+      };
+    }
+
+    if (consultation.callSession.status !== "RINGING") {
+      // If somehow ACTIVE, delegate to endCall
+      if (consultation.callSession.status === "ACTIVE") {
+        this.logger.log(
+          `[CALL:${consultationId}] Cancel called but ACTIVE — delegating to endCall`,
+        );
+        return this.endCall(userId, consultationId, "CALLER_CANCELLED");
+      }
+      throw new BadRequestException(
+        `Call cannot be cancelled. Current status: ${consultation.callSession.status}`,
+      );
+    }
+
+    // Conditional update to prevent race with accept/timeout
+    const updateResult = await this.prisma.callSession.updateMany({
+      where: { id: consultation.callSession.id, status: "RINGING" },
+      data: { status: "CANCELLED", endReason: "CALLER_CANCELLED" },
+    });
+
+    if (updateResult.count > 0) {
+      await this.prisma.consultation.update({
+        where: { id: consultationId },
+        data: { status: "CANCELLED" },
+      });
+      this.logger.log(`[CALL:${consultationId}] Cancelled by caller ${userId} — RINGING → CANCELLED`);
+    } else {
+      // Lost race — re-read to find what happened
+      const refreshed = await this.prisma.callSession.findUnique({
+        where: { id: consultation.callSession.id },
+      });
+      this.logger.warn(
+        `[CALL:${consultationId}] Cancel lost race — current status: ${refreshed?.status}`,
+      );
+    }
+
+    return { consultationId, status: "CANCELLED", endReason: "CALLER_CANCELLED" };
+  }
+
+  /**
+   * End an active call. Calculates duration, handles billing, marks as COMPLETED.
+   * If called on a RINGING session, delegates to cancelCall.
+   * Idempotent: if already terminal, returns current state.
+   */
+  async endCall(userId: string, consultationId: string, endReason = "USER_ENDED"): Promise<CallResult> {
     const consultation = await this.prisma.consultation.findUnique({
       where: { id: consultationId },
       include: {
@@ -275,16 +440,31 @@ export class CallService {
       throw new BadRequestException("No call session found");
     }
 
-    // If already completed, return current state (handles double-end race condition)
-    if (consultation.callSession.status === "COMPLETED") {
+    // Idempotent: if already in a terminal state, return current state (no-op)
+    if (isTerminal(consultation.callSession.status)) {
+      this.logger.log(
+        `[CALL:${consultationId}] endCall no-op — already ${consultation.callSession.status} (reason: ${consultation.callSession.endReason})`,
+      );
       return {
         consultationId,
-        status: "COMPLETED",
+        status: consultation.callSession.status,
         durationSeconds: consultation.callSession.durationSeconds,
+        endReason: consultation.callSession.endReason || "ALREADY_ENDED",
       };
     }
 
+    // If RINGING, delegate to cancelCall (caller can't "end" a call that hasn't started)
+    if (consultation.callSession.status === "RINGING") {
+      this.logger.log(
+        `[CALL:${consultationId}] endCall on RINGING — delegating to cancelCall`,
+      );
+      return this.cancelCall(userId, consultationId);
+    }
+
     if (consultation.callSession.status !== "ACTIVE") {
+      this.logger.warn(
+        `[CALL:${consultationId}] endCall rejected — unexpected status: ${consultation.callSession.status}`,
+      );
       throw new BadRequestException(
         `Call cannot be ended. Current status: ${consultation.callSession.status}`,
       );
@@ -299,6 +479,37 @@ export class CallService {
 
     const resolvedEndReason = isAstrologer ? "ASTROLOGER_ENDED" : endReason;
 
+    // Conditional update to prevent double-billing race condition
+    const updateResult = await this.prisma.callSession.updateMany({
+      where: {
+        id: consultation.callSession.id,
+        status: "ACTIVE", // Only end if still ACTIVE
+      },
+      data: {
+        status: "COMPLETED",
+        endedAt: now,
+        durationSeconds,
+        endReason: resolvedEndReason,
+      },
+    });
+
+    if (updateResult.count === 0) {
+      // Another event already ended this call — return safely
+      const refreshed = await this.prisma.callSession.findUnique({
+        where: { id: consultation.callSession.id },
+      });
+      this.logger.warn(
+        `[CALL:${consultationId}] endCall lost race — current status: ${refreshed?.status}`,
+      );
+      return {
+        consultationId,
+        status: refreshed?.status ?? "UNKNOWN",
+        durationSeconds: refreshed?.durationSeconds,
+        endReason: refreshed?.endReason || "ALREADY_ENDED",
+      };
+    }
+
+    // Billing + consultation update inside transaction
     return this.prisma.$transaction(async (tx) => {
       // 1. Debit user wallet
       await this.walletService.debitWallet(
@@ -320,18 +531,7 @@ export class CallService {
         consultation.id,
       );
 
-      // 3. Update call session
-      await tx.callSession.update({
-        where: { id: consultation.callSession!.id },
-        data: {
-          status: "COMPLETED",
-          endedAt: now,
-          durationSeconds,
-          endReason: resolvedEndReason,
-        },
-      });
-
-      // 4. Update consultation
+      // 3. Update consultation
       await tx.consultation.update({
         where: { id: consultationId },
         data: {
@@ -340,6 +540,11 @@ export class CallService {
           cost,
         },
       });
+
+      this.logger.log(
+        `[CALL:${consultationId}] Ended — ACTIVE → COMPLETED, duration=${durationSeconds}s, ` +
+        `cost=${cost.toString()}, reason=${resolvedEndReason}`,
+      );
 
       return {
         consultationId,
@@ -354,26 +559,40 @@ export class CallService {
 
   /**
    * Mark a ringing call as missed (30s timeout).
+   * Uses conditional update to prevent race with accept/cancel.
    */
   async markMissed(consultationId: string) {
     const callSession = await this.prisma.callSession.findUnique({
       where: { consultationId },
     });
 
-    if (!callSession || callSession.status !== "RINGING") {
-      return; // Already transitioned
+    if (!callSession) {
+      this.logger.warn(`[CALL:${consultationId}] markMissed — no call session found`);
+      return;
     }
 
-    await this.prisma.$transaction([
-      this.prisma.callSession.update({
-        where: { id: callSession.id },
-        data: { status: "MISSED", endReason: "TIMEOUT" },
-      }),
-      this.prisma.consultation.update({
+    if (callSession.status !== "RINGING") {
+      this.logger.log(
+        `[CALL:${consultationId}] markMissed no-op — already ${callSession.status}`,
+      );
+      return; // Already transitioned (accepted, cancelled, etc.)
+    }
+
+    // Conditional update: only mark missed if still RINGING
+    const updateResult = await this.prisma.callSession.updateMany({
+      where: { id: callSession.id, status: "RINGING" },
+      data: { status: "MISSED", endReason: "TIMEOUT_NO_ANSWER" },
+    });
+
+    if (updateResult.count > 0) {
+      await this.prisma.consultation.update({
         where: { id: consultationId },
         data: { status: "CANCELLED" },
-      }),
-    ]);
+      });
+      this.logger.log(`[CALL:${consultationId}] Marked as MISSED — RINGING → MISSED (timeout)`);
+    } else {
+      this.logger.log(`[CALL:${consultationId}] markMissed lost race — session already transitioned`);
+    }
   }
 
   /**

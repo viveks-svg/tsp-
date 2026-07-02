@@ -15,6 +15,9 @@ export type CallStatus =
   | "ended"
   | "failed";
 
+/** Terminal UI states — once entered, only reset() can leave them. */
+const TERMINAL_UI_STATES: CallStatus[] = ["ended", "failed"];
+
 export interface CallState {
   // Call status
   status: CallStatus;
@@ -83,7 +86,7 @@ const initialState = {
   incomingCall: null,
 };
 
-export const useCallStore = create<CallState>()((set) => ({
+export const useCallStore = create<CallState>()((set, get) => ({
   ...initialState,
 
   setInitiating: (consultationId) =>
@@ -92,7 +95,13 @@ export const useCallStore = create<CallState>()((set) => ({
   setRinging: () =>
     set({ status: "ringing" }),
 
-  setConnecting: (data) =>
+  setConnecting: (data) => {
+    const current = get().status;
+    // Don't allow backward transitions from terminal states
+    if (TERMINAL_UI_STATES.includes(current)) {
+      console.warn(`[CallStore] Ignoring setConnecting — already in terminal state: ${current}`);
+      return;
+    }
     set({
       status: "connecting",
       channelName: data.channelName,
@@ -100,19 +109,41 @@ export const useCallStore = create<CallState>()((set) => ({
       trtcUserId: data.trtcUserId,
       sdkAppId: data.sdkAppId,
       maxDurationSeconds: data.maxDurationSeconds,
-    }),
+    });
+  },
 
-  setActive: () =>
-    set({ status: "active" }),
+  setActive: () => {
+    const current = get().status;
+    if (TERMINAL_UI_STATES.includes(current)) {
+      console.warn(`[CallStore] Ignoring setActive — already in terminal state: ${current}`);
+      return;
+    }
+    set({ status: "active" });
+  },
 
   setRemoteUid: (uid) =>
     set({ remoteUid: uid }),
 
-  setEnded: (reason) =>
-    set({ status: "ended", endReason: reason }),
+  setEnded: (reason) => {
+    const current = get().status;
+    // Prevent re-entering ended state (idempotent)
+    if (current === "ended" || current === "failed") {
+      console.log(`[CallStore] setEnded no-op — already ${current} (existing reason: ${get().endReason}, new: ${reason})`);
+      return;
+    }
+    console.log(`[CallStore] ${current} → ended (reason: ${reason})`);
+    set({ status: "ended", endReason: reason });
+  },
 
-  setFailed: (reason) =>
-    set({ status: "failed", endReason: reason }),
+  setFailed: (reason) => {
+    const current = get().status;
+    if (current === "ended" || current === "failed") {
+      console.log(`[CallStore] setFailed no-op — already ${current}`);
+      return;
+    }
+    console.log(`[CallStore] ${current} → failed (reason: ${reason})`);
+    set({ status: "failed", endReason: reason });
+  },
 
   toggleAudio: () =>
     set((state) => ({ isAudioMuted: !state.isAudioMuted })),

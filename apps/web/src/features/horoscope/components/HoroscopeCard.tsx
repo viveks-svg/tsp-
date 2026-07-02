@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Heart, Briefcase, Activity, Wallet, Sparkles, ChevronRight, Zap, Sun } from "lucide-react";
 import {
   Card,
@@ -39,6 +40,56 @@ function getCompatibilityScore(sign1: string, sign2: string): number {
   return 40 + (Math.abs(hash) % 55); // Score between 40 and 95
 }
 
+function ExpandableReadingCard({ 
+  title, 
+  text, 
+  icon: Icon, 
+  colorClasses 
+}: { 
+  title: string;
+  text: string;
+  icon: any;
+  colorClasses: {
+    border: string;
+    borderHover: string;
+    bg: string;
+    text: string;
+    shadow: string;
+  }
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div 
+      className={`bg-white rounded-2xl p-5 border ${colorClasses.border} ${colorClasses.shadow} relative overflow-hidden group ${colorClasses.borderHover} transition-all duration-300 cursor-pointer`}
+      onClick={() => setExpanded(!expanded)}
+    >
+      <div className={`absolute top-0 left-0 w-1 h-full ${colorClasses.bg}`} />
+      <div className="flex items-center gap-2 mb-3">
+        <Icon className={`w-4 h-4 ${colorClasses.text}`} />
+        <h4 className={`text-xs font-bold ${colorClasses.text} tracking-wider uppercase`}>{title}</h4>
+      </div>
+      
+      {expanded ? (
+        <div className="space-y-3 mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          {text.split('. ').map((sentence: string, i: number) => {
+            if (!sentence.trim()) return null;
+            return <p key={i} className="text-sm text-gray-600 leading-relaxed">{sentence.trim()}.</p>;
+          })}
+        </div>
+      ) : (
+        <p className={`text-sm text-gray-600 leading-relaxed mb-4 line-clamp-2 transition-all`}>
+          {text}
+        </p>
+      )}
+
+      <button className={`text-xs font-semibold ${colorClasses.text} flex items-center gap-1 group-hover:gap-2 transition-all`}>
+        {expanded ? 'Read Less' : 'Read More'} <ChevronRight className={`w-3 h-3 ${expanded ? '-rotate-90' : ''} transition-transform`} />
+      </button>
+    </div>
+  );
+}
+
 function HoroscopeCardSkeleton() {
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -48,9 +99,9 @@ function HoroscopeCardSkeleton() {
 
         <div className="text-center relative z-10 flex flex-col items-center">
           <div className="relative w-32 h-32 mb-6">
-            <img 
-              src="/images/cosmic-wheel.png" 
-              alt="Aligning cosmic energies..." 
+            <img
+              src="/images/cosmic-wheel.png"
+              alt="Aligning cosmic energies..."
               className="w-full h-full object-contain animate-spin-clockwise-60 filter drop-shadow-[0_0_15px_rgba(147,51,234,0.15)]"
             />
           </div>
@@ -98,18 +149,18 @@ export default function HoroscopeCard({
   if (!data) return <HoroscopeEmptyState sign={sign} period={period} />;
 
   const periodLabel = HOROSCOPE_PERIODS.find((p) => p.value === period)?.label ?? period;
-  
+
   // Format date correctly
   const startDate = new Date(data.periodStartDate);
   const formattedDate = startDate.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  
+
   const loveScore = getDeterministicScore(sign, data.periodStartDate, 'love');
   const careerScore = getDeterministicScore(sign, data.periodStartDate, 'career');
   const moneyScore = getDeterministicScore(sign, data.periodStartDate, 'money');
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
+
       {/* Main Overall Card */}
       <Card className="rounded-card-lg shadow-card border-border overflow-hidden bg-white">
         <CardHeader className="border-b border-border bg-[#FAF5FF]/30 pb-6">
@@ -194,66 +245,62 @@ export default function HoroscopeCard({
       <div>
         <h3 className="font-heading text-xl font-bold text-dark mb-4 px-1">Detailed Reading</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
+
           {/* Love Card */}
-          <div className="bg-white rounded-2xl p-5 border border-pink-100 shadow-[0_2px_10px_rgba(236,72,153,0.04)] relative overflow-hidden group hover:border-pink-200 transition-colors">
-            <div className="absolute top-0 left-0 w-1 h-full bg-pink-500" />
-            <div className="flex items-center gap-2 mb-3">
-              <Heart className="w-4 h-4 text-pink-500" />
-              <h4 className="text-xs font-bold text-pink-500 tracking-wider uppercase">Love</h4>
-            </div>
-            <p className="text-sm text-gray-600 leading-relaxed mb-4 line-clamp-2 group-hover:line-clamp-none transition-all">
-              {data.loveText}
-            </p>
-            <button className="text-xs font-semibold text-pink-600 flex items-center gap-1 group-hover:gap-2 transition-all">
-              Read More <ChevronRight className="w-3 h-3" />
-            </button>
-          </div>
+          <ExpandableReadingCard
+            title="Love"
+            text={data.loveText}
+            icon={Heart}
+            colorClasses={{
+              border: "border-pink-100",
+              borderHover: "hover:border-pink-200",
+              bg: "bg-pink-500",
+              text: "text-pink-500",
+              shadow: "shadow-[0_2px_10px_rgba(236,72,153,0.04)]",
+            }}
+          />
 
           {/* Career Card */}
-          <div className="bg-white rounded-2xl p-5 border border-blue-100 shadow-[0_2px_10px_rgba(59,130,246,0.04)] relative overflow-hidden group hover:border-blue-200 transition-colors">
-            <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
-            <div className="flex items-center gap-2 mb-3">
-              <Briefcase className="w-4 h-4 text-blue-500" />
-              <h4 className="text-xs font-bold text-blue-500 tracking-wider uppercase">Career</h4>
-            </div>
-            <p className="text-sm text-gray-600 leading-relaxed mb-4 line-clamp-2 group-hover:line-clamp-none transition-all">
-              {data.careerText}
-            </p>
-            <button className="text-xs font-semibold text-blue-600 flex items-center gap-1 group-hover:gap-2 transition-all">
-              Read More <ChevronRight className="w-3 h-3" />
-            </button>
-          </div>
+          <ExpandableReadingCard
+            title="Career"
+            text={data.careerText}
+            icon={Briefcase}
+            colorClasses={{
+              border: "border-blue-100",
+              borderHover: "hover:border-blue-200",
+              bg: "bg-blue-500",
+              text: "text-blue-500",
+              shadow: "shadow-[0_2px_10px_rgba(59,130,246,0.04)]",
+            }}
+          />
 
           {/* Finance Card */}
-          <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-[0_2px_10px_rgba(16,185,129,0.04)] relative overflow-hidden group hover:border-emerald-200 transition-colors">
-            <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
-            <div className="flex items-center gap-2 mb-3">
-              <Wallet className="w-4 h-4 text-emerald-500" />
-              <h4 className="text-xs font-bold text-emerald-500 tracking-wider uppercase">Finance</h4>
-            </div>
-            <p className="text-sm text-gray-600 leading-relaxed mb-4 line-clamp-2 group-hover:line-clamp-none transition-all">
-              {data.financeText}
-            </p>
-            <button className="text-xs font-semibold text-emerald-600 flex items-center gap-1 group-hover:gap-2 transition-all">
-              Read More <ChevronRight className="w-3 h-3" />
-            </button>
-          </div>
+          <ExpandableReadingCard
+            title="Finance"
+            text={data.financeText}
+            icon={Wallet}
+            colorClasses={{
+              border: "border-emerald-100",
+              borderHover: "hover:border-emerald-200",
+              bg: "bg-emerald-500",
+              text: "text-emerald-500",
+              shadow: "shadow-[0_2px_10px_rgba(16,185,129,0.04)]",
+            }}
+          />
 
           {/* Health Card */}
-          <div className="bg-white rounded-2xl p-5 border border-amber-100 shadow-[0_2px_10px_rgba(245,158,11,0.04)] relative overflow-hidden group hover:border-amber-200 transition-colors">
-            <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
-            <div className="flex items-center gap-2 mb-3">
-              <Activity className="w-4 h-4 text-amber-500" />
-              <h4 className="text-xs font-bold text-amber-500 tracking-wider uppercase">Health</h4>
-            </div>
-            <p className="text-sm text-gray-600 leading-relaxed mb-4 line-clamp-2 group-hover:line-clamp-none transition-all">
-              {data.healthText}
-            </p>
-            <button className="text-xs font-semibold text-amber-600 flex items-center gap-1 group-hover:gap-2 transition-all">
-              Read More <ChevronRight className="w-3 h-3" />
-            </button>
-          </div>
+          <ExpandableReadingCard
+            title="Health"
+            text={data.healthText}
+            icon={Activity}
+            colorClasses={{
+              border: "border-amber-100",
+              borderHover: "hover:border-amber-200",
+              bg: "bg-amber-500",
+              text: "text-amber-500",
+              shadow: "shadow-[0_2px_10px_rgba(245,158,11,0.04)]",
+            }}
+          />
 
         </div>
       </div>
@@ -262,12 +309,12 @@ export default function HoroscopeCard({
       <div className="bg-white rounded-2xl p-6 md:p-8 border border-border shadow-card">
         <h3 className="font-heading text-xl font-bold text-dark mb-1">{sign} Compatibility</h3>
         <p className="text-sm text-gray-500 mb-6">Tap any pair to see how {sign} matches up.</p>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
           {zodiacSigns.map((otherSign) => {
             const matchScore = getCompatibilityScore(sign, otherSign);
             return (
-              <div 
+              <div
                 key={otherSign}
                 className="flex flex-col items-center justify-center py-4 px-2 bg-gray-50 rounded-xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50 transition-colors cursor-pointer group"
               >
@@ -280,7 +327,7 @@ export default function HoroscopeCard({
                   </div>
                 </div>
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 group-hover:text-purple-400 transition-colors">
-                  {sign.slice(0,3)} & {otherSign.slice(0,3)}
+                  {sign.slice(0, 3)} & {otherSign.slice(0, 3)}
                 </div>
                 <div className="text-lg font-bold text-dark group-hover:text-purple-700 transition-colors">
                   {matchScore}%

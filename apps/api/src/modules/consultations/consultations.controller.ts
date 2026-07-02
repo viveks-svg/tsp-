@@ -141,6 +141,18 @@ export class ConsultationsController {
   }
 
   /**
+   * Caller cancels a ringing call before the callee responds.
+   */
+  @Post(":id/call/cancel")
+  @HttpCode(HttpStatus.OK)
+  async cancelCall(
+    @CurrentUser() user: any,
+    @Param("id") id: string,
+  ) {
+    return this.callService.cancelCall(user.id, id);
+  }
+
+  /**
    * Either party ends an active call.
    */
   @Post(":id/call/end")

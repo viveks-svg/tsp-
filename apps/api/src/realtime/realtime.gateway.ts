@@ -9,6 +9,7 @@ import {
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { JwtService } from "@nestjs/jwt";
+import { Logger } from "@nestjs/common";
 import { ConsultationsService } from "../modules/consultations/consultations.service";
 import { CallService } from "../modules/consultations/call.service";
 
@@ -38,6 +39,8 @@ export class RealtimeGateway
   implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
+
+  private readonly logger = new Logger("RealtimeGateway");
 
   /**
    * Maps userId → Set<socketId> for routing call events to specific users.
@@ -80,7 +83,7 @@ export class RealtimeGateway
       }
 
       if (!token) {
-        console.warn(`Socket ${client.id} rejected — no token provided`);
+        this.logger.warn(`Socket ${client.id} rejected — no token provided`);
         client.emit("auth_error", { message: "Authentication required" });
         client.disconnect(true);
         return;
@@ -102,11 +105,11 @@ export class RealtimeGateway
       }
       this.userSockets.get(userId)!.add(client.id);
 
-      console.log(
-        `Client connected: ${client.id} (userId: ${userId})`,
+      this.logger.log(
+        `Client connected: ${client.id} (userId: ${userId}, sockets: ${this.userSockets.get(userId)!.size})`,
       );
     } catch (err) {
-      console.warn(
+      this.logger.warn(
         `Socket ${client.id} rejected — invalid token: ${(err as Error).message}`,
       );
       client.emit("auth_error", { message: "Invalid or expired token" });
@@ -126,38 +129,48 @@ export class RealtimeGateway
           this.userSockets.delete(userId);
 
           // 15-second grace period for user reconnection
+          this.logger.log(`[DISCONNECT] User ${userId} has 0 sockets — starting 15s grace period`);
           setTimeout(async () => {
             const currentSockets = this.userSockets.get(userId);
             if (!currentSockets || currentSockets.size === 0) {
-              console.log(`User ${userId} did not reconnect within grace period. Cleaning up calls.`);
+              this.logger.log(`[DISCONNECT] User ${userId} did not reconnect within grace period. Cleaning up calls.`);
               try {
                 const activeSession = await this.callService.findActiveSessionForUser(userId);
                 if (activeSession) {
-                  console.log(`Ending active/ringing call session for disconnected user ${userId}`);
+                  this.logger.log(
+                    `[CALL:${activeSession.consultationId}] Ending call for disconnected user ${userId} (status: ${activeSession.status})`,
+                  );
                   if (activeSession.status === "RINGING") {
                     await this.callService.markMissed(activeSession.consultationId);
                     this.server.to(`call:${activeSession.consultationId}`).emit("call:timeout", {
                       consultationId: activeSession.consultationId,
+                      endReason: "DISCONNECTED",
                     });
                   } else if (activeSession.status === "ACTIVE") {
                     const result = await this.callService.endCall(userId, activeSession.consultationId, "DISCONNECTED");
                     this.server.to(`call:${activeSession.consultationId}`).emit("call:ended", {
                       consultationId: activeSession.consultationId,
-                      durationSeconds: result.durationSeconds,
+                      durationSeconds: (result as any).durationSeconds,
                       endReason: "DISCONNECTED",
                     });
                   }
                 }
               } catch (err) {
-                console.error(`Failed to clean up call for disconnected user ${userId}:`, err);
+                this.logger.error(`Failed to clean up call for disconnected user ${userId}: ${(err as Error).message}`);
               }
+            } else {
+              this.logger.log(`[DISCONNECT] User ${userId} reconnected (${currentSockets.size} sockets) — no cleanup needed`);
             }
           }, 15_000);
+        } else {
+          this.logger.log(
+            `Client disconnected: ${client.id} (userId: ${userId}, remaining sockets: ${sockets.size})`,
+          );
         }
       }
     }
 
-    console.log(`Client disconnected: ${client.id} (userId: ${userId})`);
+    this.logger.log(`Client disconnected: ${client.id} (userId: ${userId})`);
   }
 
   // ─────────────────────────────────────────────────────
@@ -170,7 +183,7 @@ export class RealtimeGateway
     @ConnectedSocket() client: Socket,
   ) {
     client.join(data.threadId);
-    console.log(`Socket ${client.id} joined thread room: ${data.threadId}`);
+    this.logger.log(`Socket ${client.id} joined thread room: ${data.threadId}`);
     return { status: "success" };
   }
 
@@ -232,7 +245,7 @@ export class RealtimeGateway
   ) {
     const roomId = `call:${data.consultationId}`;
     client.join(roomId);
-    console.log(`Socket ${client.id} joined call room: ${roomId}`);
+    this.logger.log(`[CALL:${data.consultationId}] Socket ${client.id} joined call room`);
     return { status: "success" };
   }
 
@@ -268,10 +281,13 @@ export class RealtimeGateway
       callerUserId: userId,
     });
 
-    // Start 30-second timeout
+    // Start 30-second timeout (server-authoritative)
     this.startCallTimeout(consultationId, userId, astrologerUserId);
 
-    console.log(`Call initiated: ${consultationId} by ${userId} to ${astrologerUserId}`);
+    this.logger.log(
+      `[CALL:${consultationId}] Initiated signaling — caller=${userId}, callee=${astrologerUserId}, ` +
+      `callerSocket=${client.id}`,
+    );
     return { status: "ringing" };
   }
 
@@ -323,10 +339,10 @@ export class RealtimeGateway
         maxDurationSeconds: result.maxDurationSeconds,
       });
 
-      console.log(`Call accepted: ${consultationId} by ${astrologerUserId}`);
+      this.logger.log(`[CALL:${consultationId}] Accepted via signaling by ${astrologerUserId}`);
       return { status: "accepted" };
     } catch (err) {
-      console.error(`Call accept failed: ${(err as Error).message}`);
+      this.logger.error(`[CALL:${consultationId}] Accept failed: ${(err as Error).message}`);
       return { status: "error", error: (err as Error).message };
     }
   }
@@ -354,12 +370,52 @@ export class RealtimeGateway
 
       // Notify the caller
       const roomId = `call:${consultationId}`;
-      this.server.to(roomId).emit("call:rejected", { consultationId });
+      this.server.to(roomId).emit("call:rejected", {
+        consultationId,
+        endReason: "ASTROLOGER_REJECTED",
+      });
 
-      console.log(`Call rejected: ${consultationId} by ${astrologerUserId}`);
+      this.logger.log(`[CALL:${consultationId}] Rejected by ${astrologerUserId}`);
       return { status: "rejected" };
     } catch (err) {
-      console.error(`Call reject failed: ${(err as Error).message}`);
+      this.logger.error(`[CALL:${consultationId}] Reject failed: ${(err as Error).message}`);
+      return { status: "error", error: (err as Error).message };
+    }
+  }
+
+  /**
+   * Caller cancels a ringing call before the callee accepts.
+   * This is the correct event for the caller to cancel — NOT call:end.
+   */
+  @SubscribeMessage("call:cancel")
+  async handleCallCancel(
+    @MessageBody() data: { consultationId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const userId = client.data?.user?.id;
+    if (!userId) {
+      return { status: "error", error: "Not authenticated" };
+    }
+
+    const { consultationId } = data;
+
+    // Clear the ringing timeout (no need for it anymore)
+    this.clearCallTimeout(consultationId);
+
+    try {
+      const result = await this.callService.cancelCall(userId, consultationId);
+
+      // Notify all parties in the call room (including callee)
+      const roomId = `call:${consultationId}`;
+      this.server.to(roomId).emit("call:ended", {
+        consultationId,
+        endReason: "CALLER_CANCELLED",
+      });
+
+      this.logger.log(`[CALL:${consultationId}] Cancelled by caller ${userId}`);
+      return { status: "cancelled" };
+    } catch (err) {
+      this.logger.error(`[CALL:${consultationId}] Cancel failed: ${(err as Error).message}`);
       return { status: "error", error: (err as Error).message };
     }
   }
@@ -379,24 +435,36 @@ export class RealtimeGateway
 
     const { consultationId } = data;
 
+    // Also clear any ringing timeout (in case of race)
+    this.clearCallTimeout(consultationId);
+
     try {
       const result = await this.callService.endCall(userId, consultationId);
       const endResult = result as Record<string, any>;
 
-      // Notify both parties
-      const roomId = `call:${consultationId}`;
-      this.server.to(roomId).emit("call:ended", {
-        consultationId,
-        durationSeconds: endResult.durationSeconds,
-        durationMin: endResult.durationMin,
-        cost: endResult.cost,
-        endReason: endResult.endReason,
-      });
+      // Only notify room if the call was actually transitioned (not a no-op)
+      if (endResult.status === "COMPLETED" || endResult.status === "CANCELLED") {
+        const roomId = `call:${consultationId}`;
+        this.server.to(roomId).emit("call:ended", {
+          consultationId,
+          durationSeconds: endResult.durationSeconds,
+          durationMin: endResult.durationMin,
+          cost: endResult.cost,
+          endReason: endResult.endReason,
+        });
+      } else {
+        this.logger.log(
+          `[CALL:${consultationId}] endCall was no-op (status: ${endResult.status}) — not re-emitting call:ended`,
+        );
+      }
 
-      console.log(`Call ended: ${consultationId} by ${userId}, duration: ${endResult.durationSeconds}s`);
+      this.logger.log(
+        `[CALL:${consultationId}] End by ${userId} — status: ${endResult.status}, ` +
+        `duration: ${endResult.durationSeconds ?? 0}s, reason: ${endResult.endReason}`,
+      );
       return { status: "ended", consultationId, durationSeconds: endResult.durationSeconds };
     } catch (err) {
-      console.error(`Call end failed: ${(err as Error).message}`);
+      this.logger.error(`[CALL:${consultationId}] End failed: ${(err as Error).message}`);
       return { status: "error", error: (err as Error).message };
     }
   }
@@ -440,7 +508,9 @@ export class RealtimeGateway
   private emitToUser(userId: string, event: string, payload: any) {
     const sockets = this.userSockets.get(userId);
     if (!sockets || sockets.size === 0) {
-      console.warn(`No connected sockets for user ${userId}, event ${event} not delivered`);
+      this.logger.warn(
+        `[CALL:${payload?.consultationId ?? "?"}] No connected sockets for user ${userId}, event ${event} not delivered`,
+      );
       return;
     }
 
@@ -450,8 +520,11 @@ export class RealtimeGateway
   }
 
   /**
-   * Start a 30-second ringing timeout for a call.
+   * Start a 30-second ringing timeout for a call (server-authoritative).
    * If the astrologer doesn't respond, both parties are notified and the call is marked MISSED.
+   *
+   * This timeout is the SINGLE source of truth for ringing expiry — the client
+   * does NOT independently time out calls.
    */
   private startCallTimeout(
     consultationId: string,
@@ -461,26 +534,40 @@ export class RealtimeGateway
     // Clear any existing timeout for this call
     this.clearCallTimeout(consultationId);
 
+    const CALL_RING_TIMEOUT_MS = 30_000; // 30 seconds
+
     const timeout = setTimeout(async () => {
       this.callTimeouts.delete(consultationId);
 
       try {
-        // Mark as missed in DB
+        // Mark as missed in DB (uses conditional update — no-op if already transitioned)
         await this.callService.markMissed(consultationId);
 
-        // Notify both parties
+        // Notify via the call room (single emit — both parties are in the room)
         const roomId = `call:${consultationId}`;
-        this.server.to(roomId).emit("call:timeout", { consultationId });
-        this.emitToUser(callerUserId, "call:timeout", { consultationId });
-        this.emitToUser(astrologerUserId, "call:timeout", { consultationId });
+        this.server.to(roomId).emit("call:timeout", {
+          consultationId,
+          endReason: "TIMEOUT_NO_ANSWER",
+        });
 
-        console.log(`Call timeout: ${consultationId}`);
+        // Also emit directly to both users in case they aren't in the room yet
+        this.emitToUser(callerUserId, "call:timeout", {
+          consultationId,
+          endReason: "TIMEOUT_NO_ANSWER",
+        });
+        this.emitToUser(astrologerUserId, "call:timeout", {
+          consultationId,
+          endReason: "TIMEOUT_NO_ANSWER",
+        });
+
+        this.logger.log(`[CALL:${consultationId}] Ringing timeout after ${CALL_RING_TIMEOUT_MS}ms`);
       } catch (err) {
-        console.error(`Call timeout handling failed: ${(err as Error).message}`);
+        this.logger.error(`[CALL:${consultationId}] Timeout handling failed: ${(err as Error).message}`);
       }
-    }, 30_000);
+    }, CALL_RING_TIMEOUT_MS);
 
     this.callTimeouts.set(consultationId, timeout);
+    this.logger.log(`[CALL:${consultationId}] Ringing timeout scheduled — ${CALL_RING_TIMEOUT_MS}ms`);
   }
 
   /**
@@ -491,6 +578,7 @@ export class RealtimeGateway
     if (existing) {
       clearTimeout(existing);
       this.callTimeouts.delete(consultationId);
+      this.logger.log(`[CALL:${consultationId}] Ringing timeout cleared`);
     }
   }
 }

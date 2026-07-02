@@ -22,6 +22,7 @@ function bindCallSocketListeners(socket: Socket) {
     console.log("[CallSocket] Connected:", socket.id);
     const currentConsId = useCallStore.getState().consultationId;
     if (currentConsId) {
+      console.log(`[CallSocket] Rejoining call room on reconnect: ${currentConsId}`);
       socket.emit("join_call", { consultationId: currentConsId });
     }
   });
@@ -35,7 +36,16 @@ function bindCallSocketListeners(socket: Socket) {
     console.warn("[CallSocket] Connect error:", error.message);
   });
 
+  socket.on("disconnect", (reason) => {
+    console.log(`[CallSocket] Disconnected — reason: ${reason}`);
+  });
+
+  socket.on("reconnect_attempt", (attempt) => {
+    console.log(`[CallSocket] Reconnect attempt #${attempt}`);
+  });
+
   socket.on("call:incoming", (data) => {
+    console.log(`[CALL:${data.consultationId}] Incoming call from ${data.callerName}`);
     useCallStore.getState().setIncomingCall({
       consultationId: data.consultationId,
       callerName: data.callerName,
@@ -44,6 +54,7 @@ function bindCallSocketListeners(socket: Socket) {
   });
 
   socket.on("call:accepted", (data) => {
+    console.log(`[CALL:${data.consultationId}] Call accepted — connecting to TRTC`);
     useCallStore.getState().setConnecting({
       channelName: data.channelName,
       userSig: data.userSig,
@@ -53,23 +64,30 @@ function bindCallSocketListeners(socket: Socket) {
     });
   });
 
-  socket.on("call:rejected", () => {
+  socket.on("call:rejected", (data) => {
+    console.log(`[CALL:${data?.consultationId}] Call rejected — reason: ${data?.endReason || "REJECTED"}`);
     const store = useCallStore.getState();
-    store.setEnded("REJECTED");
+    store.setEnded(data?.endReason || "REJECTED");
     store.setIncomingCall(null);
   });
 
   socket.on("call:ended", (data) => {
+    console.log(
+      `[CALL:${data.consultationId}] Call ended — reason: ${data.endReason || "CALL_ENDED"}, ` +
+      `duration: ${data.durationSeconds ?? 0}s`,
+    );
     useCallStore.getState().setEnded(data.endReason || "CALL_ENDED");
   });
 
-  socket.on("call:timeout", () => {
+  socket.on("call:timeout", (data) => {
+    console.log(`[CALL:${data?.consultationId}] Call timeout — reason: ${data?.endReason || "TIMEOUT"}`);
     const store = useCallStore.getState();
-    store.setEnded("TIMEOUT");
+    store.setEnded(data?.endReason || "TIMEOUT_NO_ANSWER");
     store.setIncomingCall(null);
   });
 
   socket.on("call:busy", () => {
+    console.log("[CallSocket] Astrologer busy");
     useCallStore.getState().setEnded("BUSY");
   });
 
@@ -98,13 +116,14 @@ function ensureCallSocket(token: string | null) {
 /**
  * Hook that manages Socket.io call signaling events.
  * Connects to the server, listens for call events, and provides
- * emit functions for initiating/accepting/rejecting/ending calls.
+ * emit functions for initiating/accepting/rejecting/ending/cancelling calls.
  */
 export function useCallSocket(): {
   initiateCall: (consId: string, astrologerUserId: string, callerName: string) => void;
   acceptCall: (consId: string) => void;
   rejectCall: (consId: string) => void;
   endCall: (consId: string) => void;
+  cancelCall: (consId: string) => void;
   toggleMedia: (consId: string, audio?: boolean, video?: boolean) => void;
   joinCallRoom: (consId: string) => void;
 } {
@@ -148,6 +167,7 @@ export function useCallSocket(): {
 
   const initiateCall = useCallback(
     (consId: string, astrologerUserId: string, callerName: string) => {
+      console.log(`[CALL:${consId}] Emitting call:initiate to ${astrologerUserId}`);
       ensureCallSocket(getToken()).emit("call:initiate", {
         consultationId: consId,
         astrologerUserId,
@@ -160,6 +180,7 @@ export function useCallSocket(): {
 
   const acceptCall = useCallback(
     (consId: string) => {
+      console.log(`[CALL:${consId}] Emitting call:accept`);
       ensureCallSocket(getToken()).emit("call:accept", {
         consultationId: consId,
       });
@@ -170,6 +191,7 @@ export function useCallSocket(): {
 
   const rejectCall = useCallback(
     (consId: string) => {
+      console.log(`[CALL:${consId}] Emitting call:reject`);
       ensureCallSocket(getToken()).emit("call:reject", {
         consultationId: consId,
       });
@@ -179,7 +201,19 @@ export function useCallSocket(): {
   );
 
   const endCall = useCallback((consId: string) => {
+    console.log(`[CALL:${consId}] Emitting call:end`);
     ensureCallSocket(getToken()).emit("call:end", {
+      consultationId: consId,
+    });
+  }, [getToken]);
+
+  /**
+   * Cancel a ringing call (caller-side only).
+   * Distinct from endCall which is for active calls.
+   */
+  const cancelCall = useCallback((consId: string) => {
+    console.log(`[CALL:${consId}] Emitting call:cancel`);
+    ensureCallSocket(getToken()).emit("call:cancel", {
       consultationId: consId,
     });
   }, [getToken]);
@@ -203,6 +237,7 @@ export function useCallSocket(): {
     acceptCall,
     rejectCall,
     endCall,
+    cancelCall,
     toggleMedia,
     joinCallRoom,
   };

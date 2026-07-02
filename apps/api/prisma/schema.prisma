@@ -38,6 +38,7 @@ enum CallSessionStatus {
   REJECTED
   BUSY
   FAILED
+  CANCELLED
 }
 
 enum TransactionType {
