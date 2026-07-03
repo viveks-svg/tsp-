@@ -19,7 +19,7 @@ function bindCallSocketListeners(socket: Socket) {
   listenersBound = true;
 
   socket.on("connect", () => {
-    console.log("[CallSocket] Connected:", socket.id);
+    console.log("[CallSocket] Connected:", socket.id, "| transport:", socket.io.engine?.transport?.name);
     const currentConsId = useCallStore.getState().consultationId;
     if (currentConsId) {
       console.log(`[CallSocket] Rejoining call room on reconnect: ${currentConsId}`);
@@ -99,18 +99,49 @@ function bindCallSocketListeners(socket: Socket) {
   });
 }
 
+/**
+ * Create or return the shared socket.
+ *
+ * CRITICAL FIX for production:
+ * - Removed `transports: ["websocket"]` — socket.io now starts with HTTP
+ *   long-polling (which carries httpOnly cookies cross-origin with
+ *   withCredentials:true) and then upgrades to WebSocket. This is essential
+ *   on Railway where the WebSocket-only handshake does NOT send cookies
+ *   across origins (Vercel → Railway).
+ * - If an explicit token is available, we send it in `auth` as well.
+ *   This is a belt-and-suspenders approach: cookie OR auth token, either works.
+ */
 function ensureCallSocket(token: string | null) {
   if (sharedSocket) return sharedSocket;
 
-  sharedSocket = io(getSocketUrl(), {
-    transports: ["websocket"],
-    reconnectionAttempts: 5,
+  const socketUrl = getSocketUrl();
+  console.log(`[CallSocket] Creating socket — url: ${socketUrl}, hasToken: ${!!token}`);
+
+  sharedSocket = io(socketUrl, {
+    // Let socket.io start with polling (sends cookies) then upgrade to WS.
+    // This is the default behavior and works reliably behind Railway's proxy.
+    reconnectionAttempts: 10,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
     withCredentials: true,
     auth: token ? { token } : undefined,
   });
 
   bindCallSocketListeners(sharedSocket);
   return sharedSocket;
+}
+
+/**
+ * Tear down the shared socket completely.
+ * Called when a new token arrives and we need to reconnect with fresh auth.
+ */
+function destroySharedSocket() {
+  if (sharedSocket) {
+    sharedSocket.disconnect();
+    sharedSocket.removeAllListeners();
+    sharedSocket = null;
+    listenersBound = false;
+  }
 }
 
 /**
@@ -130,6 +161,7 @@ export function useCallSocket(): {
   const socketRef = useRef<Socket | null>(null);
   const { accessToken } = useAuth();
   const tokenRef = useRef(accessToken);
+  const prevTokenRef = useRef(accessToken);
 
   useEffect(() => {
     tokenRef.current = accessToken;
@@ -146,14 +178,28 @@ export function useCallSocket(): {
     return () => {
       sharedSocketRefs = Math.max(0, sharedSocketRefs - 1);
       if (sharedSocketRefs === 0) {
-        socket.disconnect();
-        socket.removeAllListeners();
-        sharedSocket = null;
-        listenersBound = false;
+        destroySharedSocket();
       }
       socketRef.current = null;
     };
   }, []);
+
+  // If the access token transitions from null → valid, reconnect the socket
+  // so it authenticates properly. This handles the race where the socket
+  // connects before auth hydration completes.
+  useEffect(() => {
+    const hadToken = !!prevTokenRef.current;
+    const hasToken = !!accessToken;
+    prevTokenRef.current = accessToken;
+
+    // Only reconnect if token went from null → available AND socket exists
+    if (!hadToken && hasToken && sharedSocket) {
+      console.log("[CallSocket] Token became available — reconnecting socket with auth");
+      destroySharedSocket();
+      const socket = ensureCallSocket(accessToken);
+      socketRef.current = socket;
+    }
+  }, [accessToken]);
 
   // Join signaling room when consultationId changes.
   useEffect(() => {

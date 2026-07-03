@@ -18,6 +18,14 @@ const frontendOrigins = (process.env.FRONTEND_URL ?? "http://localhost:3000")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+// Always include localhost for development
+if (!frontendOrigins.includes("http://localhost:3000")) {
+  frontendOrigins.push("http://localhost:3000");
+}
+
+// Log at module load so it's visible in Railway deploy logs
+console.log("[RealtimeGateway] CORS origins:", frontendOrigins);
+
 /**
  * Authenticated WebSocket gateway.
  *
@@ -274,6 +282,21 @@ export class RealtimeGateway
     const roomId = `call:${consultationId}`;
     client.join(roomId);
 
+    // Also add astrologer's existing sockets to the call room
+    // so they receive room-broadcast events even if emitToUser fails
+    const astroSockets = this.userSockets.get(astrologerUserId);
+    if (astroSockets) {
+      for (const socketId of astroSockets) {
+        const astroSocket = this.server.sockets.sockets.get(socketId);
+        if (astroSocket) {
+          astroSocket.join(roomId);
+          this.logger.log(
+            `[CALL:${consultationId}] Pre-joined astrologer socket ${socketId} to call room`,
+          );
+        }
+      }
+    }
+
     // Send incoming call notification to astrologer's connected sockets
     this.emitToUser(astrologerUserId, "call:incoming", {
       consultationId,
@@ -286,7 +309,7 @@ export class RealtimeGateway
 
     this.logger.log(
       `[CALL:${consultationId}] Initiated signaling — caller=${userId}, callee=${astrologerUserId}, ` +
-      `callerSocket=${client.id}`,
+      `callerSocket=${client.id}, astroSocketsFound=${astroSockets?.size ?? 0}`,
     );
     return { status: "ringing" };
   }
@@ -319,7 +342,7 @@ export class RealtimeGateway
       const roomId = `call:${consultationId}`;
       client.join(roomId);
 
-      // Send TRTC credentials to the user (caller)
+      // Send TRTC credentials to the user (caller) via direct socket mapping
       this.emitToUser(result.user.userId, "call:accepted", {
         consultationId,
         channelName: result.channelName,
@@ -329,13 +352,30 @@ export class RealtimeGateway
         maxDurationSeconds: result.maxDurationSeconds,
       });
 
-      // Send TRTC credentials to the astrologer
+      // Send TRTC credentials to the astrologer via direct socket mapping
       this.emitToUser(result.astrologer.userId, "call:accepted", {
         consultationId,
         channelName: result.channelName,
         sdkAppId: result.sdkAppId,
         userSig: result.astrologer.userSig,
         trtcUserId: result.astrologer.trtcUserId,
+        maxDurationSeconds: result.maxDurationSeconds,
+      });
+
+      // FALLBACK: Also broadcast to the call room.
+      // If either party joined the room but their userId→socket mapping is
+      // stale (e.g. after Railway redeploy), the room broadcast ensures
+      // they still receive credentials. Each side will use their own
+      // trtcUserId to identify which credentials belong to them.
+      this.server.to(roomId).emit("call:accepted", {
+        consultationId,
+        channelName: result.channelName,
+        sdkAppId: result.sdkAppId,
+        // Send BOTH sets of credentials via room — each client picks their own
+        userSig: result.user.userSig,
+        trtcUserId: result.user.trtcUserId,
+        astrologerSig: result.astrologer.userSig,
+        astrologerTrtcUserId: result.astrologer.trtcUserId,
         maxDurationSeconds: result.maxDurationSeconds,
       });
 
