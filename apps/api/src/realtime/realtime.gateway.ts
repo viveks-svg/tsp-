@@ -380,6 +380,15 @@ export class RealtimeGateway
       });
 
       this.logger.log(`[CALL:${consultationId}] Accepted via signaling by ${astrologerUserId}`);
+      
+      // Start timeout for max duration
+      this.startActiveCallTimeout(
+        consultationId,
+        result.user.userId,
+        astrologerUserId,
+        result.maxDurationSeconds,
+      );
+
       return { status: "accepted" };
     } catch (err) {
       this.logger.error(`[CALL:${consultationId}] Accept failed: ${(err as Error).message}`);
@@ -608,6 +617,48 @@ export class RealtimeGateway
 
     this.callTimeouts.set(consultationId, timeout);
     this.logger.log(`[CALL:${consultationId}] Ringing timeout scheduled — ${CALL_RING_TIMEOUT_MS}ms`);
+  }
+
+  /**
+   * Start a timeout for an active call based on the user's maximum affordable duration.
+   * Forces the call to end if it exceeds the maximum time + grace period.
+   */
+  private startActiveCallTimeout(
+    consultationId: string,
+    callerUserId: string,
+    astrologerUserId: string,
+    maxDurationSeconds: number,
+  ) {
+    this.clearCallTimeout(consultationId);
+
+    // Add 3 seconds grace period to allow frontend to disconnect gracefully first
+    const timeoutMs = (maxDurationSeconds + 3) * 1000;
+
+    const timeout = setTimeout(async () => {
+      this.callTimeouts.delete(consultationId);
+
+      try {
+        this.logger.log(`[CALL:${consultationId}] Max duration reached. Forcefully ending call.`);
+        
+        // Use callerUserId to end the call on their behalf due to insufficient balance
+        const result = await this.callService.endCall(callerUserId, consultationId, "INSUFFICIENT_BALANCE");
+
+        const roomId = `call:${consultationId}`;
+        this.server.to(roomId).emit("call:ended", {
+          consultationId,
+          endReason: "INSUFFICIENT_BALANCE",
+          durationSeconds: result.durationSeconds,
+        });
+
+      } catch (err) {
+        this.logger.error(
+          `[CALL:${consultationId}] Failed to forcefully end active call: ${(err as Error).message}`,
+        );
+      }
+    }, timeoutMs);
+
+    this.callTimeouts.set(consultationId, timeout);
+    this.logger.log(`[CALL:${consultationId}] Active call timeout scheduled — ${timeoutMs}ms`);
   }
 
   /**

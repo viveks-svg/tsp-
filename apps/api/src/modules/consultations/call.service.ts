@@ -511,7 +511,7 @@ export class CallService {
 
     // Billing + consultation update inside transaction
     return this.prisma.$transaction(async (tx) => {
-      // 1. Debit user wallet
+      // 1. Debit user wallet (allow negative to avoid rolling back the call completion)
       await this.walletService.debitWallet(
         tx,
         consultation.userId,
@@ -519,6 +519,7 @@ export class CallService {
         "CONSULTATION",
         `Call consultation fee with astrologer ${consultation.astrologer.user.name}`,
         consultation.id,
+        true // allowNegative
       );
 
       // 2. Credit astrologer wallet

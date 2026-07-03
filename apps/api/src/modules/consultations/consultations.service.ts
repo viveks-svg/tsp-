@@ -282,8 +282,13 @@ export class ConsultationsService {
       throw new NotFoundException("Consultation not found");
     }
 
-    return this.prisma.consultationReview.create({
-      data: {
+    return this.prisma.consultationReview.upsert({
+      where: { consultationId },
+      update: {
+        rating,
+        review: reviewText,
+      },
+      create: {
         consultationId,
         userId,
         astrologerId: consultation.astrologerId,

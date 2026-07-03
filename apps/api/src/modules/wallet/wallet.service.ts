@@ -95,6 +95,7 @@ export class WalletService {
     purpose: string,
     description: string,
     referenceId?: string | null,
+    allowNegative = false,
   ) {
     const wallet = await tx.wallet.findUnique({
       where: { userId },
@@ -105,7 +106,7 @@ export class WalletService {
     }
 
     const decimalAmount = new Prisma.Decimal(amount);
-    if (wallet.balance.lessThan(decimalAmount)) {
+    if (!allowNegative && wallet.balance.lessThan(decimalAmount)) {
       throw new BadRequestException("Insufficient wallet balance");
     }
 
