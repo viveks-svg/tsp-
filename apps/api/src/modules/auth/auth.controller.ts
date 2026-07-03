@@ -191,6 +191,25 @@ export class AuthController {
     };
   }
 
+  /**
+   * GET /auth/ws-token
+   * Returns the current access token from the httpOnly cookie.
+   * Used by the frontend Socket.io client to authenticate WebSocket
+   * connections, since httpOnly cookies cannot be read by JavaScript
+   * and cross-origin WebSocket handshakes may not carry them.
+   *
+   * This endpoint is itself protected by the JWT guard (which reads
+   * the cookie), so only authenticated users can get a token.
+   */
+  @Get("ws-token")
+  async getWsToken(@Req() req: Request) {
+    const token = req.cookies?.access_token;
+    if (!token) {
+      return { token: null };
+    }
+    return { token };
+  }
+
 
   /**
    * POST /auth/logout

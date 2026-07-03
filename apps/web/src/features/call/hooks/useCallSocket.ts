@@ -9,9 +9,54 @@ let sharedSocket: Socket | null = null;
 let sharedSocketRefs = 0;
 let listenersBound = false;
 
+/** Token fetched from the backend's /auth/ws-token endpoint */
+let cachedWsToken: string | null = null;
+let tokenFetchPromise: Promise<string | null> | null = null;
+
 function getSocketUrl() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
   return apiUrl.replace(/\/api\/v1\/?$/, "");
+}
+
+function getApiBaseUrl() {
+  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+}
+
+/**
+ * Fetch the WebSocket auth token from the backend.
+ * The /auth/ws-token endpoint reads the httpOnly cookie (which the browser
+ * sends automatically with credentials) and returns the JWT in the body.
+ * This solves the cross-origin WebSocket auth problem.
+ */
+async function fetchWsToken(): Promise<string | null> {
+  // Return cached token if available
+  if (cachedWsToken) return cachedWsToken;
+
+  // Deduplicate concurrent calls
+  if (tokenFetchPromise) return tokenFetchPromise;
+
+  tokenFetchPromise = (async () => {
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/auth/ws-token`, {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        console.warn("[CallSocket] ws-token fetch failed:", res.status);
+        return null;
+      }
+      const data = await res.json();
+      cachedWsToken = data.token || null;
+      console.log("[CallSocket] ws-token fetched:", cachedWsToken ? "OK" : "null");
+      return cachedWsToken;
+    } catch (err) {
+      console.error("[CallSocket] ws-token fetch error:", err);
+      return null;
+    } finally {
+      tokenFetchPromise = null;
+    }
+  })();
+
+  return tokenFetchPromise;
 }
 
 function bindCallSocketListeners(socket: Socket) {
@@ -29,6 +74,8 @@ function bindCallSocketListeners(socket: Socket) {
 
   socket.on("auth_error", (data) => {
     console.warn("[CallSocket] Auth error:", data?.message ?? data);
+    // Token might have expired — clear cache so next attempt fetches fresh
+    cachedWsToken = null;
     useCallStore.getState().setFailed("SOCKET_AUTH_FAILED");
   });
 
@@ -100,40 +147,31 @@ function bindCallSocketListeners(socket: Socket) {
 }
 
 /**
- * Create or return the shared socket.
+ * Create the shared socket with a valid auth token.
  *
- * CRITICAL FIX for production:
- * - Removed `transports: ["websocket"]` — socket.io now starts with HTTP
- *   long-polling (which carries httpOnly cookies cross-origin with
- *   withCredentials:true) and then upgrades to WebSocket. This is essential
- *   on Railway where the WebSocket-only handshake does NOT send cookies
- *   across origins (Vercel → Railway).
- * - If an explicit token is available, we send it in `auth` as well.
- *   This is a belt-and-suspenders approach: cookie OR auth token, either works.
+ * Uses WebSocket-only transport because Railway doesn't support sticky
+ * sessions needed for HTTP long-polling. Authentication is handled via
+ * an explicit token (fetched from /auth/ws-token), not cookies.
  */
-function ensureCallSocket(token: string | null) {
-  if (sharedSocket) return sharedSocket;
-
+function createSocket(token: string): Socket {
   const socketUrl = getSocketUrl();
-  console.log(`[CallSocket] Creating socket — url: ${socketUrl}, hasToken: ${!!token}`);
+  console.log(`[CallSocket] Creating socket — url: ${socketUrl}, hasToken: true`);
 
-  sharedSocket = io(socketUrl, {
-    // Let socket.io start with polling (sends cookies) then upgrade to WS.
-    // This is the default behavior and works reliably behind Railway's proxy.
+  const socket = io(socketUrl, {
+    transports: ["websocket"],
     reconnectionAttempts: 10,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
     withCredentials: true,
-    auth: token ? { token } : undefined,
+    auth: { token },
   });
 
-  bindCallSocketListeners(sharedSocket);
-  return sharedSocket;
+  bindCallSocketListeners(socket);
+  return socket;
 }
 
 /**
  * Tear down the shared socket completely.
- * Called when a new token arrives and we need to reconnect with fresh auth.
  */
 function destroySharedSocket() {
   if (sharedSocket) {
@@ -145,9 +183,21 @@ function destroySharedSocket() {
 }
 
 /**
+ * Get or create the shared socket. If the socket doesn't exist yet,
+ * this will fetch a token and create it. Returns null if no token is available.
+ */
+function getSharedSocket(): Socket | null {
+  return sharedSocket;
+}
+
+/**
  * Hook that manages Socket.io call signaling events.
  * Connects to the server, listens for call events, and provides
  * emit functions for initiating/accepting/rejecting/ending/cancelling calls.
+ *
+ * The socket connection is deferred until a valid auth token is fetched
+ * from the backend's /auth/ws-token endpoint. This ensures the WebSocket
+ * always authenticates successfully on production.
  */
 export function useCallSocket(): {
   initiateCall: (consId: string, astrologerUserId: string, callerName: string) => void;
@@ -159,47 +209,52 @@ export function useCallSocket(): {
   joinCallRoom: (consId: string) => void;
 } {
   const socketRef = useRef<Socket | null>(null);
-  const { accessToken } = useAuth();
-  const tokenRef = useRef(accessToken);
-  const prevTokenRef = useRef(accessToken);
-
-  useEffect(() => {
-    tokenRef.current = accessToken;
-  }, [accessToken]);
+  const { isAuthenticated } = useAuth();
 
   const { setRinging, setIncomingCall, consultationId } = useCallStore();
 
-  // Connect the shared socket on mount. Multiple consumers reuse one connection.
+  // Connect the shared socket on mount — but only after fetching a token.
   useEffect(() => {
-    const socket = ensureCallSocket(tokenRef.current);
+    if (!isAuthenticated) return;
+
+    let cancelled = false;
     sharedSocketRefs += 1;
-    socketRef.current = socket;
+
+    const connect = async () => {
+      // If socket already exists and is connected, reuse it
+      if (sharedSocket?.connected) {
+        socketRef.current = sharedSocket;
+        return;
+      }
+
+      // Fetch token from the backend
+      const token = await fetchWsToken();
+      if (cancelled) return;
+
+      if (!token) {
+        console.warn("[CallSocket] No ws-token available — socket not connected");
+        return;
+      }
+
+      // Create socket with the fetched token
+      if (!sharedSocket) {
+        sharedSocket = createSocket(token);
+      }
+      socketRef.current = sharedSocket;
+    };
+
+    void connect();
 
     return () => {
+      cancelled = true;
       sharedSocketRefs = Math.max(0, sharedSocketRefs - 1);
       if (sharedSocketRefs === 0) {
         destroySharedSocket();
+        cachedWsToken = null;
       }
       socketRef.current = null;
     };
-  }, []);
-
-  // If the access token transitions from null → valid, reconnect the socket
-  // so it authenticates properly. This handles the race where the socket
-  // connects before auth hydration completes.
-  useEffect(() => {
-    const hadToken = !!prevTokenRef.current;
-    const hasToken = !!accessToken;
-    prevTokenRef.current = accessToken;
-
-    // Only reconnect if token went from null → available AND socket exists
-    if (!hadToken && hasToken && sharedSocket) {
-      console.log("[CallSocket] Token became available — reconnecting socket with auth");
-      destroySharedSocket();
-      const socket = ensureCallSocket(accessToken);
-      socketRef.current = socket;
-    }
-  }, [accessToken]);
+  }, [isAuthenticated]);
 
   // Join signaling room when consultationId changes.
   useEffect(() => {
@@ -209,49 +264,87 @@ export function useCallSocket(): {
     }
   }, [consultationId]);
 
-  const getToken = useCallback(() => tokenRef.current, []);
+  /**
+   * Get a connected socket, fetching token if needed.
+   * All emit functions go through this to ensure the socket is ready.
+   */
+  const getSocket = useCallback(async (): Promise<Socket> => {
+    if (sharedSocket?.connected) return sharedSocket;
+
+    // Need to (re)connect
+    const token = await fetchWsToken();
+    if (!token) {
+      throw new Error("No auth token available for socket connection");
+    }
+
+    if (!sharedSocket) {
+      sharedSocket = createSocket(token);
+    }
+    socketRef.current = sharedSocket;
+    return sharedSocket;
+  }, []);
+
+  /**
+   * Synchronous socket getter for fire-and-forget emits.
+   * Falls back to async token fetch if socket isn't ready.
+   */
+  const emitOrDefer = useCallback(
+    (event: string, data: any) => {
+      if (sharedSocket?.connected) {
+        sharedSocket.emit(event, data);
+      } else {
+        // Socket not ready — fetch token and connect first
+        void getSocket().then((socket) => {
+          socket.emit(event, data);
+        }).catch((err) => {
+          console.error(`[CallSocket] Failed to emit ${event}:`, err);
+        });
+      }
+    },
+    [getSocket],
+  );
 
   const initiateCall = useCallback(
     (consId: string, astrologerUserId: string, callerName: string) => {
       console.log(`[CALL:${consId}] Emitting call:initiate to ${astrologerUserId}`);
-      ensureCallSocket(getToken()).emit("call:initiate", {
+      emitOrDefer("call:initiate", {
         consultationId: consId,
         astrologerUserId,
         callerName,
       });
       setRinging();
     },
-    [setRinging, getToken],
+    [setRinging, emitOrDefer],
   );
 
   const acceptCall = useCallback(
     (consId: string) => {
       console.log(`[CALL:${consId}] Emitting call:accept`);
-      ensureCallSocket(getToken()).emit("call:accept", {
+      emitOrDefer("call:accept", {
         consultationId: consId,
       });
       setIncomingCall(null);
     },
-    [setIncomingCall, getToken],
+    [setIncomingCall, emitOrDefer],
   );
 
   const rejectCall = useCallback(
     (consId: string) => {
       console.log(`[CALL:${consId}] Emitting call:reject`);
-      ensureCallSocket(getToken()).emit("call:reject", {
+      emitOrDefer("call:reject", {
         consultationId: consId,
       });
       setIncomingCall(null);
     },
-    [setIncomingCall, getToken],
+    [setIncomingCall, emitOrDefer],
   );
 
   const endCall = useCallback((consId: string) => {
     console.log(`[CALL:${consId}] Emitting call:end`);
-    ensureCallSocket(getToken()).emit("call:end", {
+    emitOrDefer("call:end", {
       consultationId: consId,
     });
-  }, [getToken]);
+  }, [emitOrDefer]);
 
   /**
    * Cancel a ringing call (caller-side only).
@@ -259,24 +352,24 @@ export function useCallSocket(): {
    */
   const cancelCall = useCallback((consId: string) => {
     console.log(`[CALL:${consId}] Emitting call:cancel`);
-    ensureCallSocket(getToken()).emit("call:cancel", {
+    emitOrDefer("call:cancel", {
       consultationId: consId,
     });
-  }, [getToken]);
+  }, [emitOrDefer]);
 
   const toggleMedia = useCallback((consId: string, audio?: boolean, video?: boolean) => {
-    ensureCallSocket(getToken()).emit("call:toggle_media", {
+    emitOrDefer("call:toggle_media", {
       consultationId: consId,
       audio,
       video,
     });
-  }, [getToken]);
+  }, [emitOrDefer]);
 
   const joinCallRoom = useCallback((consId: string) => {
-    ensureCallSocket(getToken()).emit("join_call", {
+    emitOrDefer("join_call", {
       consultationId: consId,
     });
-  }, [getToken]);
+  }, [emitOrDefer]);
 
   return {
     initiateCall,
