@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { useCallStore } from "../store/call.store";
 import { useAuth } from "@/providers/AuthProvider";
+import { apiClient } from "@/lib/http/client";
 
 let sharedSocket: Socket | null = null;
 let sharedSocketRefs = 0;
@@ -18,35 +19,20 @@ function getSocketUrl() {
   return apiUrl.replace(/\/api\/v1\/?$/, "");
 }
 
-function getApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
-}
-
 /**
  * Fetch the WebSocket auth token from the backend.
- * The /auth/ws-token endpoint reads the httpOnly cookie (which the browser
- * sends automatically with credentials) and returns the JWT in the body.
- * This solves the cross-origin WebSocket auth problem.
+ * Uses apiClient so the request goes through the Next.js proxy (/api/...),
+ * which ensures the same-origin httpOnly cookie is sent correctly.
  */
 async function fetchWsToken(): Promise<string | null> {
-  // Return cached token if available
   if (cachedWsToken) return cachedWsToken;
-
-  // Deduplicate concurrent calls
   if (tokenFetchPromise) return tokenFetchPromise;
 
   tokenFetchPromise = (async () => {
     try {
-      const res = await fetch(`${getApiBaseUrl()}/auth/ws-token`, {
-        credentials: "include",
-      });
-      if (!res.ok) {
-        console.warn("[CallSocket] ws-token fetch failed:", res.status);
-        return null;
-      }
-      const data = await res.json();
+      const data = await apiClient.get<{ token: string | null }>("/auth/ws-token");
       cachedWsToken = data.token || null;
-      console.log("[CallSocket] ws-token fetched:", cachedWsToken ? "OK" : "null");
+      console.log("[CallSocket] ws-token fetched via proxy:", cachedWsToken ? "OK" : "null");
       return cachedWsToken;
     } catch (err) {
       console.error("[CallSocket] ws-token fetch error:", err);
