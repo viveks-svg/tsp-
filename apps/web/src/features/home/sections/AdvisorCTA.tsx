@@ -69,9 +69,9 @@ export default function AdvisorCTA() {
                 whileTap={{ scale: 0.98 }}
                 className="btn-shine w-full sm:w-auto bg-gradient-to-r from-[#F6A000] to-[#E89500] text-white px-12 py-5 rounded-full text-base font-heading font-semibold shadow-[0_4px_30px_rgba(246,160,0,0.25)] hover:shadow-[0_8px_40px_rgba(246,160,0,0.35)] transition-shadow duration-300"
                 onClick={() => {
-                  window.location.href = "/consultations/chat"
+                  window.location.href = "/solutions"
                 }}>
-                Talk @ ₹1 Only
+                Get Vastu Consultation @ ₹24,999 Only
               </motion.button>
             </div>
           </div>

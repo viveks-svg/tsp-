@@ -25,8 +25,9 @@ export class CreateShopOrderDto {
   @Matches(/^[a-zA-Z\s]+$/, { message: "Name must contain only letters and spaces" })
   customerName!: string;
 
+  @IsOptional()
   @IsEmail({}, { message: "Invalid email format" })
-  customerEmail!: string;
+  customerEmail?: string;
 
   @IsString()
   @IsNotEmpty()

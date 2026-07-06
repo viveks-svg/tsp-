@@ -150,7 +150,14 @@ export default function ShopPage() {
       return;
     }
 
-    if (!shippingData.customerName || !shippingData.customerPhone || !shippingData.shippingAddress) {
+    if (
+      !shippingData.customerName || 
+      !shippingData.customerPhone || 
+      !shippingData.shippingAddress ||
+      !shippingData.city ||
+      !shippingData.state ||
+      !shippingData.pincode
+    ) {
       alert("Please fill in all required shipping details.");
       return;
     }
@@ -159,12 +166,12 @@ export default function ShopPage() {
     try {
       const orderPayload = {
         ...shippingData,
+        customerEmail: shippingData.customerEmail || undefined,
         items: cart.map((item) => ({
           productId: item.id,
           productName: item.name,
           price: item.price,
           quantity: item.quantity,
-          itemType: item.type,
         })),
         totalAmount: subtotal,
         userId: user?.id || undefined
@@ -239,8 +246,9 @@ export default function ShopPage() {
       });
       rzp.open();
 
-    } catch (error) {
-      alert("Failed to initiate checkout. Please try again.");
+    } catch (error: any) {
+      console.error("Checkout failed:", error);
+      alert(error.message || "Failed to initiate checkout. Please try again.");
       setIsProcessing(false);
     }
   };
