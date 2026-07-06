@@ -2,6 +2,17 @@
 
 import React, { useState } from "react";
 
+function formatAMPM(timeStr: string) {
+  if (!timeStr) return "";
+  const [h, m] = timeStr.split(':');
+  if (!h || !m) return timeStr;
+  let hours = parseInt(h, 10);
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; 
+  return `${hours.toString().padStart(2, '0')}:${m} ${ampm}`;
+}
+
 export function KundaliDashboard({ data }: { data: any }) {
   const [activeTab, setActiveTab] = useState("Basic");
 
@@ -16,7 +27,7 @@ export function KundaliDashboard({ data }: { data: any }) {
           {data.name || "Your"} Kundli
         </h2>
         <p className="text-sm text-muted bg-white border border-border inline-block px-4 py-1.5 rounded-full shadow-sm">
-          {new Date(data.birthDate).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })} • {data.birthTime} • {data.birthPlace || "Unknown Location"}
+          {new Date(data.birthDate).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })} • {formatAMPM(data.birthTime)} • {data.birthPlace || "Unknown Location"}
         </p>
       </div>
 
@@ -87,7 +98,7 @@ function BasicTab({ data }: { data: any }) {
           <DataRow label="Name" value={data.name || "-"} />
           <DataRow label="Gender" value={data.gender || "Male"} />
           <DataRow label="Date of Birth" value={data.birthDate} />
-          <DataRow label="Time of Birth" value={data.birthTime} />
+          <DataRow label="Time of Birth" value={formatAMPM(data.birthTime)} />
           <DataRow label="Place of Birth" value={data.birthPlace || "-"} />
           <DataRow label="Latitude" value={data.latitude?.toFixed(4) || "-"} />
           <DataRow label="Longitude" value={data.longitude?.toFixed(4) || "-"} />

@@ -49,20 +49,14 @@ export const freeServicesConfigs: Record<string, FreeServiceConfig> = {
       let moonHouse = 8;
       
       let finalData: any;
-      try {
-        const { fetchBirthChart } = await import("@/lib/api/ephemeris");
-        finalData = await fetchBirthChart({
-          name: name,
-          birthDate: values.birthDate,
-          birthTime: values.birthTime,
-          birthPlace: values.birthPlace,
-        });
-      } catch (error) {
-        // Fallback mock data if backend fails
-        const { getKundaliMockData } = await import("../utils/ephemeris-mock");
-        finalData = getKundaliMockData(name, values.birthDate, values.birthTime, values.birthPlace);
-      }
-      finalData.gender = values.gender || "Male";
+      const { fetchBirthChart } = await import("@/lib/api/ephemeris");
+      finalData = await fetchBirthChart({
+        name: name,
+        birthDate: values.birthDate,
+        birthTime: values.birthTime,
+        birthPlace: values.birthPlace,
+      });
+      finalData.gender = values.gender;
 
       const { KundaliDashboard } = await import("@/features/calculators/components/KundaliDashboard");
       
@@ -94,59 +88,27 @@ export const freeServicesConfigs: Record<string, FreeServiceConfig> = {
       let details = "This union is stable, but requires understanding and patience regarding differences.";
       let categories = [];
 
-      try {
-        const { fetchKundaliMatching } = await import("@/lib/api/ephemeris");
-        const apiData = await fetchKundaliMatching({
-          person1: { name: boyName, birthDate: values.boyBirthDate, birthTime: values.boyBirthTime || "12:00", birthPlace: values.boyBirthPlace || "Delhi" },
-          person2: { name: girlName, birthDate: values.girlBirthDate, birthTime: values.girlBirthTime || "12:00", birthPlace: values.girlBirthPlace || "Delhi" }
-        });
-        matchedGunas = Math.round(apiData.gunaScore);
-        status = apiData.verdict;
-        if (status.includes("Excellent")) statusColor = "text-emerald-600";
-        else if (status.includes("Good")) statusColor = "text-gold";
-        else if (status.includes("Not Recommended")) statusColor = "text-rose-600";
-        
-        categories = [
-          { name: "Varna (Work alignment)", score: `${apiData.breakdown.varna.score} / ${apiData.breakdown.varna.max}`, desc: apiData.breakdown.varna.description },
-          { name: "Vashya (Influence)", score: `${apiData.breakdown.vashya.score} / ${apiData.breakdown.vashya.max}`, desc: apiData.breakdown.vashya.description },
-          { name: "Tara (Destiny/Luck)", score: `${apiData.breakdown.tara.score} / ${apiData.breakdown.tara.max}`, desc: apiData.breakdown.tara.description },
-          { name: "Yoni (Physical resonance)", score: `${apiData.breakdown.yoni.score} / ${apiData.breakdown.yoni.max}`, desc: apiData.breakdown.yoni.description },
-          { name: "Maitri (Planetary friendship)", score: `${apiData.breakdown.grahaMaitri.score} / ${apiData.breakdown.grahaMaitri.max}`, desc: apiData.breakdown.grahaMaitri.description },
-          { name: "Gana (Temperament)", score: `${apiData.breakdown.gana.score} / ${apiData.breakdown.gana.max}`, desc: apiData.breakdown.gana.description },
-          { name: "Bhakoot (Moon position)", score: `${apiData.breakdown.bhakoot.score} / ${apiData.breakdown.bhakoot.max}`, desc: apiData.breakdown.bhakoot.description },
-          { name: "Nadi (Genetic/Health)", score: `${apiData.breakdown.nadi.score} / ${apiData.breakdown.nadi.max}`, desc: apiData.breakdown.nadi.description },
-        ];
-      } catch (error) {
-        // Calculate deterministic matching score
-        const combined = (boyName + girlName).toLowerCase();
-        let sum = 0;
-        for (let i = 0; i < combined.length; i++) {
-          sum += combined.charCodeAt(i);
-        }
-        matchedGunas = 18 + (sum % 19); // score between 18 and 36 gunas
-
-        if (matchedGunas >= 28) {
-          status = "Excellent Match (Uttam)";
-          statusColor = "text-emerald-600";
-          details = "An auspicious and highly compatible relationship. High alignment in core values, physical resonance, and life goals.";
-        } else if (matchedGunas >= 22) {
-          status = "Good Match (Madhyam)";
-          statusColor = "text-gold";
-          details = "A solid connection with high potential. Standard remedies can easily resolve minor planetary imbalances.";
-        }
-
-        // Ashtakoot categories
-        categories = [
-          { name: "Varna (Work alignment)", score: "1 / 1", desc: "Auspicious alignment of intellectual/mental orientations." },
-          { name: "Vashya (Influence/Control)", score: matchedGunas > 24 ? "2 / 2" : "1 / 2", desc: "Mutual respect and emotional control parameters." },
-          { name: "Tara (Destiny/Luck)", score: matchedGunas > 28 ? "3 / 3" : "1.5 / 3", desc: "Inter-relationship fortune and lifespan safety." },
-          { name: "Yoni (Physical resonance)", score: matchedGunas > 30 ? "4 / 4" : "2 / 4", desc: "Physical compatibility and biological harmony." },
-          { name: "Maitri (Planetary friendship)", score: matchedGunas > 26 ? "5 / 5" : "3 / 5", desc: "Subconscious alignment and intellectual friendship." },
-          { name: "Gana (Temperament)", score: matchedGunas > 28 ? "6 / 6" : "4 / 6", desc: "Mental temperament, alignment of spiritual levels." },
-          { name: "Bhakoot (Moon position)", score: matchedGunas > 20 ? "7 / 7" : "0 / 7", desc: "Emotional resonance and wealth progress parameters." },
-          { name: "Nadi (Genetic/Health)", score: matchedGunas % 2 === 0 ? "8 / 8" : "0 / 8", desc: "Genetic health alignment and progeny longevity parameters." },
-        ];
-      }
+      const { fetchKundaliMatching } = await import("@/lib/api/ephemeris");
+      const apiData = await fetchKundaliMatching({
+        person1: { name: boyName, birthDate: values.boyBirthDate, birthTime: values.boyBirthTime || "12:00", birthPlace: values.boyBirthPlace || "Delhi" },
+        person2: { name: girlName, birthDate: values.girlBirthDate, birthTime: values.girlBirthTime || "12:00", birthPlace: values.girlBirthPlace || "Delhi" }
+      });
+      matchedGunas = Math.round(apiData.gunaScore);
+      status = apiData.verdict;
+      if (status.includes("Excellent")) statusColor = "text-emerald-600";
+      else if (status.includes("Good")) statusColor = "text-gold";
+      else if (status.includes("Not Recommended")) statusColor = "text-rose-600";
+      
+      categories = [
+        { name: "Varna (Work alignment)", score: `${apiData.breakdown.varna.score} / ${apiData.breakdown.varna.max}`, desc: apiData.breakdown.varna.description },
+        { name: "Vashya (Influence)", score: `${apiData.breakdown.vashya.score} / ${apiData.breakdown.vashya.max}`, desc: apiData.breakdown.vashya.description },
+        { name: "Tara (Destiny/Luck)", score: `${apiData.breakdown.tara.score} / ${apiData.breakdown.tara.max}`, desc: apiData.breakdown.tara.description },
+        { name: "Yoni (Physical resonance)", score: `${apiData.breakdown.yoni.score} / ${apiData.breakdown.yoni.max}`, desc: apiData.breakdown.yoni.description },
+        { name: "Maitri (Planetary friendship)", score: `${apiData.breakdown.grahaMaitri.score} / ${apiData.breakdown.grahaMaitri.max}`, desc: apiData.breakdown.grahaMaitri.description },
+        { name: "Gana (Temperament)", score: `${apiData.breakdown.gana.score} / ${apiData.breakdown.gana.max}`, desc: apiData.breakdown.gana.description },
+        { name: "Bhakoot (Moon position)", score: `${apiData.breakdown.bhakoot.score} / ${apiData.breakdown.bhakoot.max}`, desc: apiData.breakdown.bhakoot.description },
+        { name: "Nadi (Genetic/Health)", score: `${apiData.breakdown.nadi.score} / ${apiData.breakdown.nadi.max}`, desc: apiData.breakdown.nadi.description },
+      ];
 
       return (
         <ServiceResultCard title="Ashtakoot Guna Milan Compatibility Report">
@@ -399,24 +361,14 @@ export const freeServicesConfigs: Record<string, FreeServiceConfig> = {
       let isManglik = false;
       let marsHouse = 1;
 
-      try {
-        const { fetchMangalDosha } = await import("@/lib/api/ephemeris");
-        const apiData = await fetchMangalDosha({
-          birthDate: values.birthDate,
-          birthTime: values.birthTime,
-          birthPlace: values.birthPlace,
-        });
-        isManglik = apiData.isManglik;
-        marsHouse = apiData.marsHouse;
-      } catch (error) {
-        const birthTime = values.birthTime || "12:00";
-        const hours = parseInt(birthTime.split(":")[0], 10) || 12;
-        // Deterministically set Dosha based on hours
-        // Mangal Dosha occurs when Mars is in 1, 2, 4, 7, 8, 12 houses.
-        marsHouse = hours % 12;
-        if (marsHouse === 0) marsHouse = 12;
-        isManglik = [1, 2, 4, 7, 8, 12].includes(marsHouse);
-      }
+      const { fetchMangalDosha } = await import("@/lib/api/ephemeris");
+      const apiData = await fetchMangalDosha({
+        birthDate: values.birthDate,
+        birthTime: values.birthTime,
+        birthPlace: values.birthPlace,
+      });
+      isManglik = apiData.isManglik;
+      marsHouse = apiData.marsHouse;
 
       return (
         <ServiceResultCard title={`Mangal Dosha Report: ${name}`}>

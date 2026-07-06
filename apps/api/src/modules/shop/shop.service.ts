@@ -4,24 +4,7 @@ import { PaymentsService } from '../payments/payments.service';
 import { RazorpayService } from '../payments/razorpay.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ShopOrderStatus } from '@prisma/client';
-
-export interface CreateShopOrderDto {
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  shippingAddress: string;
-  city: string;
-  state: string;
-  pincode: string;
-  items: {
-    productId: string;
-    productName: string;
-    price: number;
-    quantity: number;
-  }[];
-  totalAmount: number;
-  userId?: string;
-}
+import { CreateShopOrderDto } from './dto/create-shop-order.dto';
 
 @Injectable()
 export class ShopService {

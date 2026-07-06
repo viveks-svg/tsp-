@@ -44,6 +44,7 @@ export const ENDPOINTS = {
   ASTROLOGERS: {
     LIST: "/astrologers",
     DETAIL: (id: string) => `/astrologers/${id}`,
+    ME_AVAILABILITY_RULES: "/astrologers/me/availability/rules",
   },
 
   // Horoscope

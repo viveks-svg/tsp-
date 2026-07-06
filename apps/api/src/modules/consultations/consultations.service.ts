@@ -27,11 +27,47 @@ export class ConsultationsService {
 
     const astrologer = await this.prisma.astrologer.findUnique({
       where: { id: dto.astrologerId },
-      include: { user: true },
+      include: { 
+        user: true,
+        availabilityRules: true,
+        exceptions: {
+          where: {
+            date: {
+              gte: new Date(new Date().setHours(0, 0, 0, 0)),
+              lt: new Date(new Date().setHours(23, 59, 59, 999)),
+            }
+          }
+        }
+      },
     });
 
     if (!astrologer || astrologer.status !== "APPROVED") {
       throw new BadRequestException("Astrologer is not approved or active");
+    }
+
+    let isAvailable = astrologer.isAvailable;
+    const now = new Date();
+    const currentDay = now.getDay();
+    const currentHourMin = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    if (isAvailable && astrologer.availabilityRules.length > 0) {
+      const todayException = astrologer.exceptions[0];
+      if (todayException) {
+        isAvailable = todayException.isAvailable;
+      } else {
+        const ruleForToday = astrologer.availabilityRules.find(r => r.dayOfWeek === currentDay);
+        if (ruleForToday) {
+          if (currentHourMin < ruleForToday.startTime || currentHourMin > ruleForToday.endTime) {
+            isAvailable = false;
+          }
+        } else {
+          isAvailable = false;
+        }
+      }
+    }
+
+    if (!isAvailable) {
+      throw new BadRequestException("This astrologer is currently offline or not scheduled for today.");
     }
 
     if (astrologer.userId === userId) {

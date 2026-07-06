@@ -7,16 +7,22 @@ import { apiClient } from "@/lib/http/client";
 import { ENDPOINTS } from "@/lib/constants/http/endpoints";
 import { useAuth } from "@/providers/AuthProvider";
 import type { AuthTokenResponse, User } from "@/types/user";
+import PasswordStrengthIndicator from "@/components/ui/PasswordStrengthIndicator";
+import { 
+  filterNameInput, 
+  filterPhoneInput, 
+  validateName, 
+  validateEmail, 
+  validatePassword, 
+  validatePhone 
+} from "@/lib/validations/validators";
 
 interface SignupFormProps {
-  /** Called after a successful signup. */
   onSuccess?: (user: User) => void;
-  /** Called when the user clicks "Log In" to switch to login mode. */
   onSwitchToLogin?: () => void;
 }
 
 export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormProps) {
-
   const { login } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -28,20 +34,31 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password) {
-      setError("Please fill in all required fields.");
-      return;
+    setError(null);
+    setSuccess(null);
+
+    // Client-side validations
+    const nameError = validateName(name);
+    if (nameError) return setError(nameError);
+
+    const emailError = validateEmail(email);
+    if (emailError) return setError(emailError);
+
+    const passwordError = validatePassword(password);
+    if (passwordError) return setError(passwordError);
+
+    if (phone) {
+      const phoneError = validatePhone(phone);
+      if (phoneError) return setError(phoneError);
     }
 
     try {
       setLoading(true);
-      setError(null);
-      setSuccess(null);
-
       const response = await apiClient.post<AuthTokenResponse>(ENDPOINTS.AUTH.SIGNUP, {
-        name,
-        email,
+        name: name.trim(),
+        email: email.trim(),
         password,
+        ...(phone && { phone: phone.trim() }),
       });
 
       login(response.user, Number(response.walletBalance ?? 0), response.accessToken);
@@ -60,7 +77,6 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
 
   return (
     <div className="w-full max-w-md mx-auto space-y-6">
-      {/* Error & Success Messages */}
       <AnimatePresence mode="wait">
         {error && (
           <motion.div
@@ -87,14 +103,10 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
         )}
       </AnimatePresence>
 
-      {/* Signup Form */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
         <form onSubmit={handleSignup} className="space-y-4">
           <div>
-            <label
-              htmlFor="signup-name"
-              className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5"
-            >
+            <label htmlFor="signup-name" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               Full Name
             </label>
             <input
@@ -104,15 +116,12 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
               className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
               placeholder="Enter your full name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(filterNameInput(e.target.value))}
             />
           </div>
 
           <div>
-            <label
-              htmlFor="signup-email"
-              className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5"
-            >
+            <label htmlFor="signup-email" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               Email Address
             </label>
             <input
@@ -122,32 +131,27 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
               className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
               placeholder="name@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value.trim())}
             />
           </div>
 
           <div>
-            <label
-              htmlFor="signup-phone"
-              className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5"
-            >
+            <label htmlFor="signup-phone" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               Phone <span className="font-normal text-slate-400">(optional)</span>
             </label>
             <input
               type="tel"
               id="signup-phone"
+              maxLength={10}
               className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
-              placeholder="e.g. +91 99999 99999"
+              placeholder="e.g. 9999999999"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(filterPhoneInput(e.target.value))}
             />
           </div>
 
           <div>
-            <label
-              htmlFor="signup-password"
-              className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5"
-            >
+            <label htmlFor="signup-password" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               Password
             </label>
             <input
@@ -155,23 +159,23 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
               id="signup-password"
               required
               className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
-              placeholder="Min 6 characters"
+              placeholder="Enter a strong password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            {password.length > 0 && <PasswordStrengthIndicator password={password} />}
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+            className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 mt-2"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             Create Account
           </button>
         </form>
 
-        {/* Switch to Login */}
         <p className="pt-4 text-sm text-center text-slate-600">
           Already have an account?{" "}
           <button

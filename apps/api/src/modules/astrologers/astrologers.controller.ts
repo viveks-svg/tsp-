@@ -53,6 +53,11 @@ export class AstrologersController {
     return this.astrologersService.setAvailabilityRules(user.id, dto);
   }
 
+  @Get("me/availability/rules")
+  async getMyAvailabilityRules(@CurrentUser() user: any) {
+    return this.astrologersService.getMyAvailabilityRules(user.id);
+  }
+
   @Public()
   @Get(":id/availability/rules")
   async getAvailabilityRules(@Param("id") id: string) {

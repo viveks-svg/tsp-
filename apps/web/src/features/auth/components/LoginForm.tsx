@@ -9,6 +9,7 @@ import { apiClient } from "@/lib/http/client";
 import { ENDPOINTS } from "@/lib/constants/http/endpoints";
 import { useAuth } from "@/providers/AuthProvider";
 import type { AuthTokenResponse, User } from "@/types/user";
+import { filterPhoneInput, validatePhone } from "@/lib/validations/validators";
 
 interface LoginFormProps {
   /** Called after a successful login with user data. */
@@ -102,7 +103,12 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
   const handleSendOtp = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (!phone) {
-      setError("Please enter a valid phone number");
+      setError("Please enter a phone number");
+      return;
+    }
+    const phoneError = validatePhone(phone);
+    if (phoneError) {
+      setError(phoneError);
       return;
     }
 
@@ -331,9 +337,10 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
                     </span>
                     <input
                       type="tel"
-                      placeholder="e.g. +91 99999 99999"
+                      placeholder="e.g. 9999999999"
+                      maxLength={10}
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => setPhone(filterPhoneInput(e.target.value))}
                       className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all text-sm"
                     />
                   </div>

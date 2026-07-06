@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsISO8601, IsDateString, Matches } from "class-validator";
+import { IsString, IsOptional, IsISO8601, Matches, IsIn } from "class-validator";
+import { IsPastDate, IsNotPurelyNumeric } from "../../../common/decorators/validation.decorator";
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -6,11 +7,12 @@ export class UpdateProfileDto {
   timezone?: string;
 
   @IsOptional()
-  @IsString()
+  @IsIn(["en", "hi", "ta", "te", "mr", "bn", "gu", "kn", "ml", "pa", "or", "as"])
   preferredLanguage?: string;
 
   @IsOptional()
   @IsISO8601()
+  @IsPastDate()
   dob?: string;
 
   @IsOptional()
@@ -22,9 +24,11 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
+  @IsNotPurelyNumeric()
   pob?: string;
 
   @IsOptional()
-  @IsString()
+  @IsIn(["Male", "Female", "Other"])
   gender?: string;
 }
+

@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Clock, Calendar, Check, Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Clock, Calendar, Check, Save, Loader2 } from "lucide-react";
+import { apiClient } from "@/lib/http/client";
+import { ENDPOINTS } from "@/lib/constants/http/endpoints";
 
 interface AvailabilityDay {
+  dayOfWeek: number;
   day: string;
   enabled: boolean;
   startTime: string;
@@ -11,19 +14,45 @@ interface AvailabilityDay {
 }
 
 const INITIAL_DAYS: AvailabilityDay[] = [
-  { day: "Monday", enabled: true, startTime: "09:00", endTime: "18:00" },
-  { day: "Tuesday", enabled: true, startTime: "09:00", endTime: "18:00" },
-  { day: "Wednesday", enabled: true, startTime: "09:00", endTime: "18:00" },
-  { day: "Thursday", enabled: true, startTime: "09:00", endTime: "18:00" },
-  { day: "Friday", enabled: true, startTime: "09:00", endTime: "18:00" },
-  { day: "Saturday", enabled: false, startTime: "10:00", endTime: "16:00" },
-  { day: "Sunday", enabled: false, startTime: "10:00", endTime: "16:00" },
+  { dayOfWeek: 1, day: "Monday", enabled: true, startTime: "09:00", endTime: "18:00" },
+  { dayOfWeek: 2, day: "Tuesday", enabled: true, startTime: "09:00", endTime: "18:00" },
+  { dayOfWeek: 3, day: "Wednesday", enabled: true, startTime: "09:00", endTime: "18:00" },
+  { dayOfWeek: 4, day: "Thursday", enabled: true, startTime: "09:00", endTime: "18:00" },
+  { dayOfWeek: 5, day: "Friday", enabled: true, startTime: "09:00", endTime: "18:00" },
+  { dayOfWeek: 6, day: "Saturday", enabled: false, startTime: "10:00", endTime: "16:00" },
+  { dayOfWeek: 0, day: "Sunday", enabled: false, startTime: "10:00", endTime: "16:00" },
 ];
 
 export default function AstrologerAvailabilityPage() {
   const [schedule, setSchedule] = useState<AvailabilityDay[]>(INITIAL_DAYS);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchRules = async () => {
+      try {
+        const rules = await apiClient.get<any[]>(ENDPOINTS.ASTROLOGERS.ME_AVAILABILITY_RULES);
+        
+        if (rules && rules.length > 0) {
+          const updatedSchedule = [...INITIAL_DAYS].map(day => {
+            const rule = rules.find(r => r.dayOfWeek === day.dayOfWeek);
+            if (rule) {
+              return { ...day, enabled: true, startTime: rule.startTime, endTime: rule.endTime };
+            }
+            return { ...day, enabled: false };
+          });
+          setSchedule(updatedSchedule);
+        }
+      } catch (err: any) {
+        console.error("Failed to load availability rules:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    void fetchRules();
+  }, []);
 
   const handleToggle = (index: number) => {
     setSchedule((prev) =>
@@ -37,15 +66,42 @@ export default function AstrologerAvailabilityPage() {
     );
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
     setSaved(false);
-    setTimeout(() => {
-      setSaving(false);
+    setError(null);
+    
+    try {
+      const activeRules = schedule
+        .filter(day => day.enabled)
+        .map(day => ({
+          dayOfWeek: day.dayOfWeek,
+          startTime: day.startTime,
+          endTime: day.endTime,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        }));
+
+      await apiClient.post(ENDPOINTS.ASTROLOGERS.ME_AVAILABILITY_RULES, {
+        rules: activeRules
+      });
+      
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    }, 1000);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to save availability rules");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-navy" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto">
@@ -62,23 +118,26 @@ export default function AstrologerAvailabilityPage() {
             Configure the days and times you are available to receive calls and chats.
           </p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="self-start md:self-auto flex items-center gap-2 bg-navy hover:bg-navy-hover text-white rounded-button px-5 py-2.5 text-sm font-bold font-poppins transition-colors shadow-sm disabled:opacity-60"
-        >
-          {saving ? "Saving..." : saved ? (
-            <>
-              <Check className="w-4 h-4" />
-              Saved
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              Save Availability
-            </>
-          )}
-        </button>
+        <div className="flex flex-col items-end gap-2 self-start md:self-auto">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 bg-navy hover:bg-navy-hover text-white rounded-button px-5 py-2.5 text-sm font-bold font-poppins transition-colors shadow-sm disabled:opacity-60"
+          >
+            {saving ? "Saving..." : saved ? (
+              <>
+                <Check className="w-4 h-4" />
+                Saved
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save Availability
+              </>
+            )}
+          </button>
+          {error && <span className="text-xs text-rose-500 font-medium">{error}</span>}
+        </div>
       </div>
 
       {/* Schedule Table Card */}

@@ -11,7 +11,8 @@ import { SHOP_PRODUCTS, type Product } from "@/lib/data/shop";
 import { useCart } from "@/providers/CartProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import { useAuthModal } from "@/hooks/useAuthModal";
-import { div } from "framer-motion/client";
+import FormField from "@/components/ui/FormField";
+import { filterNameInput, filterPhoneInput, filterLocationInput } from "@/lib/validations/validators";
 
 export default function ShopPage() {
   const [search, setSearch] = useState("");
@@ -556,57 +557,65 @@ export default function ShopPage() {
                   <Truck className="w-5 h-5 text-gold" /> Shipping Details
                 </h3>
                 <div className="space-y-3">
-                  <input
-                    type="text"
+                  <FormField
+                    label=""
+                    name="customerName"
                     placeholder="Full Name *"
                     value={shippingData.customerName}
-                    onChange={(e) => setShippingData({ ...shippingData, customerName: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                    onChange={(val) => setShippingData({ ...shippingData, customerName: filterNameInput(val) })}
+                    required
                   />
                   <div className="grid grid-cols-2 gap-3">
-                    <input
+                    <FormField
+                      label=""
+                      name="customerEmail"
                       type="email"
                       placeholder="Email"
                       value={shippingData.customerEmail}
-                      onChange={(e) => setShippingData({ ...shippingData, customerEmail: e.target.value })}
-                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                      onChange={(val) => setShippingData({ ...shippingData, customerEmail: val.trim() })}
                     />
-                    <input
+                    <FormField
+                      label=""
+                      name="customerPhone"
                       type="tel"
                       placeholder="Phone *"
                       value={shippingData.customerPhone}
-                      onChange={(e) => setShippingData({ ...shippingData, customerPhone: e.target.value })}
-                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                      onChange={(val) => setShippingData({ ...shippingData, customerPhone: filterPhoneInput(val) })}
+                      required
                     />
                   </div>
-                  <input
-                    type="text"
+                  <FormField
+                    label=""
+                    name="shippingAddress"
                     placeholder="Street Address *"
                     value={shippingData.shippingAddress}
-                    onChange={(e) => setShippingData({ ...shippingData, shippingAddress: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                    onChange={(val) => setShippingData({ ...shippingData, shippingAddress: val })}
+                    required
                   />
                   <div className="grid grid-cols-3 gap-3">
-                    <input
-                      type="text"
+                    <FormField
+                      label=""
+                      name="city"
                       placeholder="City *"
                       value={shippingData.city}
-                      onChange={(e) => setShippingData({ ...shippingData, city: e.target.value })}
-                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                      onChange={(val) => setShippingData({ ...shippingData, city: filterLocationInput(val) })}
+                      required
                     />
-                    <input
-                      type="text"
+                    <FormField
+                      label=""
+                      name="state"
                       placeholder="State *"
                       value={shippingData.state}
-                      onChange={(e) => setShippingData({ ...shippingData, state: e.target.value })}
-                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                      onChange={(val) => setShippingData({ ...shippingData, state: filterLocationInput(val) })}
+                      required
                     />
-                    <input
-                      type="text"
+                    <FormField
+                      label=""
+                      name="pincode"
                       placeholder="PIN *"
                       value={shippingData.pincode}
-                      onChange={(e) => setShippingData({ ...shippingData, pincode: e.target.value })}
-                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-cream/50 focus:outline-none focus:border-gold"
+                      onChange={(val) => setShippingData({ ...shippingData, pincode: filterPhoneInput(val) })} // Pincode should be numbers only
+                      required
                     />
                   </div>
                 </div>

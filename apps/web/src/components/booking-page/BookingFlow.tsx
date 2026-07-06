@@ -15,6 +15,8 @@ import PlanSelectStep from './PlanSelectStep';
 import BookingCalendarStep from './BookingCalendarStep';
 import ReviewStep from './ReviewStep';
 import BookingSuccess from './BookingSuccess';
+import FormField from '@/components/ui/FormField';
+import { validateEmail } from '@/lib/validations/validators';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,10 +90,10 @@ function StepIndicator({ currentStep }: { currentStep: BookingPageStep }) {
             <div className="flex flex-col items-center gap-1">
               <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive
-                    ? 'bg-[#C8A04A] text-white shadow-[0_0_0_3px_rgba(200,160,74,0.2)]'
-                    : isCompleted
-                      ? 'bg-[#C8A04A] text-white'
-                      : 'bg-[#EFEBE1] text-[#9CA3AF]'
+                  ? 'bg-[#C8A04A] text-white shadow-[0_0_0_3px_rgba(200,160,74,0.2)]'
+                  : isCompleted
+                    ? 'bg-[#C8A04A] text-white'
+                    : 'bg-[#EFEBE1] text-[#9CA3AF]'
                   }`}
               >
                 {isCompleted ? '✓' : stepIndex + 1}
@@ -135,6 +137,9 @@ function DynamicFormStep({
   onBack: () => void;
   onNext: () => void;
 }) {
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
   // Group fields by section
   const sections: Record<string, typeof service.formFields> = {};
   for (const field of service.formFields) {
@@ -145,53 +150,92 @@ function DynamicFormStep({
 
   // Handle validation and proceed
   const handleNext = () => {
+    setFormError(null);
+    const newErrors: Record<string, string> = {};
+
     // Check required fields
     const missingFields = service.formFields.filter(
       (f) => f.required && (!formData[f.name] || formData[f.name].trim() === '')
     );
     if (missingFields.length > 0) {
-      alert(`Please fill in required fields: ${missingFields.map((f) => f.label).join(', ')}`);
-      return;
+      missingFields.forEach((f) => {
+        newErrors[f.name] = `${f.label} is required`;
+      });
     }
 
+    // check phone number 
+    const phoneField = service.formFields.find(
+      (f) => f.name.toLowerCase().includes('phone') || f.name.toLowerCase().includes('mobile')
+    );
+    if (phoneField && formData[phoneField.name]) {
+      const phone = formData[phoneField.name].replace(/\D/g, "");
+      if (phone.length !== 10) {
+        newErrors[phoneField.name] = "Please enter a valid 10-digit phone number.";
+      }
+    }
+
+    // check name
+    const nameField = service.formFields.find(
+      (f) => f.name.toLowerCase().includes('name') && f.type === 'text'
+    );
+    if (nameField && formData[nameField.name]) {
+      const nameVal = formData[nameField.name].trim();
+      if (nameVal.length < 2) {
+        newErrors[nameField.name] = "Name must be at least 2 characters long.";
+      } else if (!/^[a-zA-Z\s]+$/.test(nameVal)) {
+        newErrors[nameField.name] = "Name must contain only letters and spaces.";
+      }
+    }
+    
     // Check email
     const emailField = service.formFields.find(
       (f) => f.type === 'email' || f.name.toLowerCase().includes('email')
     );
     if (emailField) {
       const email = formData[emailField.name];
-      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        alert('Please enter a valid email address.');
-        return;
+      if (email) {
+        const error = validateEmail(email);
+        if (error) {
+          newErrors[emailField.name] = error;
+        }
       }
     }
 
     // Check date and time
     if (service.requiresSlot) {
-      if (!scheduledDate || !scheduledSlot) {
-        alert('Date and Time are required.');
-        return;
+      if (!scheduledDate) {
+        newErrors['scheduledDate'] = 'Date is required.';
+      }
+      if (!scheduledSlot) {
+        newErrors['scheduledSlot'] = 'Time is required.';
       }
 
-      const selected = new Date(scheduledDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      if (scheduledDate) {
+        const selected = new Date(scheduledDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-      if (selected < today) {
-        alert('Cannot select a past date for booking.');
-        return;
-      }
+        if (selected < today) {
+          newErrors['scheduledDate'] = 'Cannot select a past date for booking.';
+        }
 
-      const minDate = new Date();
-      minDate.setDate(minDate.getDate() + 2);
-      minDate.setHours(0, 0, 0, 0);
+        const minDate = new Date();
+        minDate.setDate(minDate.getDate() + 2);
+        minDate.setHours(0, 0, 0, 0);
 
-      if (selected < minDate && urgencyTier === 'STANDARD') {
-        alert('Standard booking requires at least 2 days advance notice.');
-        return;
+        if (selected < minDate && urgencyTier === 'STANDARD') {
+          newErrors['scheduledDate'] = 'Standard booking requires at least 2 days advance notice.';
+        }
       }
     }
 
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      setFormError("Please fix the highlighted errors.");
+      return;
+    }
+
+    setFieldErrors({});
     onNext();
   };
 
@@ -226,43 +270,6 @@ function DynamicFormStep({
               {fields.map((field) => {
                 const value = formData[field.name] || '';
 
-                if (field.type === 'select' && field.options) {
-                  return (
-                    <div key={field.name}>
-                      <label className="block text-sm text-[#4B5563] mb-1.5 font-medium">
-                        {field.label} {field.required && <span className="text-[#C8A04A]">*</span>}
-                      </label>
-                      <select
-                        value={value}
-                        onChange={(e) => updateFormField(field.name, e.target.value)}
-                        className="w-full px-4 py-2.5 bg-white border border-[#EFEBE1] rounded-xl text-sm text-[#1E1A16] focus:border-[#C8A04A] focus:ring-1 focus:ring-[#C8A04A]/20 focus:outline-none transition-all"
-                      >
-                        <option value="">Select…</option>
-                        {field.options.map((opt) => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    </div>
-                  );
-                }
-
-                if (field.type === 'textarea') {
-                  return (
-                    <div key={field.name} className="sm:col-span-2">
-                      <label className="block text-sm text-[#4B5563] mb-1.5 font-medium">
-                        {field.label} {field.required && <span className="text-[#C8A04A]">*</span>}
-                      </label>
-                      <textarea
-                        rows={2}
-                        placeholder={field.placeholder}
-                        value={value}
-                        onChange={(e) => updateFormField(field.name, e.target.value)}
-                        className="w-full px-4 py-2.5 bg-white border border-[#EFEBE1] rounded-xl text-sm text-[#1E1A16] focus:border-[#C8A04A] focus:ring-1 focus:ring-[#C8A04A]/20 focus:outline-none transition-all resize-none"
-                      />
-                    </div>
-                  );
-                }
-
                 if (field.type === 'file') {
                   return (
                     <div key={field.name} className="sm:col-span-2">
@@ -277,24 +284,19 @@ function DynamicFormStep({
                 }
 
                 return (
-                  <div key={field.name}>
-                    <label className="block text-sm text-[#4B5563] mb-1.5 font-medium">
-                      {field.label} {field.required && <span className="text-[#C8A04A]">*</span>}
-                    </label>
-                    <input
-                      type={field.type}
-                      placeholder={field.placeholder}
-                      value={value}
-                      onChange={(e) => {
-                        let val = e.target.value;
-                        if (field.type === 'tel' || field.name.toLowerCase().includes('phone')) {
-                          val = val.replace(/[^\d\s\+\-\(\)]/g, '');
-                        }
-                        updateFormField(field.name, val);
-                      }}
-                      className="w-full px-4 py-2.5 bg-white border border-[#EFEBE1] rounded-xl text-sm text-[#1E1A16] focus:border-[#C8A04A] focus:ring-1 focus:ring-[#C8A04A]/20 focus:outline-none transition-all"
-                    />
-                  </div>
+                  <FormField
+                    key={field.name}
+                    label={field.label}
+                    name={field.name}
+                    type={field.type as any}
+                    value={value}
+                    onChange={(val) => updateFormField(field.name, val)}
+                    required={field.required}
+                    placeholder={field.placeholder}
+                    options={field.options}
+                    error={fieldErrors[field.name]}
+                    className={field.type === 'textarea' ? 'sm:col-span-2' : ''}
+                  />
                 );
               })}
             </div>
@@ -308,43 +310,44 @@ function DynamicFormStep({
               Preferred Schedule
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm text-[#4B5563] mb-1.5 font-medium">
-                  Preferred Date <span className="text-[#C8A04A]">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={scheduledDate}
-                  onChange={(e) => setScheduledDate(e.target.value)}
-                  min={new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0]}
-                  className="w-full px-4 py-2.5 bg-white border border-[#EFEBE1] rounded-xl text-sm text-[#1E1A16] focus:border-[#C8A04A] focus:ring-1 focus:ring-[#C8A04A]/20 focus:outline-none transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-[#4B5563] mb-1.5 font-medium">
-                  Preferred Time
-                </label>
-                <select
-                  value={scheduledSlot}
-                  onChange={(e) => setScheduledSlot(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white border border-[#EFEBE1] rounded-xl text-sm text-[#1E1A16] focus:border-[#C8A04A] focus:ring-1 focus:ring-[#C8A04A]/20 focus:outline-none transition-all"
-                >
-                  <option value="">Select a time slot…</option>
-                  <option value="10:00-11:00">10:00 AM – 11:00 AM</option>
-                  <option value="11:00-12:00">11:00 AM – 12:00 PM</option>
-                  <option value="14:00-15:00">2:00 PM – 3:00 PM</option>
-                  <option value="15:00-16:00">3:00 PM – 4:00 PM</option>
-                  <option value="16:00-17:00">4:00 PM – 5:00 PM</option>
-                  <option value="17:00-18:00">5:00 PM – 6:00 PM</option>
-                </select>
-              </div>
+              <FormField
+                label="Preferred Date"
+                name="scheduledDate"
+                type="date"
+                required
+                value={scheduledDate}
+                onChange={(val) => { setScheduledDate(val); setFieldErrors(prev => ({...prev, scheduledDate: ''})); }}
+                min={new Date().toISOString().split("T")[0]}
+                error={fieldErrors['scheduledDate']}
+              />
+              <FormField
+                label="Preferred Time"
+                name="scheduledSlot"
+                type="select"
+                value={scheduledSlot}
+                onChange={(val) => { setScheduledSlot(val); setFieldErrors(prev => ({...prev, scheduledSlot: ''})); }}
+                error={fieldErrors['scheduledSlot']}
+                options={[
+                  '10:00-11:00 AM',
+                  '11:00-12:00 PM',
+                  '02:00-03:00 PM',
+                  '03:00-04:00 PM',
+                  '04:00-05:00 PM',
+                  '05:00-06:00 PM'
+                ]}
+              />
             </div>
           </div>
         )}
       </div>
 
       {/* Next Button */}
-      <div className="mt-8 flex justify-end">
+      <div className="mt-8 flex flex-col sm:flex-row items-center justify-end gap-4">
+        {formError && (
+          <p className="text-sm font-semibold text-rose-500 animate-fade-in text-center sm:text-right">
+            {formError}
+          </p>
+        )}
         <button
           onClick={handleNext}
           className="px-8 py-3 bg-[#1E1A16] text-white rounded-full text-sm font-semibold hover:bg-[#C8A04A] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -399,7 +402,13 @@ export default function BookingFlow() {
   }, [serviceParam, planParam]);
 
   const updateFormField = useCallback((key: string, value: string) => {
-    setDynamicFormData((prev) => ({ ...prev, [key]: value }));
+    let finalValue = value;
+    // We let the user type, but if they want "no numeric values allowed in name field" 
+    // strictly during typing, we can strip numbers here. The user requested this.
+    if (key.toLowerCase().includes("name")) {
+      finalValue = value.replace(/[0-9]/g, ""); 
+    }
+    setDynamicFormData((prev) => ({ ...prev, [key]: finalValue }));
   }, []);
 
   // ── Service Selection ──────────────────────────────────────────────────────

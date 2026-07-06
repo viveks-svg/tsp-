@@ -362,25 +362,11 @@ export class RealtimeGateway
         maxDurationSeconds: result.maxDurationSeconds,
       });
 
-      // FALLBACK: Also broadcast to the call room.
-      // If either party joined the room but their userId→socket mapping is
-      // stale (e.g. after Railway redeploy), the room broadcast ensures
-      // they still receive credentials. Each side will use their own
-      // trtcUserId to identify which credentials belong to them.
-      this.server.to(roomId).emit("call:accepted", {
-        consultationId,
-        channelName: result.channelName,
-        sdkAppId: result.sdkAppId,
-        // Send BOTH sets of credentials via room — each client picks their own
-        userSig: result.user.userSig,
-        trtcUserId: result.user.trtcUserId,
-        astrologerSig: result.astrologer.userSig,
-        astrologerTrtcUserId: result.astrologer.trtcUserId,
-        maxDurationSeconds: result.maxDurationSeconds,
-      });
-
+      // The emitToUser method is robust enough since we now manage sockets correctly.
+      // We do not broadcast to the room here because sending the exact same payload 
+      // (with a single userSig) to both parties causes a TRTC Kick error.
       this.logger.log(`[CALL:${consultationId}] Accepted via signaling by ${astrologerUserId}`);
-      
+
       // Start timeout for max duration
       this.startActiveCallTimeout(
         consultationId,
@@ -639,7 +625,7 @@ export class RealtimeGateway
 
       try {
         this.logger.log(`[CALL:${consultationId}] Max duration reached. Forcefully ending call.`);
-        
+
         // Use callerUserId to end the call on their behalf due to insufficient balance
         const result = await this.callService.endCall(callerUserId, consultationId, "INSUFFICIENT_BALANCE");
 

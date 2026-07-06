@@ -165,7 +165,7 @@ export class AstrologersService {
   }
 
   async findAllApproved() {
-    return this.prisma.astrologer.findMany({
+    const astrologers = await this.prisma.astrologer.findMany({
       where: { status: "APPROVED" },
       include: {
         user: {
@@ -186,7 +186,51 @@ export class AstrologersService {
             language: true,
           },
         },
+        availabilityRules: true,
+        exceptions: {
+          where: {
+            date: {
+              gte: new Date(new Date().setHours(0, 0, 0, 0)),
+              lt: new Date(new Date().setHours(23, 59, 59, 999)),
+            }
+          }
+        }
       },
+    });
+
+    const now = new Date();
+    // Use IST timezone since users usually operate in India for Vedic astrology.
+    // However, if we do server local time, it might be UTC.
+    // It's better to just do server time for now.
+    const currentDay = now.getDay();
+    const currentHourMin = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    return astrologers.map(astro => {
+      let isAvailable = astro.isAvailable; // Base manual toggle
+      
+      // If manual toggle is ON, but they have scheduled rules, we enforce the rules
+      if (isAvailable && astro.availabilityRules.length > 0) {
+        const todayException = astro.exceptions[0];
+        if (todayException) {
+          isAvailable = todayException.isAvailable;
+        } else {
+          const ruleForToday = astro.availabilityRules.find(r => r.dayOfWeek === currentDay);
+          if (ruleForToday) {
+            if (currentHourMin < ruleForToday.startTime || currentHourMin > ruleForToday.endTime) {
+              isAvailable = false;
+            }
+          } else {
+            isAvailable = false; // No rule for today = not available today
+          }
+        }
+      }
+      
+      // We explicitly exclude availabilityRules and exceptions from the final response payload 
+      // if we want to keep it identical, or just return them since the DTO mapper can ignore them.
+      return {
+        ...astro,
+        isAvailable
+      };
     });
   }
 
@@ -213,6 +257,15 @@ export class AstrologersService {
           },
         },
         verification: true,
+        availabilityRules: true,
+        exceptions: {
+          where: {
+            date: {
+              gte: new Date(new Date().setHours(0, 0, 0, 0)),
+              lt: new Date(new Date().setHours(23, 59, 59, 999)),
+            }
+          }
+        }
       },
     });
 
@@ -220,7 +273,31 @@ export class AstrologersService {
       throw new NotFoundException("Astrologer profile not found");
     }
 
-    return astrologer;
+    let isAvailable = astrologer.isAvailable;
+    const now = new Date();
+    const currentDay = now.getDay();
+    const currentHourMin = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    if (isAvailable && astrologer.availabilityRules.length > 0) {
+      const todayException = astrologer.exceptions[0];
+      if (todayException) {
+        isAvailable = todayException.isAvailable;
+      } else {
+        const ruleForToday = astrologer.availabilityRules.find(r => r.dayOfWeek === currentDay);
+        if (ruleForToday) {
+          if (currentHourMin < ruleForToday.startTime || currentHourMin > ruleForToday.endTime) {
+            isAvailable = false;
+          }
+        } else {
+          isAvailable = false;
+        }
+      }
+    }
+
+    return {
+      ...astrologer,
+      isAvailable
+    };
   }
 
   async setAvailabilityRules(userId: string, dto: SetAvailabilityRulesDto) {
@@ -261,6 +338,14 @@ export class AstrologersService {
       where: { astrologerId },
       orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
     });
+  }
+
+  async getMyAvailabilityRules(userId: string) {
+    const profile = await this.prisma.astrologer.findUnique({
+      where: { userId },
+    });
+    if (!profile) throw new NotFoundException("Astrologer profile not found");
+    return this.getAvailabilityRules(profile.id);
   }
 
   async addAvailabilityException(userId: string, dto: AddAvailabilityExceptionDto) {

@@ -6,24 +6,28 @@ import { apiClient } from "@/lib/http/client";
 import { ENDPOINTS } from "@/lib/constants/http/endpoints";
 import type { UserProfile } from "@/types/api";
 import { useAuth } from "@/providers/AuthProvider";
+import FormField from "@/components/ui/FormField";
+import { GENDERS, SUPPORTED_LANGUAGES } from "@/lib/validations/constants";
+import { validateDateOfBirth, validateLocation } from "@/lib/validations/validators";
 
 export default function ProfilePageContent() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        setProfile(
-          await apiClient.get<UserProfile>(ENDPOINTS.USERS.PROFILE)
-        );
+        setProfile(await apiClient.get<UserProfile>(ENDPOINTS.USERS.PROFILE));
       } catch (error) {
-        setMessage(
-          error instanceof Error ? error.message : "Unable to load profile."
-        );
+        setMessage({
+          type: "error",
+          text: error instanceof Error ? error.message : "Unable to load profile.",
+        });
       } finally {
         setLoading(false);
       }
@@ -34,6 +38,23 @@ export default function ProfilePageContent() {
   const saveProfile = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!profile) return;
+
+    // Validate inputs before saving
+    const newErrors: Record<string, string> = {};
+    if (profile.dob) {
+      const dobError = validateDateOfBirth(profile.dob);
+      if (dobError) newErrors.dob = dobError;
+    }
+    if (profile.pob) {
+      const pobError = validateLocation(profile.pob);
+      if (pobError) newErrors.pob = pobError;
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    setErrors({});
 
     try {
       setSaving(true);
@@ -48,11 +69,12 @@ export default function ProfilePageContent() {
           gender: profile.gender || undefined,
         })
       );
-      setMessage("Profile saved.");
+      setMessage({ type: "success", text: "Profile saved." });
     } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Unable to save profile."
-      );
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Unable to save profile.",
+      });
     } finally {
       setSaving(false);
     }
@@ -80,76 +102,69 @@ export default function ProfilePageContent() {
             onSubmit={saveProfile}
             className="mt-8 grid gap-5 rounded-card-lg border border-border bg-white p-6 shadow-card sm:grid-cols-2"
           >
-            <label className="text-sm font-medium text-dark">
-              Date of birth
-              <input
-                type="date"
-                value={profile.dob?.slice(0, 10) || ""}
-                onChange={(event) =>
-                  setProfile({ ...profile, dob: event.target.value || null })
-                }
-                className="mt-2 w-full rounded-input border border-border px-4 py-3"
-              />
-            </label>
-            <label className="text-sm font-medium text-dark">
-              Time of birth
-              <input
-                type="time"
-                value={profile.tob || ""}
-                onChange={(event) =>
-                  setProfile({ ...profile, tob: event.target.value || null })
-                }
-                className="mt-2 w-full rounded-input border border-border px-4 py-3"
-              />
-            </label>
-            <label className="text-sm font-medium text-dark sm:col-span-2">
-              Place of birth
-              <input
-                value={profile.pob || ""}
-                onChange={(event) =>
-                  setProfile({ ...profile, pob: event.target.value || null })
-                }
-                className="mt-2 w-full rounded-input border border-border px-4 py-3"
-              />
-            </label>
-            <label className="text-sm font-medium text-dark">
-              Preferred language
-              <input
-                value={profile.preferredLanguage}
-                onChange={(event) =>
-                  setProfile({
-                    ...profile,
-                    preferredLanguage: event.target.value,
-                  })
-                }
-                className="mt-2 w-full rounded-input border border-border px-4 py-3"
-              />
-            </label>
-            <label className="text-sm font-medium text-dark">
-              Gender
-              <input
-                value={profile.gender || ""}
-                onChange={(event) =>
-                  setProfile({ ...profile, gender: event.target.value || null })
-                }
-                className="mt-2 w-full rounded-input border border-border px-4 py-3"
-              />
-            </label>
-            <div className="sm:col-span-2">
+            <FormField
+              label="Date of birth"
+              name="dob"
+              type="date"
+              value={profile.dob?.slice(0, 10) || ""}
+              onChange={(val) => setProfile({ ...profile, dob: val || null })}
+              error={errors.dob}
+              max={new Date().toISOString().split("T")[0]}
+            />
+            <FormField
+              label="Time of birth"
+              name="tob"
+              type="time"
+              value={profile.tob || ""}
+              onChange={(val) => setProfile({ ...profile, tob: val || null })}
+            />
+            <FormField
+              label="Place of birth"
+              name="pob"
+              type="places-autocomplete"
+              value={profile.pob || ""}
+              onChange={(val) => setProfile({ ...profile, pob: val || null })}
+              className="sm:col-span-2"
+              error={errors.pob}
+            />
+            <FormField
+              label="Preferred language"
+              name="preferredLanguage"
+              type="select"
+              options={SUPPORTED_LANGUAGES.map((l: any) => l.code)}
+              value={profile.preferredLanguage || ""}
+              onChange={(val) => setProfile({ ...profile, preferredLanguage: val })}
+            />
+            <FormField
+              label="Gender"
+              name="gender"
+              type="select"
+              options={[...GENDERS]}
+              value={profile.gender || ""}
+              onChange={(val) => setProfile({ ...profile, gender: val || null })}
+            />
+            <div className="sm:col-span-2 flex items-center gap-4 mt-2">
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-button bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy-hover disabled:opacity-60"
+                className="rounded-button bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy-hover disabled:opacity-60 flex items-center gap-2"
               >
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {saving ? "Saving..." : "Save profile"}
               </button>
               {message && (
-                <span className="ml-4 text-sm text-paragraph">{message}</span>
+                <span
+                  className={`text-sm font-medium ${
+                    message.type === "success" ? "text-emerald-600" : "text-rose-600"
+                  }`}
+                >
+                  {message.text}
+                </span>
               )}
             </div>
           </form>
         ) : (
-          <p className="mt-8 text-sm text-rose-600">{message}</p>
+          <p className="mt-8 text-sm text-rose-600">{message?.text}</p>
         )}
       </div>
     </section>

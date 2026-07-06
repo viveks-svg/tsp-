@@ -1,18 +1,22 @@
-import { IsDateString, IsString, ValidateNested } from 'class-validator';
+import { IsDateString, IsString, ValidateNested, Matches } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsPastDate, IsNotPurelyNumeric } from '../../common/decorators/validation.decorator';
 
 export class BirthDetailsDto {
   @ApiProperty({ example: '1990-07-15' })
   @IsDateString()
+  @IsPastDate()
   birthDate!: string;
 
   @ApiProperty({ example: '14:30' })
   @IsString()
+  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "birthTime must be in HH:MM 24-hour format" })
   birthTime!: string;
 
   @ApiProperty({ example: 'Delhi, India' })
   @IsString()
+  @IsNotPurelyNumeric()
   birthPlace!: string;
 }
 
@@ -31,6 +35,7 @@ export class BirthChartDto extends BirthDetailsDto {
 export class PersonDetailsDto extends BirthDetailsDto {
   @ApiProperty({ example: 'John Doe' })
   @IsString()
+  @Matches(/^[a-zA-Z\s]+$/, { message: "Name must contain only letters and spaces" })
   name!: string;
 }
 

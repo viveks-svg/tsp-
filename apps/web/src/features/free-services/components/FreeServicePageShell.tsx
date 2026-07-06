@@ -1,18 +1,20 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { FormField } from "@/types/free-services";
+import type { FormField as FormFieldType } from "@/types/free-services";
 import type { ReactNode } from "react";
 import Button from "@/components/ui/Button";
-import { fetchPlaces } from "@/lib/api/ephemeris";
+import FormField from "@/components/ui/FormField";
 
 interface FreeServicePageShellProps {
   title: string;
   description: string;
-  fields: FormField[];
+  fields: FormFieldType[];
   submitLabel?: string;
-  onSubmit: (values: Record<string, string>) => ReactNode;
+  onSubmit: (values: Record<string, string>) => ReactNode | Promise<ReactNode>;
 }
+
+import { filterNameInput, filterLocationInput } from "@/lib/validations/validators";
 
 export default function FreeServicePageShell({
   title,
@@ -22,58 +24,54 @@ export default function FreeServicePageShell({
   onSubmit,
 }: FreeServicePageShellProps) {
   const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [result, setResult] = useState<ReactNode | null>(null);
-
-  // Autocomplete state
-  const [suggestions, setSuggestions] = useState<{ name: string }[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (name: string, value: string) => {
-    setFormValues((prev) => ({ ...prev, [name]: value }));
+    let finalValue = value;
+    if (name.toLowerCase().includes("name")) {
+      finalValue = filterNameInput(value);
+    } else if (name.toLowerCase().includes("place")) {
+      finalValue = filterLocationInput(value);
+    }
+    
+    setFormValues((prev) => ({ ...prev, [name]: finalValue }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
-  const handleAutocompleteChange = async (name: string, value: string) => {
-    handleChange(name, value);
-    if (value.length < 2) {
-      setSuggestions([]);
-      setShowSuggestions(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const newErrors: Record<string, string> = {};
+    for (const field of fields) {
+      if (field.required && !formValues[field.name]) {
+        newErrors[field.name] = `${field.label} is required`;
+      }
+      if (field.name.toLowerCase().includes("name") && formValues[field.name]) {
+        if (!/^[a-zA-Z\s]+$/.test(formValues[field.name])) {
+          newErrors[field.name] = "Name must contain only letters and spaces.";
+        }
+      }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
-
-    setIsSearching(true);
-    setShowSuggestions(true);
+    
+    setErrors({});
+    setIsSubmitting(true);
     try {
-      const results = await fetchPlaces(value);
-      setSuggestions(results);
-    } catch (err) {
-      console.error("Error fetching places:", err);
-      setSuggestions([]);
+      const calculatedResult = await onSubmit(formValues);
+      setResult(calculatedResult);
+    } catch (err: any) {
+      setErrors({ submit: err.message || "Something went wrong. Please try again." });
     } finally {
-      setIsSearching(false);
+      setIsSubmitting(false);
     }
-  };
-
-  const selectSuggestion = (name: string, suggestionName: string) => {
-    handleChange(name, suggestionName);
-    setShowSuggestions(false);
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const calculatedResult = onSubmit(formValues);
-    setResult(calculatedResult);
   };
 
   return (
@@ -92,99 +90,45 @@ export default function FreeServicePageShell({
           {fields.map((field) => {
             const value = formValues[field.name] ?? "";
             return (
-              <div key={field.name} className="space-y-2 relative" ref={field.type === "places-autocomplete" ? dropdownRef : null}>
-                <label className="block text-xs font-semibold text-dark font-poppins uppercase tracking-wider">
-                  {field.label} {field.required && <span className="text-rose-500">*</span>}
-                </label>
-
+              <div key={field.name} className="space-y-2 relative">
                 {field.type === "button-group" ? (
-                  <div className="flex items-center gap-3">
-                    {field.options?.map((option) => (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => handleChange(field.name, option)}
-                        className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border transition-all text-sm font-poppins ${
-                          value === option
-                            ? "border-gold bg-gold/10 text-gold font-semibold shadow-sm"
-                            : "border-border bg-card text-muted-foreground hover:border-gold/50 hover:bg-gold/5"
-                        }`}
-                      >
-                        {option === "Male" && <span className="text-lg leading-none">♂</span>}
-                        {option === "Female" && <span className="text-lg leading-none">♀</span>}
-                        {option === "Other" && <span className="text-lg leading-none">⚧</span>}
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                ) : field.type === "select" ? (
-                  <select
-                    value={value}
-                    onChange={(e) => handleChange(field.name, e.target.value)}
-                    required={field.required}
-                    className="w-full bg-cream border border-border focus:border-gold focus:ring-1 focus:ring-gold rounded-xl px-4 py-3 text-sm font-poppins outline-none transition-all appearance-none cursor-pointer"
-                  >
-                    <option value="" disabled>
-                      {field.placeholder ?? `Select ${field.label}`}
-                    </option>
-                    {field.options?.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                ) : field.type === "places-autocomplete" ? (
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={value}
-                      placeholder={field.placeholder ?? "Search city..."}
-                      required={field.required}
-                      onChange={(e) => handleAutocompleteChange(field.name, e.target.value)}
-                      onFocus={() => {
-                        if (suggestions.length > 0) setShowSuggestions(true);
-                      }}
-                      className="w-full bg-cream border border-border focus:border-gold focus:ring-1 focus:ring-gold rounded-xl px-4 py-3 text-sm font-poppins outline-none transition-all"
-                    />
-                    {showSuggestions && value.length >= 2 && (
-                      <div className="absolute z-50 w-full mt-1 bg-card border border-border shadow-card rounded-xl max-h-60 overflow-y-auto">
-                        {isSearching ? (
-                          <div className="p-3 text-sm text-muted text-center animate-pulse">Searching...</div>
-                        ) : suggestions.length > 0 ? (
-                          suggestions.map((s, idx) => (
-                            <div
-                              key={idx}
-                              onClick={() => selectSuggestion(field.name, s.name)}
-                              className="px-4 py-3 hover:bg-cream-dark cursor-pointer text-sm font-poppins border-b border-border/50 last:border-0 transition-colors"
-                            >
-                              {s.name}
-                            </div>
-                          ))
-                        ) : (
-                          <div className="p-3 text-sm text-muted text-center">No places found</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ) : field.type === "date" ? (
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={value}
-                      required={field.required}
-                      onChange={(e) => handleChange(field.name, e.target.value)}
-                      className="w-full bg-cream border border-border focus:border-gold focus:ring-1 focus:ring-gold rounded-xl px-4 py-3 text-sm font-poppins outline-none transition-all appearance-none"
-                      style={{ colorScheme: "light" }}
-                    />
-                  </div>
+                  <>
+                    <label className="block text-xs font-semibold text-dark font-poppins uppercase tracking-wider">
+                      {field.label} {field.required && <span className="text-rose-500">*</span>}
+                    </label>
+                    <div className="flex items-center gap-3">
+                      {field.options?.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => handleChange(field.name, option)}
+                          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border transition-all text-sm font-poppins ${
+                            value === option
+                              ? "border-gold bg-gold/10 text-gold font-semibold shadow-sm"
+                              : "border-border bg-card text-muted-foreground hover:border-gold/50 hover:bg-gold/5"
+                          }`}
+                        >
+                          {option === "Male" && <span className="text-lg leading-none">♂</span>}
+                          {option === "Female" && <span className="text-lg leading-none">♀</span>}
+                          {option === "Other" && <span className="text-lg leading-none">⚧</span>}
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                    {errors[field.name] && <p className="text-xs text-rose-500 font-medium">{errors[field.name]}</p>}
+                  </>
                 ) : (
-                  <input
-                    type={field.type}
+                  <FormField
+                    label={field.label}
+                    name={field.name}
+                    type={field.type as any}
                     value={value}
-                    placeholder={field.placeholder}
+                    onChange={(val) => handleChange(field.name, val)}
                     required={field.required}
-                    onChange={(e) => handleChange(field.name, e.target.value)}
-                    className="w-full bg-cream border border-border focus:border-gold focus:ring-1 focus:ring-gold rounded-xl px-4 py-3 text-sm font-poppins outline-none transition-all"
+                    placeholder={field.placeholder}
+                    options={field.options}
+                    error={errors[field.name]}
+                    {...(field.type === "date" ? { max: new Date().toISOString().split("T")[0] } : {})}
                   />
                 )}
               </div>
@@ -192,9 +136,10 @@ export default function FreeServicePageShell({
           })}
         </div>
 
-        <div className="flex justify-end pt-2">
-          <Button type="submit" variant="gold" size="lg" className="w-full md:w-auto font-poppins font-semibold">
-            {submitLabel}
+        <div className="flex flex-col items-end pt-2 gap-2">
+          {errors.submit && <p className="text-sm font-semibold text-rose-500">{errors.submit}</p>}
+          <Button type="submit" variant="gold" size="lg" className="w-full md:w-auto font-poppins font-semibold" disabled={isSubmitting}>
+            {isSubmitting ? "Calculating..." : submitLabel}
           </Button>
         </div>
       </form>

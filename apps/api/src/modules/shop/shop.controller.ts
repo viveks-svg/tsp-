@@ -1,5 +1,6 @@
 import { Controller, Post, Body, Req } from '@nestjs/common';
-import { ShopService, CreateShopOrderDto } from './shop.service';
+import { ShopService } from './shop.service';
+import { CreateShopOrderDto } from './dto/create-shop-order.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Request } from 'express';
 
