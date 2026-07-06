@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3000",
+    "prebuild": "cd ../../packages/constants && pnpm build && cd ../zod-schemas && pnpm build",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
