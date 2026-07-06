@@ -1,3 +1,4 @@
+import { label } from "framer-motion/client";
 import { ROUTES } from "./routes";
 
 export const footerLinks = {
@@ -34,9 +35,8 @@ export const footerLinks = {
     { label: "Choghadiya", href: ROUTES.CALC_CHOGHADIYA },
   ],
   shop: [
-    { label: "Astro Shop", href: ROUTES.SHOP },
-    { label: "Business Vastu Plans", href: ROUTES.BUSINESS_VASTU },
-  ],
+    { label: "TSP Shop", href: ROUTES.SHOP },
+    { label: "Blogs", href: ROUTES.BLOG }],
   corporate: [
     { label: "About Us", href: ROUTES.ABOUT },
     { label: "Contact Us", href: ROUTES.CONTACT },

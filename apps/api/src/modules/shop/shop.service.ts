@@ -21,7 +21,7 @@ export class ShopService {
       const order = await this.prisma.shopOrder.create({
         data: {
           customerName: data.customerName,
-          customerEmail: data.customerEmail,
+          customerEmail: data.customerEmail || '',
           customerPhone: data.customerPhone,
           shippingAddress: data.shippingAddress,
           city: data.city,

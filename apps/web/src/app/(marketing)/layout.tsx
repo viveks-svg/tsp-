@@ -8,11 +8,7 @@ import SharedCartDrawer from "@/components/layout/SharedCartDrawer";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default function MarketingLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function MarketingLayout({ children, }: Readonly<{ children: React.ReactNode; }>) {
   return (
     <>
       {/* <TopBar /> */}

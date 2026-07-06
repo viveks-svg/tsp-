@@ -133,7 +133,7 @@ export default function Footer() {
             </div>
             <div>
               <h4 className="font-heading text-md font-bold text-white mb-4">
-                Shop
+                Shop & Blog
               </h4>
               <ul className="space-y-2.5">
                 {footerLinks.shop.map((link) => (

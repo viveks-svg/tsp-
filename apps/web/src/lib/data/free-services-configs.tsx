@@ -353,7 +353,7 @@ export const freeServicesConfigs: Record<string, FreeServiceConfig> = {
       { name: "name", label: "Full Name", type: "text", required: true, placeholder: "Enter name" },
       { name: "birthDate", label: "Birth Date", type: "date", required: true },
       { name: "birthTime", label: "Birth Time", type: "time", required: true },
-      { name: "birthPlace", label: "Birth Place", type: "text", required: true, placeholder: "City, Country" },
+      { name: "birthPlace", label: "Birth Place", type: "places-autocomplete", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Check Dosha Status",
     compute: async (values) => {

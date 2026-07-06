@@ -138,7 +138,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     fields: [
       { name: "birthDate", label: "Birth Date", type: "date", required: true },
       { name: "birthTime", label: "Birth Time", type: "time", required: true },
-      { name: "birthPlace", label: "Birth Place", type: "text", required: true, placeholder: "City, Country" },
+      { name: "birthPlace", label: "Birth Place", type: "places-autocomplete", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Calculate Dasha Periods",
     compute: async (values) => {
@@ -154,13 +154,13 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
           birthTime: values.birthTime,
           birthPlace: values.birthPlace,
         });
-        
+
         dashas = apiData.mahadashas.map((d: any) => ({
           planet: d.planet,
           years: d.durationYears,
           start: new Date(d.startDate).getFullYear(),
         }));
-        
+
         balance = apiData.balanceAtBirth;
         currentDasha = dashas.find((d: any) => currentYear >= d.start && currentYear < d.start + d.years) || dashas[5];
       } catch (error) {
@@ -191,9 +191,9 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
               </p>
             </div>
             {balance.years > 0 && (
-               <div className="text-center text-xs text-muted mb-2 font-poppins">
-                 Balance at birth: {balance.years} years, {balance.months} months, {balance.days} days
-               </div>
+              <div className="text-center text-xs text-muted mb-2 font-poppins">
+                Balance at birth: {balance.years} years, {balance.months} months, {balance.days} days
+              </div>
             )}
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs font-poppins">
@@ -292,7 +292,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     fields: [
       { name: "birthDate", label: "Birth Date", type: "date", required: true },
       { name: "birthTime", label: "Birth Time", type: "time", required: true },
-      { name: "birthPlace", label: "Birth Place", type: "text", required: true, placeholder: "City, Country" },
+      { name: "birthPlace", label: "Birth Place", type: "places-autocomplete", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Find Rashi",
     compute: async (values) => {
@@ -368,7 +368,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     fields: [
       { name: "birthDate", label: "Birth Date", type: "date", required: true },
       { name: "birthTime", label: "Birth Time", type: "time", required: true },
-      { name: "birthPlace", label: "Birth Place", type: "text", required: true, placeholder: "City, Country" },
+      { name: "birthPlace", label: "Birth Place", type: "places-autocomplete", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Find Lagna",
     compute: async (values) => {
@@ -384,7 +384,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
       } catch (error) {
         const birthTime = values.birthTime || "12:00";
         const hours = parseInt(birthTime.split(":")[0], 10);
-        
+
         const signs = [
           "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
           "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
@@ -750,7 +750,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     fields: [
       { name: "birthDate", label: "Birth Date", type: "date", required: true },
       { name: "birthTime", label: "Birth Time", type: "time", required: true },
-      { name: "birthPlace", label: "Birth Place", type: "text", required: true, placeholder: "City, Country" },
+      { name: "birthPlace", label: "Birth Place", type: "places-autocomplete", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Find Nakshatra",
     compute: async (values) => {
@@ -825,7 +825,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     submitLabel: "Calculate Ayanamsa",
     compute: async (values) => {
       let degrees, minutes, seconds;
-      
+
       try {
         const { fetchAyanamsa } = await import("@/lib/api/ephemeris");
         const apiData = await fetchAyanamsa({
@@ -836,12 +836,12 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
         seconds = apiData.seconds;
       } catch (error) {
         const year = values.birthDate ? new Date(values.birthDate).getFullYear() : new Date().getFullYear();
-        
+
         // Calculate Lahiri Ayanamsa: roughly 23.85 degrees + 50.29 seconds per year from 1950
         const diffYears = year - 1950;
         const secondsOffset = diffYears * 50.29;
         const baseDeg = 23.16 + (secondsOffset / 3600);
-        
+
         degrees = Math.floor(baseDeg);
         minutes = Math.floor((baseDeg - degrees) * 60);
         seconds = Math.round((((baseDeg - degrees) * 60) - minutes) * 60);
@@ -870,12 +870,12 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     description: "Display planetary hours for scheduling meetings and starting work today.",
     fields: [
       { name: "date", label: "Date", type: "date", required: true },
-      { name: "birthPlace", label: "Coordinates (City)", type: "text", required: true, placeholder: "City, Country" },
+      { name: "birthPlace", label: "Coordinates (City)", type: "places-autocomplete", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Find Horas",
     compute: (values) => {
       const dateStr = values.date || "Today";
-      
+
       const horas = [
         { time: "06:00 AM – 07:00 AM", ruler: "Sun", effect: "Auspicious", desc: "Good for meetings, leadership tasks, public activities." },
         { time: "07:00 AM – 08:00 AM", ruler: "Venus", effect: "Auspicious", desc: "Perfect for buying gems, art, dates, signing contracts." },
@@ -929,7 +929,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     description: "Display auspicious and inauspicious time divisions for daily tasks.",
     fields: [
       { name: "date", label: "Date", type: "date", required: true },
-      { name: "birthPlace", label: "Coordinates (City)", type: "text", required: true, placeholder: "City, Country" },
+      { name: "birthPlace", label: "Coordinates (City)", type: "places-autocomplete", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Find Choghadiya",
     compute: (values) => {

@@ -566,7 +566,7 @@ export default function ShopPage() {
                 </h3>
                 <div className="space-y-3">
                   <FormField
-                    label=""
+                    label="Full Name"
                     name="customerName"
                     placeholder="Full Name *"
                     value={shippingData.customerName}
@@ -575,7 +575,7 @@ export default function ShopPage() {
                   />
                   <div className="grid grid-cols-2 gap-3">
                     <FormField
-                      label=""
+                      label="Email"
                       name="customerEmail"
                       type="email"
                       placeholder="Email"
@@ -583,7 +583,7 @@ export default function ShopPage() {
                       onChange={(val) => setShippingData({ ...shippingData, customerEmail: val.trim() })}
                     />
                     <FormField
-                      label=""
+                      label="Phone"
                       name="customerPhone"
                       type="tel"
                       placeholder="Phone *"
@@ -593,7 +593,7 @@ export default function ShopPage() {
                     />
                   </div>
                   <FormField
-                    label=""
+                    label="Street Address"
                     name="shippingAddress"
                     placeholder="Street Address *"
                     value={shippingData.shippingAddress}
@@ -602,7 +602,7 @@ export default function ShopPage() {
                   />
                   <div className="grid grid-cols-3 gap-3">
                     <FormField
-                      label=""
+                      label="City"
                       name="city"
                       placeholder="City *"
                       value={shippingData.city}
@@ -610,7 +610,7 @@ export default function ShopPage() {
                       required
                     />
                     <FormField
-                      label=""
+                      label="State"
                       name="state"
                       placeholder="State *"
                       value={shippingData.state}
@@ -618,7 +618,7 @@ export default function ShopPage() {
                       required
                     />
                     <FormField
-                      label=""
+                      label="PIN Code"
                       name="pincode"
                       placeholder="PIN *"
                       value={shippingData.pincode}
