@@ -14,42 +14,42 @@ export default function FounderSection() {
           <FadeUp>
             <div className="relative">
               <Image
-                src="/images/pandit g.png"
+                src="/images/founder image.png"
                 alt="Founder"
-                width={560}
-                height={560}
+                width={580}
+                height={580}
                 className="w-full h-auto object-cover rounded-2xl"
               />
-              
+
 
               {/* Certified Badge */}
 
 
-               {/* Certificate Badge */}
-                  <div className="absolute bottom-10 right-10 z-10">
-                    <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-gold to-[#D88D14] shadow-[0_8px_30px_rgba(246,160,0,0.25)] border-[3px] border-white flex items-center justify-center">
-                      
-                      {/* Inner Dashed Ring */}
-                      <div className="absolute inset-1.5 rounded-full border border-dashed border-white/50"></div>
+              {/* Certificate Badge */}
+              <div className="absolute bottom-10 right-10 z-10">
+                <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-gold to-[#D88D14] shadow-[0_8px_30px_rgba(246,160,0,0.25)] border-[3px] border-white flex items-center justify-center">
 
-                      {/* Badge Content */}
-                      <div className="text-center text-white">
-                        <p className="text-[9px] font-semibold tracking-[2px]">
-                          CERTIFIED
-                        </p>
+                  {/* Inner Dashed Ring */}
+                  <div className="absolute inset-1.5 rounded-full border border-dashed border-white/50"></div>
 
-                        <p className="text-lg font-bold leading-none mt-1">
-                          25+
-                        </p>
+                  {/* Badge Content */}
+                  <div className="text-center text-white">
+                    <p className="text-[9px] font-semibold tracking-[2px]">
+                      CERTIFIED
+                    </p>
 
-                        <p className="text-[8px] tracking-wider mt-1 opacity-80">
-                          YEARS
-                        </p>
-                      </div>
-                    </div>
-                </div>  
+                    <p className="text-lg font-bold leading-none mt-1">
+                      25+
+                    </p>
 
+                    <p className="text-[8px] tracking-wider mt-1 opacity-80">
+                      YEARS
+                    </p>
+                  </div>
+                </div>
               </div>
+
+            </div>
           </FadeUp>
 
           {/* RIGHT — Content */}
@@ -112,10 +112,10 @@ export default function FounderSection() {
               </div>
             </FadeUp>
 
-          {/* CTA */}
+            {/* CTA */}
             <FadeUp delay={0.4}>
               <a
-                href="#"
+                href="/book"
                 className="btn-shine flex w-full sm:w-auto justify-center sm:inline-flex items-center gap-3 bg-gradient-to-r from-[#F6A000] to-[#E89500] hover:from-[#E89500] hover:to-[#D88D14] text-white font-semibold text-sm md:text-base px-8 py-4 rounded-full shadow-[0_8px_30px_rgba(246,160,0,0.25)] hover:shadow-[0_12px_40px_rgba(246,160,0,0.3)] transition-all duration-300 group hover:scale-[1.02]"
               >
                 Learn More About Our Methodology
