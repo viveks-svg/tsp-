@@ -90,13 +90,31 @@ function ServiceCard({ service, index }: { service: ServiceDefinition; index: nu
           <div />
         )}
 
-        <Link
-          href={`/solutions/${service.id}`}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1E1A16] group-hover:text-[#C8A04A] transition-colors duration-300 font-poppins"
-        >
-          Explore
-          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-300" />
-        </Link>
+        {service.category === 'business' ? (
+          /* 
+          <Link
+            href={`/solutions/${service.id}`}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1E1A16] group-hover:text-[#C8A04A] transition-colors duration-300 font-poppins"
+          >
+            Explore
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-300" />
+          </Link>
+          */
+          <button
+            onClick={(e) => e.preventDefault()}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1E1A16]/60 transition-colors duration-300 font-poppins cursor-not-allowed"
+          >
+            Coming Soon
+          </button>
+        ) : (
+          <Link
+            href={`/solutions/${service.id}`}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1E1A16] group-hover:text-[#C8A04A] transition-colors duration-300 font-poppins"
+          >
+            Explore
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-300" />
+          </Link>
+        )}
       </div>
     </motion.div>
   );

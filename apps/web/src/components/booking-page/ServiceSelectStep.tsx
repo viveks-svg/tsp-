@@ -66,15 +66,23 @@ export default function ServiceSelectStep({ selectedServiceId, onSelect }: Props
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.03, duration: 0.3 }}
-                    onClick={() => onSelect(service)}
+                    onClick={(e) => {
+                      if (cat === 'business') {
+                        e.preventDefault();
+                      } else {
+                        onSelect(service);
+                      }
+                    }}
                     className={`relative text-left p-4 rounded-xl border-2 transition-all duration-300 ${
-                      isSelected
+                      cat === 'business'
+                        ? 'border-[#EFEBE1]/50 bg-white/50 cursor-not-allowed opacity-60'
+                        : isSelected
                         ? 'border-[#C8A04A] bg-[#C8A04A]/5 shadow-[0_0_0_1px_rgba(200,160,74,0.3)]'
                         : 'border-[#EFEBE1] bg-white hover:border-[#C8A04A]/30 hover:shadow-sm'
                     }`}
                   >
                     {/* Selected check */}
-                    {isSelected && (
+                    {isSelected && cat !== 'business' && (
                       <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-[#C8A04A] flex items-center justify-center">
                         <Check className="w-3 h-3 text-white" />
                       </div>
@@ -82,20 +90,20 @@ export default function ServiceSelectStep({ selectedServiceId, onSelect }: Props
 
                     <div className="flex items-start gap-3">
                       <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                        isSelected
+                        isSelected && cat !== 'business'
                           ? 'bg-[#C8A04A]/15'
                           : 'bg-[#F7F4EE]'
                       }`}>
-                        {Icon && <Icon className={`w-4 h-4 ${isSelected ? 'text-[#C8A04A]' : 'text-[#8B6914]'}`} />}
+                        {Icon && <Icon className={`w-4 h-4 ${isSelected && cat !== 'business' ? 'text-[#C8A04A]' : 'text-[#8B6914]'}`} />}
                       </div>
                       <div className="min-w-0">
                         <span className="block text-sm font-semibold text-[#1E1A16] truncate">
-                          {service.name}
+                          {service.name} {cat === 'business' && <span className="text-[#8B6914] text-xs font-normal ml-1">(Coming Soon)</span>}
                         </span>
                         <span className="block text-xs text-[#6B5F52] mt-0.5 line-clamp-2">
                           {service.shortDescription}
                         </span>
-                        {startingPrice && (
+                        {startingPrice && cat !== 'business' && (
                           <span className="block text-xs text-[#8B6914] font-medium mt-1">
                             From ₹{startingPrice.toLocaleString('en-IN')}
                           </span>

@@ -198,14 +198,24 @@ export default function Navbar() {
                                       </span>
                                       <div className="space-y-0.5">
                                         {services.map((service) => (
-                                          <Link
-                                            key={service.id}
-                                            href={`/solutions/${service.id}`}
-                                            onClick={() => setActiveDropdown(null)}
-                                            className="block px-2 py-1.5 rounded-lg text-xs font-poppins text-white/60 hover:bg-white/[0.05] hover:text-white transition-colors font-medium"
-                                          >
-                                            {service.name}
-                                          </Link>
+                                          cat === 'business' ? (
+                                            <button
+                                              key={service.id}
+                                              onClick={(e) => e.preventDefault()}
+                                              className="block w-full text-left px-2 py-1.5 rounded-lg text-xs font-poppins text-white/40 cursor-not-allowed font-medium"
+                                            >
+                                              {service.name} (Coming Soon)
+                                            </button>
+                                          ) : (
+                                            <Link
+                                              key={service.id}
+                                              href={`/solutions/${service.id}`}
+                                              onClick={() => setActiveDropdown(null)}
+                                              className="block px-2 py-1.5 rounded-lg text-xs font-poppins text-white/60 hover:bg-white/[0.05] hover:text-white transition-colors font-medium"
+                                            >
+                                              {service.name}
+                                            </Link>
+                                          )
                                         ))}
                                       </div>
                                     </div>
@@ -660,14 +670,24 @@ export default function Navbar() {
                                               {CATEGORY_LABELS[cat]}
                                             </span>
                                             {services.map((service) => (
-                                              <Link
-                                                key={service.id}
-                                                href={`/solutions/${service.id}`}
-                                                onClick={() => setMobileOpen(false)}
-                                                className="block text-sm font-medium py-1.5 px-3 rounded-[8px] transition-colors font-poppins text-white/50 hover:bg-white/[0.05] hover:text-white"
-                                              >
-                                                {service.name}
-                                              </Link>
+                                              cat === 'business' ? (
+                                                <button
+                                                  key={service.id}
+                                                  onClick={(e) => e.preventDefault()}
+                                                  className="block w-full text-left text-sm font-medium py-1.5 px-3 rounded-[8px] transition-colors font-poppins text-white/30 cursor-not-allowed"
+                                                >
+                                                  {service.name} (Coming Soon)
+                                                </button>
+                                              ) : (
+                                                <Link
+                                                  key={service.id}
+                                                  href={`/solutions/${service.id}`}
+                                                  onClick={() => setMobileOpen(false)}
+                                                  className="block text-sm font-medium py-1.5 px-3 rounded-[8px] transition-colors font-poppins text-white/50 hover:bg-white/[0.05] hover:text-white"
+                                                >
+                                                  {service.name}
+                                                </Link>
+                                              )
                                             ))}
                                           </div>
                                         );

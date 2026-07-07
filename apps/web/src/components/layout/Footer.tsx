@@ -99,16 +99,25 @@ export default function Footer() {
               Solutions
             </h4>
             <ul className="space-y-2.5">
-              {footerLinks.solutions.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-white/45 text-[13px] hover:text-[#C8A04A] transition-colors duration-200"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              {footerLinks.solutions.map((link) => {
+                const isBusiness = link.label === "Business Vastu"; // Add any others here if needed later
+                return (
+                  <li key={link.label}>
+                    {isBusiness ? (
+                      <span className="text-white/30 text-[13px] cursor-not-allowed text-left w-full inline-block">
+                        {link.label} (Coming Soon)
+                      </span>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-white/45 text-[13px] hover:text-[#C8A04A] transition-colors duration-200"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
 

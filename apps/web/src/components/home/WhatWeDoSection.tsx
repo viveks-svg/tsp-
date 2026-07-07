@@ -114,21 +114,47 @@ export default function WhatWeDoSection() {
 
                 <div className="gradient-line-gold mx-auto my-3 w-full" />
 
-                <Link
-                  href={service.href}
-                  className="inline-flex items-center justify-center text-sm font-semibold text-[#8B6914] group-hover:text-[#C99411] transition-colors duration-300 uppercase tracking-[0.12em]"
-                >
-                  Explore
-                  <svg
-                    className="w-4 h-4 ml-1.5 group-hover:translate-x-1.5 transition-transform duration-300"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
+                {service.title === "Business Vastu" ? (
+                  /*
+                  <Link
+                    href={service.href}
+                    className="inline-flex items-center justify-center text-sm font-semibold text-[#8B6914] group-hover:text-[#C99411] transition-colors duration-300 uppercase tracking-[0.12em]"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
+                    Explore
+                    <svg
+                      className="w-4 h-4 ml-1.5 group-hover:translate-x-1.5 transition-transform duration-300"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                  */
+                  <button
+                    onClick={(e) => e.preventDefault()}
+                    className="inline-flex items-center justify-center text-sm font-semibold text-[#8B6914]/60 transition-colors duration-300 uppercase tracking-[0.12em] cursor-not-allowed"
+                  >
+                    Coming Soon
+                  </button>
+                ) : (
+                  <Link
+                    href={service.href}
+                    className="inline-flex items-center justify-center text-sm font-semibold text-[#8B6914] group-hover:text-[#C99411] transition-colors duration-300 uppercase tracking-[0.12em]"
+                  >
+                    Explore
+                    <svg
+                      className="w-4 h-4 ml-1.5 group-hover:translate-x-1.5 transition-transform duration-300"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                )}
               </div>
             </motion.div>
           ))}

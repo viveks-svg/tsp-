@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image"; 
+import Image from "next/image";
 import { ReportCard } from "@/types/home";
 import { useCart } from "@/providers/CartProvider";
 
@@ -17,11 +17,11 @@ const fadeInRightVariant = {
 
 
 const reports: ReportCard[] = [
-  { title: "Astro SWOT Analysis", price: 1999, slug: "astro-swot", imagePlaceholder: "/images/vastu.png" },
-  { title: "Career Blueprint Report", price: 2999, slug: "career-blueprint", imagePlaceholder: "/images/career-blueprint.png" },
-  { title: "Business Alignment", price: 6999, slug: "business-alignment", imagePlaceholder: "/images/business-alignment.png" },
+  { title: "Astro SWOT Analysis", price: 3399, slug: "astro-swot", imagePlaceholder: "/images/vastu.png" },
+  { title: "Career Blueprint Report", price: 3201, slug: "career-blueprint", imagePlaceholder: "/images/career-blueprint.png" },
+  { title: "Business Alignment", price: 5199, slug: "business-alignment", imagePlaceholder: "/images/business-alignment.png" },
   { title: "Relationship Analysis", price: 2499, slug: "relationship-analysis", imagePlaceholder: "/images/relationship.png" },
-  { title: "Annual Forecast Report", price: 2499, slug: "annual-forecast", imagePlaceholder: "/images/annual.png" }
+  { title: "Annual Forecast Report", price: 3399, slug: "annual-forecast", imagePlaceholder: "/images/annual.png" }
 ];
 
 export default function ReportsSection() {
@@ -120,12 +120,12 @@ export default function ReportsSection() {
                     </span>
                   </div>
 
-                <button
-                  onClick={() => handleAddReport(report)}
-                  className="inline-flex items-center justify-center rounded-full bg-[#0F1023] px-4 py-2 text-[11px] font-semibold text-white whitespace-nowrap shrink-0 transition-all duration-300 hover:bg-[#C99411] hover:text-black shadow-[0_8px_24px_rgba(15,16,35,0.25)]"
-                >
-                  Get Report
-                </button>
+                  <button
+                    onClick={() => handleAddReport(report)}
+                    className="inline-flex items-center justify-center rounded-full bg-[#0F1023] px-4 py-2 text-[11px] font-semibold text-white whitespace-nowrap shrink-0 transition-all duration-300 hover:bg-[#C99411] hover:text-black shadow-[0_8px_24px_rgba(15,16,35,0.25)]"
+                  >
+                    Get Report
+                  </button>
 
                 </div>
               </div>
