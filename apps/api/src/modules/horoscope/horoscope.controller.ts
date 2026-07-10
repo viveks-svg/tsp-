@@ -1,8 +1,10 @@
 import { Controller, Get, Param, Post, Req, Query } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { HoroscopeService } from './horoscope.service';
 import { GetHoroscopeQueryDto } from './dto/get-horoscope-query.dto';
 import { HoroscopeResponseDto } from './dto/horoscope-response.dto';
 import { Public } from '../../common/decorators/public.decorator';
+import { TIER_PUBLIC_TOOLS, TIER_ADMIN_INTERNAL } from '../../common/config/rate-limit.config';
 import { HoroscopePeriod } from '@prisma/client';
 
 @Controller('horoscope')
@@ -14,6 +16,7 @@ export class HoroscopeController {
    * Public endpoint — returns the latest horoscope reading for the given sign and period.
    */
   @Public()
+  @Throttle(TIER_PUBLIC_TOOLS)
   @Get(':sign/:period')
   async getHoroscope(
     @Param() params: GetHoroscopeQueryDto,
@@ -40,6 +43,7 @@ export class HoroscopeController {
    * In production, generation is handled by the BullMQ cron.
    */
   @Public()
+  @Throttle(TIER_ADMIN_INTERNAL)
   @Post('generate')
   async triggerGeneration(
     @Query('period') period?: HoroscopePeriod,

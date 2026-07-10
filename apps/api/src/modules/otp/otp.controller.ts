@@ -1,9 +1,12 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { OtpService } from "./otp.service";
 import { SendOtpDto, VerifyOtpDto } from "./dto/otp.dto";
 import { Public } from "../../common/decorators/public.decorator";
+import { TIER_AUTH_STRICT } from "../../common/config/rate-limit.config";
 
 @Controller("otp")
+@Throttle(TIER_AUTH_STRICT)
 export class OtpController {
   constructor(private readonly otpService: OtpService) {}
 
@@ -21,3 +24,4 @@ export class OtpController {
     return this.otpService.verifyOtp(dto);
   }
 }
+

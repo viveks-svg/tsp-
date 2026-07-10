@@ -1,11 +1,14 @@
 import { Controller, Post, Body, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ShopService } from './shop.service';
 import { CreateShopOrderDto } from './dto/create-shop-order.dto';
 import { Public } from '../../common/decorators/public.decorator';
+import { TIER_FINANCIAL } from '../../common/config/rate-limit.config';
 import { Request } from 'express';
 
 @Public()
 @Controller('shop')
+@Throttle(TIER_FINANCIAL)
 export class ShopController {
   constructor(private readonly shopService: ShopService) {}
 

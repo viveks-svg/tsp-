@@ -10,10 +10,12 @@ import {
   Param,
   Delete,
 } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { SignupDto, LoginDto, RefreshTokenDto } from "./dto/auth.dto";
 import { FirebaseAuthDto } from "./dto/firebase-auth.dto";
 import { Public } from "../../common/decorators/public.decorator";
+import { TIER_AUTH_STRICT, TIER_AUTH_REFRESH } from "../../common/config/rate-limit.config";
 import { Request, Response } from "express";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { PrismaService } from "../../database/prisma.service";
@@ -65,6 +67,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle(TIER_AUTH_STRICT)
   @Post("signup")
   async signup(
     @Req() req: Request,
@@ -78,6 +81,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle(TIER_AUTH_STRICT)
   @Post("login")
   @HttpCode(HttpStatus.OK)
   async login(
@@ -92,6 +96,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle(TIER_AUTH_STRICT)
   @Post("firebase/phone")
   @HttpCode(HttpStatus.OK)
   async loginWithFirebasePhone(
@@ -109,6 +114,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle(TIER_AUTH_STRICT)
   @Post("firebase/google")
   @HttpCode(HttpStatus.OK)
   async loginWithFirebaseGoogle(
@@ -126,6 +132,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle(TIER_AUTH_STRICT)
   @Post("firebase/apple")
   @HttpCode(HttpStatus.OK)
   async loginWithFirebaseApple(
@@ -143,6 +150,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle(TIER_AUTH_REFRESH)
   @Post("refresh")
   @HttpCode(HttpStatus.OK)
   async refresh(

@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ToolsModule } from '../tools/tools.module';
-import { RedisService } from '../../integrations/redis/redis.service';
 import { HoroscopeController } from './horoscope.controller';
 import { HoroscopeService } from './horoscope.service';
 import { HoroscopeTransitService } from './horoscope-transit.service';
@@ -23,7 +22,6 @@ import { HoroscopeGenerationScheduler } from './horoscope-generation.scheduler';
     HoroscopeRepository,
     HoroscopeGenerationProcessor,
     HoroscopeGenerationScheduler,
-    RedisService,
   ],
   exports: [HoroscopeService],
 })

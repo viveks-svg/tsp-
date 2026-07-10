@@ -8,6 +8,12 @@ import { AppModule } from "./app.module";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Trust one proxy hop (Railway's reverse proxy) so req.ip returns
+  // the real client IP from X-Forwarded-For, not the load balancer IP.
+  // Required for accurate per-IP rate limiting.
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', 1);
+
   const configService = app.get(ConfigService);
   const port = configService.get<number>("PORT", 3001);
 

@@ -1,10 +1,12 @@
 import { Controller, Post, Body, Get, Patch, Param } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { AstrologersService } from "./astrologers.service";
 import { OnboardAstrologerDto, UpdateAvailabilityDto, SubmitKycDto, ReviewKycDto } from "./dto/astrologer.dto";
 import { SetAvailabilityRulesDto, AddAvailabilityExceptionDto } from "./dto/availability.dto";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Public } from "../../common/decorators/public.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
+import { TIER_PUBLIC_TOOLS, TIER_ADMIN_INTERNAL } from "../../common/config/rate-limit.config";
 import { Role } from "@prisma/client";
 
 @Controller("astrologers")
@@ -19,6 +21,7 @@ export class AstrologersController {
     return this.astrologersService.onboard(user.id, dto);
   }
 
+  @Throttle(TIER_ADMIN_INTERNAL)
   @Patch("me/availability")
   async updateAvailability(
     @CurrentUser() user: any,
@@ -35,6 +38,7 @@ export class AstrologersController {
     return this.astrologersService.submitKyc(user.id, dto);
   }
 
+  @Throttle(TIER_ADMIN_INTERNAL)
   @Patch(":id/kyc/review")
   @Roles(Role.ADMIN)
   async reviewKyc(
@@ -45,6 +49,7 @@ export class AstrologersController {
     return this.astrologersService.reviewKyc(id, user.id, dto);
   }
 
+  @Throttle(TIER_ADMIN_INTERNAL)
   @Post("me/availability/rules")
   async setAvailabilityRules(
     @CurrentUser() user: any,
@@ -53,17 +58,20 @@ export class AstrologersController {
     return this.astrologersService.setAvailabilityRules(user.id, dto);
   }
 
+  @Throttle(TIER_ADMIN_INTERNAL)
   @Get("me/availability/rules")
   async getMyAvailabilityRules(@CurrentUser() user: any) {
     return this.astrologersService.getMyAvailabilityRules(user.id);
   }
 
   @Public()
+  @Throttle(TIER_PUBLIC_TOOLS)
   @Get(":id/availability/rules")
   async getAvailabilityRules(@Param("id") id: string) {
     return this.astrologersService.getAvailabilityRules(id);
   }
 
+  @Throttle(TIER_ADMIN_INTERNAL)
   @Post("me/availability/exceptions")
   async addAvailabilityException(
     @CurrentUser() user: any,
@@ -73,18 +81,21 @@ export class AstrologersController {
   }
 
   @Public()
+  @Throttle(TIER_PUBLIC_TOOLS)
   @Get(":id/availability/exceptions")
   async getAvailabilityExceptions(@Param("id") id: string) {
     return this.astrologersService.getAvailabilityExceptions(id);
   }
 
   @Public()
+  @Throttle(TIER_PUBLIC_TOOLS)
   @Get()
   async getApprovedAstrologers() {
     return this.astrologersService.findAllApproved();
   }
 
   @Public()
+  @Throttle(TIER_PUBLIC_TOOLS)
   @Get(":id")
   async getAstrologerById(@Param("id") id: string) {
     return this.astrologersService.findById(id);

@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { BullModule } from '@nestjs/bullmq';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from "@nestjs/core";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
@@ -22,8 +23,13 @@ import { BookingsModule } from "./modules/bookings/booking.module";
 import { SlotsModule } from "./modules/slots/slots.module";
 import { ShopModule } from "./modules/shop/shop.module";
 import { OrdersModule } from "./modules/orders/orders.module";
+import { RedisModule } from "./integrations/redis/redis.module";
+import { RedisService } from "./integrations/redis/redis.service";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
+import { CustomThrottlerGuard } from "./common/guards/custom-throttler.guard";
+import { ThrottlerStorageRedis } from "./common/throttler/throttler-storage-redis";
+import { TIER_AUTHENTICATED_DEFAULT } from "./common/config/rate-limit.config";
 import configuration from "./config/configuration";
 
 @Module({
@@ -50,7 +56,29 @@ import configuration from "./config/configuration";
       },
       inject: [ConfigService],
     }),
+
+    // Global rate limiting — Tier 3 (authenticated default) as the global fallback.
+    // Any endpoint without an explicit @Throttle() override gets these limits.
+    // Redis-backed storage ensures correctness across multiple instances.
+    // We inject RedisService (globally available from RedisModule) and instantiate
+    // the storage adapter in the factory, since forRootAsync runs in ThrottlerModule's
+    // own DI context where AppModule-level providers aren't visible.
+    ThrottlerModule.forRootAsync({
+      inject: [RedisService],
+      useFactory: (redisService: RedisService) => ({
+        throttlers: [
+          {
+            name: 'default',
+            ttl: TIER_AUTHENTICATED_DEFAULT.default.ttl,
+            limit: TIER_AUTHENTICATED_DEFAULT.default.limit,
+          },
+        ],
+        storage: new ThrottlerStorageRedis(redisService),
+      }),
+    }),
+
     DatabaseModule,
+    RedisModule,
     AuthModule,
     UsersModule,
     OtpModule,
@@ -79,6 +107,12 @@ import configuration from "./config/configuration";
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    // CustomThrottlerGuard runs AFTER JwtAuthGuard (registration order matters),
+    // so req.user is already populated for per-user rate limiting keying.
+    {
+      provide: APP_GUARD,
+      useClass: CustomThrottlerGuard,
     },
   ],
 })

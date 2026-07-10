@@ -1,6 +1,8 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Public } from '../../common/decorators/public.decorator';
+import { TIER_PUBLIC_TOOLS } from '../../common/config/rate-limit.config';
 import { EphemerisService } from './ephemeris.service';
 import {
   PlanetaryPositionsDto,
@@ -17,6 +19,7 @@ import {
 @ApiTags('Ephemeris')
 @Controller('ephemeris')
 @Public()
+@Throttle(TIER_PUBLIC_TOOLS)
 export class EphemerisController {
   constructor(private readonly ephemerisService: EphemerisService) {}
 
