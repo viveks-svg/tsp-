@@ -43,8 +43,6 @@ export default function AstrologerLayout({
   const router = useRouter();
   const auth = useAuth();
   const user = auth.user;
-  const isMobileMenuOpen = useAppStore((state) => state.isMobileMenuOpen);
-  const setMobileMenuOpen = useAppStore((state) => state.setMobileMenuOpen);
   const { isAuthenticated, isLoading, logout } = auth;
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
