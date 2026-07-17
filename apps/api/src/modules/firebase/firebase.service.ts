@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit, UnauthorizedException } from "@nestjs/common"
 import { ConfigService } from "@nestjs/config";
 import { App, initializeApp, cert } from "firebase-admin/app";
 import { getAuth, DecodedIdToken } from "firebase-admin/auth";
+import { getMessaging, Messaging } from "firebase-admin/messaging";
 
 @Injectable()
 export class FirebaseService implements OnModuleInit {
@@ -52,4 +53,9 @@ export class FirebaseService implements OnModuleInit {
       throw new UnauthorizedException(`Invalid Firebase ID token: ${error.message}`);
     }
   }
+
+  getMessaging(): Messaging {
+    return getMessaging(this.firebaseApp);
+  }
 }
+

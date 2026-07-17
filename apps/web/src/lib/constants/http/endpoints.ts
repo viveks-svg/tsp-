@@ -21,6 +21,7 @@ export const ENDPOINTS = {
   USERS: {
     PROFILE: "/users/profile",
     UPDATE_PROFILE: "/users/profile",
+    FCM_TOKEN: "/users/fcm-token",
   },
 
   // Consultations
@@ -75,5 +76,12 @@ export const ENDPOINTS = {
   OTP: {
     SEND: "/otp/send",
     VERIFY: "/otp/verify",
+  },
+
+  // Notifications
+  NOTIFICATIONS: {
+    LIST: "/notifications",
+    READ_ALL: "/notifications/read-all",
+    READ: (id: string) => `/notifications/${id}/read`,
   },
 } as const;

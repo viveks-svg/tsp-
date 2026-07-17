@@ -455,9 +455,15 @@ export default function BookingFlow() {
 
     try {
       // Build a composite slug for the API
-      const serviceSlug = selectedService.plans.length > 1
-        ? selectedPlan.slug    // legacy: "rising", "celestial", "zenith" etc.
-        : selectedService.id;  // single-plan services use service id
+      let serviceSlug = selectedService.id;
+      if (selectedService.plans.length > 1) {
+        // Backend maps 'standard' and 'basic' plans to the base service ID
+        if (['standard', 'basic'].includes(selectedPlan.slug)) {
+          serviceSlug = selectedService.id;
+        } else {
+          serviceSlug = selectedPlan.slug;
+        }
+      }
 
       const data = await apiClient.post<any>('/bookings/initiate', {
         serviceCategory: serviceCategoryFromCatalog(selectedService),

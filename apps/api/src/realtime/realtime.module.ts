@@ -14,5 +14,6 @@ import { ConsultationsModule } from "../modules/consultations/consultations.modu
 @Module({
   imports: [AuthModule, ConsultationsModule],
   providers: [RealtimeGateway],
+  exports: [RealtimeGateway],
 })
 export class RealtimeModule {}

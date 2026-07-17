@@ -25,7 +25,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   /** Set the access token as an HTTP-only cookie on the response. */
   private setAuthCookie(res: Response, accessToken: string): void {
@@ -35,7 +35,7 @@ export class AuthController {
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax",
       path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
     });
   }
 

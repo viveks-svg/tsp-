@@ -1,5 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, Inject, forwardRef } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
+import { FirebaseService } from "../firebase/firebase.service";
+import { RealtimeGateway } from "../../realtime/realtime.gateway";
+import { NotificationType } from "@prisma/client";
+import twilio from "twilio";
 
 @Injectable()
 export class NotificationsService {
@@ -9,7 +13,12 @@ export class NotificationsService {
   private readonly twilioToken = process.env.TWILIO_AUTH_TOKEN || "";
   private readonly twilioFrom = process.env.TWILIO_FROM_NUMBER || "";
 
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly firebaseService: FirebaseService,
+    @Inject(forwardRef(() => RealtimeGateway))
+    private readonly realtimeGateway: RealtimeGateway,
+  ) { }
 
   async sendOrderConfirmationEmail(toEmail: string, customerName: string, orderId: string, totalAmount: number) {
     try {
@@ -44,7 +53,7 @@ export class NotificationsService {
     }
   }
 
-  async sendOrderConfirmationSMS(toNumber: string, customerName: string, orderId: string) {
+  async sendOrderConfirmationSMS(toNumber: string, customerName: string, orderId: string, scheduledDate?: Date | null) {
     try {
       // Ensure phone number starts with country code, default to +91
       let phone = toNumber.trim();
@@ -52,14 +61,33 @@ export class NotificationsService {
         phone = `+91${phone}`;
       }
 
-      const auth = Buffer.from(`${this.twilioSid}:${this.twilioToken}`).toString("base64");
+      const accountSid = this.twilioSid;
+      const authToken = this.twilioToken;
+      const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+
+      let dateStr = "TBD";
+      let timeStr = "TBD";
+      
+      if (scheduledDate) {
+        const dateObj = new Date(scheduledDate);
+        // format like "July 21"
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        dateStr = `${monthNames[dateObj.getMonth()]} ${dateObj.getDate()}`;
+        
+        // format like "3PM"
+        let hours = dateObj.getHours();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        timeStr = `${hours}${ampm}`;
+      }
 
       const bodyParams = new URLSearchParams();
-      bodyParams.append("To", phone);
-      bodyParams.append("From", this.twilioFrom);
-      bodyParams.append("Body", `Namaste ${customerName}, your order (${orderId}) at TSP has been confirmed! Log in to view details.`);
+      bodyParams.append("To", `whatsapp:${phone}`);
+      bodyParams.append("From", "whatsapp:+14155238886");
+      bodyParams.append("Body", `Your appointment is coming up on ${dateStr} at ${timeStr}`);
 
-      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${this.twilioSid}/Messages.json`, {
+      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
         method: "POST",
         headers: {
           "Authorization": `Basic ${auth}`,
@@ -70,9 +98,176 @@ export class NotificationsService {
 
       if (!response.ok) {
         this.logger.error(`Twilio API Error: ${await response.text()}`);
+      } else {
+        const data = await response.json();
+        this.logger.log(`WhatsApp confirmation sent to ${phone}: ${data.sid}`);
       }
     } catch (e) {
-      this.logger.error("Failed to send order SMS", e);
+      this.logger.error("Failed to send order WhatsApp", e);
     }
+  }
+
+  /**
+   * Send a push notification to all ADMIN users when a booking is confirmed.
+   */
+  async sendAdminBookingNotification(
+    customerName: string,
+    serviceName: string,
+    bookingId: string,
+    scheduledDate?: Date | null,
+  ) {
+    try {
+      // Fetch all admin users with registered FCM tokens
+      const admins = await this.prisma.user.findMany({
+        where: {
+          role: "ADMIN",
+          fcmTokens: { isEmpty: false },
+        },
+        select: { fcmTokens: true },
+      });
+
+      // Collect all tokens across all admins
+      const allTokens = admins.flatMap((admin) => admin.fcmTokens);
+
+      if (allTokens.length === 0) {
+        this.logger.warn("No admin FCM tokens registered — skipping push notification.");
+        return;
+      }
+
+      const dateStr = scheduledDate
+        ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(new Date(scheduledDate))
+        : "TBD";
+
+      const messaging = this.firebaseService.getMessaging();
+
+      const response = await messaging.sendEachForMulticast({
+        tokens: allTokens,
+        notification: {
+          title: "🔔 New Booking Received",
+          body: `${customerName} has booked "${serviceName}" for ${dateStr}.`,
+        },
+        data: {
+          bookingId,
+          type: "NEW_BOOKING",
+        },
+        webpush: {
+          fcmOptions: {
+            link: "/astrologer/dashboard",
+          },
+        },
+      });
+
+      this.logger.log(
+        `Admin push notification sent: ${response.successCount} success, ${response.failureCount} failures`,
+      );
+
+      // Clean up invalid tokens
+      if (response.failureCount > 0) {
+        const invalidTokens: string[] = [];
+        response.responses.forEach((resp, idx) => {
+          if (resp.error) {
+            const code = resp.error.code;
+            if (
+              code === "messaging/invalid-registration-token" ||
+              code === "messaging/registration-token-not-registered"
+            ) {
+              invalidTokens.push(allTokens[idx]);
+            }
+          }
+        });
+
+        if (invalidTokens.length > 0) {
+          this.logger.log(`Removing ${invalidTokens.length} invalid FCM token(s).`);
+          // Remove invalid tokens from all admins
+          for (const admin of admins) {
+            const cleaned = admin.fcmTokens.filter((t) => !invalidTokens.includes(t));
+            if (cleaned.length !== admin.fcmTokens.length) {
+              // We need the admin ID to update — refetch
+              const adminUser = await this.prisma.user.findFirst({
+                where: { role: "ADMIN", fcmTokens: { hasSome: invalidTokens } },
+              });
+              if (adminUser) {
+                await this.prisma.user.update({
+                  where: { id: adminUser.id },
+                  data: { fcmTokens: cleaned },
+                });
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      this.logger.error("Failed to send admin push notification", e);
+    }
+  }
+
+  // ─── IN-APP NOTIFICATIONS ────────────────────────────────────────────────────
+
+  async createNotification(
+    userId: string,
+    type: NotificationType,
+    title: string,
+    body: string,
+    metadata?: any,
+  ) {
+    try {
+      const notification = await this.prisma.notification.create({
+        data: {
+          userId,
+          type,
+          title,
+          body,
+          metadata: metadata || {},
+        },
+      });
+
+      // Emit to connected client in real-time
+      this.realtimeGateway.emitNotificationToUser(userId, notification);
+
+      return notification;
+    } catch (e) {
+      this.logger.error("Failed to create in-app notification", e);
+      // We don't throw here to avoid breaking core flows like payments
+      return null;
+    }
+  }
+
+  async getUserNotifications(userId: string, unreadOnly: boolean, limit: number) {
+    const where: any = { userId };
+    if (unreadOnly) {
+      where.isRead = false;
+    }
+
+    const notifications = await this.prisma.notification.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+
+    const unreadCount = await this.prisma.notification.count({
+      where: { userId, isRead: false },
+    });
+
+    return { notifications, unreadCount };
+  }
+
+  async markAsRead(id: string, userId: string) {
+    // Verify ownership
+    const notification = await this.prisma.notification.findUnique({ where: { id } });
+    if (!notification || notification.userId !== userId) {
+      return null; // Or throw NotFound/Forbidden
+    }
+
+    return this.prisma.notification.update({
+      where: { id },
+      data: { isRead: true },
+    });
+  }
+
+  async markAllAsRead(userId: string) {
+    return this.prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true },
+    });
   }
 }

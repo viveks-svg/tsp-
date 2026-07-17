@@ -11,6 +11,7 @@ import "./globals.css";
 import { rootMetadata } from "@/lib/seo/metadata";
 import AuthProvider from "@/providers/AuthProvider";
 import { getServerAuth } from "@/lib/auth/getServerAuth";
+import { FcmInitializer } from "@/components/FcmInitializer";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +80,7 @@ export default async function RootLayout({
                 var routeGroup = function (pathname) {
                   if (pathname.indexOf('/astrologer') === 0) return 'astrologer';
                   if (pathname.indexOf('/login') === 0 || pathname.indexOf('/signup') === 0) return 'auth';
+                  if (pathname.match(/^\\/(dashboard|kundli|wallet|profile|subscriptions|orders|settings)/)) return 'user';
                   return 'site';
                 };
 
@@ -131,6 +133,7 @@ export default async function RootLayout({
           initialUser={initialAuth?.user ?? null}
           initialWalletBalance={initialAuth?.walletBalance ?? 0}
         >
+          <FcmInitializer />
           {children}
         </AuthProvider>
       </body>

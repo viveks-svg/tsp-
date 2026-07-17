@@ -367,3 +367,16 @@ export function useCallSocket(): {
     joinCallRoom,
   };
 }
+
+export function useSocketListener(event: string, callback: (data: any) => void) {
+  useEffect(() => {
+    if (sharedSocket) {
+      sharedSocket.on(event, callback);
+    }
+    return () => {
+      if (sharedSocket) {
+        sharedSocket.off(event, callback);
+      }
+    };
+  }, [event, callback]);
+}

@@ -20,7 +20,7 @@ const dateTime = (value: string) =>
   }).format(new Date(value));
 
 export default function WalletPageContent() {
-  const { hydrate: hydrateAuth } = useAuth();
+  const { hydrate: hydrateAuth, user } = useAuth();
   const [wallet, setWallet] = useState<WalletResponse | null>(null);
   const [amount, setAmount] = useState("500");
   const [loading, setLoading] = useState(true);
@@ -83,6 +83,17 @@ export default function WalletPageContent() {
     };
   }, []);
 
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      if (typeof window !== "undefined" && (window as any).Razorpay) return resolve(true);
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const addFunds = async (event: React.FormEvent) => {
     event.preventDefault();
     const numericAmount = Number(amount);
@@ -94,17 +105,73 @@ export default function WalletPageContent() {
     try {
       setSubmitting(true);
       setError(null);
-      await apiClient.post(ENDPOINTS.WALLET.ADD_FUNDS, {
+      
+      const orderData = await apiClient.post<any>(ENDPOINTS.PAYMENTS.ORDERS, {
         amount: numericAmount,
+        currency: "INR",
       });
-      await Promise.all([loadWallet(), hydrateAuth()]);
+
+      if (orderData.mock || !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+         await apiClient.post(ENDPOINTS.PAYMENTS.VERIFY, {
+           orderId: orderData.id,
+           gatewayTransactionId: "mock_txn_" + Math.random().toString(36).substring(7),
+           signature: "mock_signature",
+         });
+         await Promise.all([loadWallet(), hydrateAuth()]);
+         setSubmitting(false);
+         return;
+      }
+
+      const isLoaded = await loadRazorpay();
+      if (!isLoaded) {
+        setError("Razorpay SDK failed to load. Are you offline?");
+        setSubmitting(false);
+        return;
+      }
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || orderData.key,
+        amount: numericAmount * 100,
+        currency: "INR",
+        name: "TSP Wallet",
+        description: "Add funds to your wallet",
+        order_id: orderData.gatewayOrderId,
+        handler: async (response: any) => {
+          try {
+            await apiClient.post(ENDPOINTS.PAYMENTS.VERIFY, {
+              orderId: orderData.id,
+              gatewayTransactionId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+            });
+            await Promise.all([loadWallet(), hydrateAuth()]);
+          } catch (err) {
+            setError(err instanceof Error ? err.message : "Payment verification failed.");
+          } finally {
+            setSubmitting(false);
+          }
+        },
+        prefill: {
+          name: user?.name || "User",
+          email: user?.email || "",
+          contact: user?.phone || "",
+        },
+        theme: {
+          color: "#D4AF37",
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (response: any) {
+        setError("Payment failed: " + response.error.description);
+        setSubmitting(false);
+      });
+      rzp.open();
     } catch (submitError) {
       setError(
         submitError instanceof Error
           ? submitError.message
           : "Unable to add funds."
       );
-    } finally {
       setSubmitting(false);
     }
   };
@@ -146,10 +213,10 @@ export default function WalletPageContent() {
                 className="rounded-card-lg border border-border bg-white p-6 shadow-card"
               >
                 <h2 className="font-heading text-xl font-bold text-dark">
-                  Add test funds
+                  Add funds to wallet
                 </h2>
                 <p className="mt-1 text-xs text-muted">
-                  Uses the current development top-up endpoint.
+                  Secure payment processing via Razorpay.
                 </p>
                 <label className="mt-5 block text-sm font-medium text-dark">
                   Amount in INR

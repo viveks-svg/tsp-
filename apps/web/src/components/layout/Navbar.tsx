@@ -22,6 +22,7 @@ import { freeServices } from "@/lib/data/free-services";
 import { zodiacSigns, zodiacEmojis } from "@/lib/data/zodiac";
 import { CALCULATOR_CATEGORY_LABELS } from "@/types/calculator";
 import type { CalculatorCategory } from "@/types/calculator";
+import NotificationBell from "@/features/notifications/components/NotificationBell";
 
 function isActiveLink(pathname: string, href: string) {
   if (href === ROUTES.HOME) return pathname === href;
@@ -101,6 +102,13 @@ export default function Navbar() {
       document.body.style.overflow = "";
     };
   }, [mobileOpen]);
+
+  // Close all menus/dropdowns on navigation (pathname change)
+  useEffect(() => {
+    setDropdownOpen(false);
+    setMobileOpen(false);
+    setActiveDropdown(null);
+  }, [pathname]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -382,12 +390,9 @@ export default function Navbar() {
             {/* Right side */}
             <div className="flex items-center gap-3">
               {/* Bell / Notification */}
-              <button
-                className="hidden md:flex w-9 h-9 items-center justify-center rounded-full hover:bg-white/[0.08] transition-colors duration-200"
-                aria-label="Notifications"
-              >
-                <Bell className="w-4.5 h-4.5 text-white/60" />
-              </button>
+              {isAuthenticated && user && (user.role === "ADMIN" || user.role === "ASTROLOGER") ? (
+                <NotificationBell />
+              ) : null}
 
               {/* User / Auth */}
               {isAuthenticated && user ? (
@@ -434,47 +439,42 @@ export default function Navbar() {
                         {/* Menu Items */}
                         <div className="py-1">
                           {(user.role === "ASTROLOGER" || user.role === "ADMIN") && (
-                            <Link
+                            <a
                               href="/astrologer/dashboard"
-                              onClick={() => setDropdownOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#C8A04A] hover:bg-white/[0.05] transition-colors font-poppins"
                             >
                               <LayoutDashboard className="w-4 h-4 text-[#C8A04A]" />
                               Admin Panel
-                            </Link>
+                            </a>
                           )}
-                          <Link
+                          <a
                             href={ROUTES.PROFILE}
-                            onClick={() => setDropdownOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/60 hover:bg-white/[0.05] hover:text-white transition-colors font-poppins"
                           >
                             <UserCircle className="w-4 h-4" />
                             Profile
-                          </Link>
-                          <Link
+                          </a>
+                          <a
                             href={ROUTES.WALLET}
-                            onClick={() => setDropdownOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/60 hover:bg-white/[0.05] hover:text-white transition-colors font-poppins"
                           >
                             <Wallet className="w-4 h-4" />
                             Wallet
-                          </Link>
-                          <Link
+                          </a>
+                          <a
                             href={ROUTES.CONSULTATIONS}
-                            onClick={() => setDropdownOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/60 hover:bg-white/[0.05] hover:text-white transition-colors font-poppins"
                           >
                             <CalendarClock className="w-4 h-4" />
                             Consultations
-                          </Link>
-                          <Link
+                          </a>
+                          <a
                             href={ROUTES.ORDERS}
-                            onClick={() => setDropdownOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/60 hover:bg-white/[0.05] hover:text-white transition-colors font-poppins"
                           >
                             <ReceiptText className="w-4 h-4" />
                             Orders
-                          </Link>
+                          </a>
                         </div>
 
                         {/* Logout */}

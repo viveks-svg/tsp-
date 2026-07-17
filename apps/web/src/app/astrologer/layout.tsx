@@ -41,7 +41,11 @@ export default function AstrologerLayout({
 }>) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const auth = useAuth();
+  const user = auth.user;
+  const isMobileMenuOpen = useAppStore((state) => state.isMobileMenuOpen);
+  const setMobileMenuOpen = useAppStore((state) => state.setMobileMenuOpen);
+  const { isAuthenticated, isLoading, logout } = auth;
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // ── Call signaling — always active for astrologers ──

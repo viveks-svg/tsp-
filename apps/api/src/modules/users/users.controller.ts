@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body } from "@nestjs/common";
+import { Controller, Get, Patch, Post, Body } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
@@ -18,6 +18,14 @@ export class UsersController {
     @Body() dto: UpdateProfileDto,
   ) {
     return this.usersService.updateProfile(user.id, dto);
+  }
+
+  @Post("fcm-token")
+  async registerFcmToken(
+    @CurrentUser() user: any,
+    @Body("token") token: string,
+  ) {
+    return this.usersService.registerFcmToken(user.id, token);
   }
 }
 

@@ -658,4 +658,11 @@ export class RealtimeGateway
       this.logger.log(`[CALL:${consultationId}] Ringing timeout cleared`);
     }
   }
+
+  /**
+   * Emit a notification to a specific user.
+   */
+  emitNotificationToUser(userId: string, notification: any) {
+    this.emitToUser(userId, "notification:new", notification);
+  }
 }

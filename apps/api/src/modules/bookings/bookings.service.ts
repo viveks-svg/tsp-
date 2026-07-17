@@ -185,8 +185,39 @@ export class BookingsService {
     this.notifications.sendOrderConfirmationSMS(
       booking.phone,
       booking.fullName,
-      booking.id
+      booking.id,
+      booking.scheduledDate
     );
+
+    // Send push notification to admin(s)
+    this.notifications.sendAdminBookingNotification(
+      booking.fullName,
+      booking.serviceName,
+      booking.id,
+      booking.scheduledDate,
+    );
+
+    // Persist in-app notification for admin(s)
+    try {
+      const admins = await this.prisma.user.findMany({
+        where: { role: 'ADMIN' },
+        select: { id: true },
+      });
+      const dateStr = booking.scheduledDate
+        ? new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium' }).format(new Date(booking.scheduledDate))
+        : 'TBD';
+      for (const admin of admins) {
+        await this.notifications.createNotification(
+          admin.id,
+          'NEW_BOOKING',
+          'New Booking Received',
+          `${booking.fullName} booked ${booking.serviceName} for ${dateStr}`,
+          { bookingId: booking.id, customerName: booking.fullName, serviceName: booking.serviceName, scheduledDate: dateStr },
+        );
+      }
+    } catch (e) {
+      console.error('Failed to persist admin notification', e);
+    }
 
     return { success: true, bookingId: booking.id };
   }
