@@ -1,9 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async getProfile(userId: string) {
@@ -45,6 +47,7 @@ export class UsersService {
 
   async registerFcmToken(userId: string, token: string) {
     if (!token || typeof token !== "string") {
+      this.logger.warn(`Invalid FCM token registration attempt for user ${userId}`);
       return { success: false, message: "Invalid FCM token" };
     }
 
@@ -54,12 +57,14 @@ export class UsersService {
     });
 
     if (!user) {
+      this.logger.warn(`FCM token registration failed: User ${userId} not found`);
       return { success: false, message: "User not found" };
     }
 
     // Skip if token already registered
     if (user.fcmTokens.includes(token)) {
-      return { success: true, message: "Token already registered" };
+      this.logger.log(`FCM token already registered for user ${userId}`);
+      return { success: true, message: "Token already registered", tokenCount: user.fcmTokens.length };
     }
 
     // Keep only the 5 most recent tokens (drop oldest if at limit)
@@ -71,7 +76,8 @@ export class UsersService {
       data: { fcmTokens: updatedTokens },
     });
 
-    return { success: true, message: "FCM token registered" };
+    this.logger.log(`Successfully registered new FCM token for user ${userId} (Total tokens: ${updatedTokens.length})`);
+    return { success: true, message: "FCM token registered", tokenCount: updatedTokens.length };
   }
 }
 

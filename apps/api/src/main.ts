@@ -49,8 +49,8 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(port);
-  console.log(`TSP API running on http://localhost:${port}/api/v1`);
+  await app.listen(port, "127.0.0.1");
+  console.log(`TSP API running on http://127.0.0.1:${port}/api/v1`);
 }
 
 bootstrap();

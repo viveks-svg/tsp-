@@ -123,7 +123,7 @@ export class NotificationsService {
           role: "ADMIN",
           fcmTokens: { isEmpty: false },
         },
-        select: { fcmTokens: true },
+        select: { id: true, fcmTokens: true },
       });
 
       // Collect all tokens across all admins
@@ -167,12 +167,9 @@ export class NotificationsService {
         response.responses.forEach((resp, idx) => {
           if (resp.error) {
             const code = resp.error.code;
-            if (
-              code === "messaging/invalid-registration-token" ||
-              code === "messaging/registration-token-not-registered"
-            ) {
-              invalidTokens.push(allTokens[idx]);
-            }
+            this.logger.error(`FCM Push Error for token ${allTokens[idx]}: ${code} - ${resp.error.message}`);
+            // Let's aggressively clean up ANY token that returns an error to be safe
+            invalidTokens.push(allTokens[idx]);
           }
         });
 
@@ -182,22 +179,75 @@ export class NotificationsService {
           for (const admin of admins) {
             const cleaned = admin.fcmTokens.filter((t) => !invalidTokens.includes(t));
             if (cleaned.length !== admin.fcmTokens.length) {
-              // We need the admin ID to update — refetch
-              const adminUser = await this.prisma.user.findFirst({
-                where: { role: "ADMIN", fcmTokens: { hasSome: invalidTokens } },
+              await this.prisma.user.update({
+                where: { id: admin.id },
+                data: { fcmTokens: cleaned },
               });
-              if (adminUser) {
-                await this.prisma.user.update({
-                  where: { id: adminUser.id },
-                  data: { fcmTokens: cleaned },
-                });
-              }
             }
           }
         }
       }
     } catch (e) {
       this.logger.error("Failed to send admin push notification", e);
+    }
+  }
+
+  /**
+   * Send a test push notification to the current user's registered FCM tokens.
+   */
+  async sendTestPushNotification(userId: string, title?: string, body?: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { fcmTokens: true, name: true, email: true },
+      });
+
+      if (!user || !user.fcmTokens || user.fcmTokens.length === 0) {
+        return {
+          success: false,
+          message: "No registered FCM tokens found for your user account. Please enable notifications in your browser first.",
+          fcmTokensCount: 0,
+        };
+      }
+
+      const messaging = this.firebaseService.getMessaging();
+      const notifTitle = title || "🔔 Test Push Notification";
+      const notifBody = body || `Hello ${user.name || 'User'}! Push notifications are working on Time Space & Planets.`;
+
+      const response = await messaging.sendEachForMulticast({
+        tokens: user.fcmTokens,
+        notification: {
+          title: notifTitle,
+          body: notifBody,
+        },
+        data: {
+          type: "TEST_NOTIFICATION",
+          timestamp: new Date().toISOString(),
+        },
+        webpush: {
+          fcmOptions: {
+            link: "/",
+          },
+        },
+      });
+
+      this.logger.log(
+        `Test push notification for user ${userId}: ${response.successCount} success, ${response.failureCount} failures`,
+      );
+
+      return {
+        success: response.successCount > 0,
+        message: `Push notification sent (${response.successCount} success, ${response.failureCount} failures)`,
+        successCount: response.successCount,
+        failureCount: response.failureCount,
+        totalTokens: user.fcmTokens.length,
+      };
+    } catch (e: any) {
+      this.logger.error("Failed to send test push notification", e);
+      return {
+        success: false,
+        message: e.message || "Failed to send push notification",
+      };
     }
   }
 
@@ -261,6 +311,19 @@ export class NotificationsService {
     return this.prisma.notification.update({
       where: { id },
       data: { isRead: true },
+    });
+  }
+
+  async getUnreadCount(userId: string) {
+    return this.prisma.notification.count({
+      where: { userId, isRead: false },
+    });
+  }
+
+  async makeUserAdmin(userId: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { role: "ADMIN" },
     });
   }
 

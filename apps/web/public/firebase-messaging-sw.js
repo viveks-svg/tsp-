@@ -15,9 +15,9 @@ importScripts("https://www.gstatic.com/firebasejs/11.8.1/firebase-messaging-comp
 // Firebase config hardcoded to avoid evaluation errors if loaded without query params
 const firebaseConfig = {
   apiKey: "AIzaSyAGu-_RsRa2x17QOTJzVFYxAd3Up8QUHgY",
-  authDomain: "time-space-planets.firebaseapp.com",
-  projectId: "time-space-planets",
-  storageBucket: "time-space-planets.firebasestorage.app",
+  authDomain: "time-space-planet.firebaseapp.com",
+  projectId: "time-space-planet",
+  storageBucket: "time-space-planet.firebasestorage.app",
   messagingSenderId: "372092763486",
   appId: "1:372092763486:web:242051a838fb71c80a63cf",
 };

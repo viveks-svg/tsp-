@@ -59,6 +59,9 @@ export default function ReviewStep({
     ([, value]) => value && value.trim() !== ""
   );
 
+  const calculatedTotal = plan.priceINR * (1 + (SURCHARGE[urgencyTier] || 0));
+  const displayTotal = serverPrice?.amount ?? calculatedTotal;
+
   return (
     <div className="p-6 sm:p-8">
       <button
@@ -180,21 +183,21 @@ export default function ReviewStep({
               <div className="flex justify-between text-sm">
                 <span className="text-[#6B5F52]">{service.name} — {plan.name}</span>
                 <span className="text-[#1E1A16]">
-                  {isFetchingPrice ? <Loader2 className="w-4 h-4 animate-spin text-[#C8A04A]" /> : `₹${(serverPrice?.breakdown?.basePrice || plan.priceINR).toLocaleString('en-IN')}`}
+                  {isFetchingPrice && !serverPrice ? <Loader2 className="w-4 h-4 animate-spin text-[#C8A04A]" /> : `₹${(serverPrice?.breakdown?.basePrice || plan.priceINR).toLocaleString('en-IN')}`}
                 </span>
               </div>
               
-              {serverPrice?.breakdown?.urgencySurcharge ? (
+              {serverPrice?.breakdown?.urgencySurcharge || (SURCHARGE[urgencyTier] > 0) ? (
                 <div className="flex justify-between text-sm">
                   <span className="text-[#C8A04A]">Priority Surcharge</span>
-                  <span className="text-[#C8A04A]">+ ₹{serverPrice.breakdown.urgencySurcharge.toLocaleString('en-IN')}</span>
+                  <span className="text-[#C8A04A]">+ ₹{(serverPrice?.breakdown?.urgencySurcharge || (plan.priceINR * (SURCHARGE[urgencyTier] || 0))).toLocaleString('en-IN')}</span>
                 </div>
               ) : null}
 
               <div className="border-t border-[#EFEBE1] pt-3 flex justify-between">
                 <span className="font-semibold text-[#1E1A16]">Total</span>
                 <span className="font-heading text-xl font-bold text-[#1E1A16]">
-                  {isFetchingPrice ? <Loader2 className="w-5 h-5 animate-spin text-[#1E1A16]" /> : `₹${(serverPrice?.amount || 0).toLocaleString('en-IN')}`}
+                  ₹{displayTotal.toLocaleString('en-IN')}
                 </span>
               </div>
             </div>
@@ -204,11 +207,11 @@ export default function ReviewStep({
             )}
 
             <button
-              disabled={isLoading || isFetchingPrice || !!priceError}
+              disabled={isLoading}
               onClick={onConfirm}
               className="w-full bg-gradient-to-r from-[#C8A04A] to-[#A6832E] text-white py-3.5 rounded-full font-semibold text-sm hover:from-[#D4AC5A] hover:to-[#B8933E] shadow-[0_4px_20px_rgba(200,160,74,0.25)] hover:shadow-[0_6px_28px_rgba(200,160,74,0.35)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Processing…' : isFetchingPrice ? 'Calculating...' : `Pay ₹${(serverPrice?.amount || 0).toLocaleString('en-IN')}`}
+              {isLoading ? 'Processing…' : `Pay ₹${displayTotal.toLocaleString('en-IN')}`}
             </button>
 
             <p className="text-xs text-[#9CA3AF] mt-4 text-center leading-relaxed">

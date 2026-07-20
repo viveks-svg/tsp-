@@ -33,13 +33,21 @@ export function useFcmToken() {
         }
 
         const fcmToken = await requestFcmToken();
-        if (!fcmToken) return;
+        if (!fcmToken) {
+          console.log("[useFcmToken] Could not retrieve FCM token (permission not granted or not supported)");
+          return;
+        }
 
         setToken(fcmToken);
-        registered.current = true;
 
-        // Send the token to our backend
-        await apiClient.post(ENDPOINTS.USERS.FCM_TOKEN, { token: fcmToken });
+        // Send the token to our backend API
+        const response = await apiClient.post<{ success: boolean; message: string }>(
+          ENDPOINTS.USERS.FCM_TOKEN,
+          { token: fcmToken }
+        );
+
+        registered.current = true;
+        console.log("[useFcmToken] FCM token successfully registered on backend:", response);
 
         // Listen for foreground messages and show a browser notification
         unsubscribe = onForegroundMessage((payload) => {
