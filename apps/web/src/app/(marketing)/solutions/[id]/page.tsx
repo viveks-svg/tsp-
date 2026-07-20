@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -10,20 +10,34 @@ import {
   type ServiceDefinition,
   type ServicePlan,
 } from "@/lib/data/service-catalog";
-import { SOLUTION_DETAILS, type SolutionDetail } from "@/lib/data/solutions-details";
+import { SOLUTION_DETAILS } from "@/lib/data/solutions-details";
 import {
   Building2, Landmark, Factory, ShoppingBag, Hotel, Map, Laptop,
   Target, Handshake, TrendingUp, Type,
   Briefcase, Heart, Activity, Users,
   Home as HomeIcon, Building, Castle, HardHat,
-  ArrowLeft, Check, Sparkles, Compass, ShieldCheck, Award, ArrowRight
+  ChevronRight, ArrowLeft, Check, Sparkles,
+  Phone, PenTool
 } from "lucide-react";
 
 import BusinessVastuPage from "@/features/solutions/components/BusinessVastuPage";
 import OfficeVastuPage from "@/features/solutions/components/OfficeVastuPage";
 import HomeVastuPage from "@/features/solutions/components/HomeVastuPage";
 
-/* Rotating Starburst Badge */
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  Building2, Landmark, Factory, ShoppingBag, Hotel, Map, Laptop,
+  Target, Handshake, TrendingUp, Type,
+  Briefcase, Heart, Activity, Users,
+  Home: HomeIcon, Building, Castle, HardHat,
+  Phone, PenTool
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }
+};
+
+/* Custom Rotating Starburst Badge */
 function StarburstBadge({ text }: { text: string }) {
   return (
     <div className="absolute -top-7 -right-7 w-20 h-20 flex items-center justify-center pointer-events-none select-none z-20">
@@ -40,424 +54,235 @@ function StarburstBadge({ text }: { text: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BESPOKE THEME GENERATOR FOR ALL 34 SOLUTIONS
+// 1. BUSINESS VASTU LAYOUT (Category: 'business')
 // ─────────────────────────────────────────────────────────────────────────────
-interface ThemeConfig {
-  styleKey: 'dark-obsidian' | 'royal-crimson' | 'sapphire-navy' | 'emerald-forest' | 'sandstone' | 'solar-amber';
-  pageBg: string;
-  heroBg: string;
-  textColor: string;
-  subtextColor: string;
-  headingColor: string;
-  accentColor: string;
-  cardBg: string;
-  cardBorder: string;
-  shlokaBorder: string;
-  shlokaBg: string;
-  shlokaQuote: string;
-  shlokaTranslation: string;
-  domainLabel: string;
-  primaryBtn: string;
-  secondaryBtn: string;
-  portraitSrc: string;
-  processBg: string;
-}
-
-function getSolutionTheme(serviceId: string, category: string): ThemeConfig {
-  // 1. Dark Obsidian (High-Stakes Business, M&A, Strategy, Wealth)
-  if (['strategic-consulting', 'mergers-acquisitions-astrology', 'boardroom-dynamics', 'wealth-prosperity-astrology', 'signature-analysis'].includes(serviceId)) {
-    return {
-      styleKey: 'dark-obsidian',
-      pageBg: 'bg-[#0A0907]',
-      heroBg: 'bg-gradient-to-b from-[#14120E] via-[#0A0907] to-[#0A0907]',
-      textColor: 'text-[#E5DFD5]',
-      subtextColor: 'text-[#999285]',
-      headingColor: 'text-white',
-      accentColor: 'text-[#C8A04A]',
-      cardBg: 'bg-[#12100D]/90 backdrop-blur-xl',
-      cardBorder: 'border-[#3A3222]',
-      shlokaBorder: 'border-[#C8A04A]/60',
-      shlokaBg: 'bg-[#181510]/80',
-      shlokaQuote: 'वास्तुशास्त्रं प्रवक्ष्यामि लोकानां हितकाम्यया।',
-      shlokaTranslation: 'Vastu & Astrological Alignment: Engineered for commercial dominance and wealth retention.',
-      domainLabel: 'Strategic Resonance Engine',
-      primaryBtn: 'bg-gradient-to-r from-[#C8A04A] to-[#8B6914] text-white hover:from-[#D4AC5A] hover:to-[#9B7924]',
-      secondaryBtn: 'border border-[#C8A04A]/40 text-[#C8A04A] hover:bg-[#C8A04A]/10',
-      portraitSrc: '/images/dr-pradeep-sharma.png',
-      processBg: 'bg-[#0E0C09] border-y border-[#3A3222]/50',
-    };
-  }
-
-  // 2. Royal Crimson (Personal Destiny, Relationships, Gemstones, Solar Return)
-  if (['relationship-guidance', 'personal-kundli-audit', 'annual-solar-return', 'gemstone-recommendation', 'brand-naming-astrology'].includes(serviceId) || category === 'personal') {
-    return {
-      styleKey: 'royal-crimson',
-      pageBg: 'bg-[#FDF9F5]',
-      heroBg: 'bg-gradient-to-br from-[#2D0B10] via-[#1F070A] to-[#120305]',
-      textColor: 'text-[#2C2224]',
-      subtextColor: 'text-[#6E5D61]',
-      headingColor: 'text-[#1F070A]',
-      accentColor: 'text-[#B82E3E]',
-      cardBg: 'bg-white',
-      cardBorder: 'border-[#F0D8DC]',
-      shlokaBorder: 'border-[#B82E3E]/60',
-      shlokaBg: 'bg-white/10 backdrop-blur-md',
-      shlokaQuote: 'समानो मन्त्रः समितिः समानी॥',
-      shlokaTranslation: 'May your purpose, cosmic trajectory, and inner blueprint align in perfect harmony.',
-      domainLabel: 'Personal Vedic Audit',
-      primaryBtn: 'bg-[#2D0B10] text-white hover:bg-[#B82E3E]',
-      secondaryBtn: 'border border-[#B82E3E]/30 text-[#B82E3E] hover:bg-[#B82E3E]/10',
-      portraitSrc: '/images/dr-pradeep.png',
-      processBg: 'bg-[#FAF0F2] border-y border-[#F0D8DC]',
-    };
-  }
-
-  // 3. Sapphire Navy (Corporate Office, Factory, Logistics, Coworking, Tech, Mobile)
-  if (['factory-vastu', 'retail-vastu', 'coworking-vastu', 'warehouse-vastu', 'mobile-analysis'].includes(serviceId)) {
-    return {
-      styleKey: 'sapphire-navy',
-      pageBg: 'bg-[#F5F8FF]',
-      heroBg: 'bg-gradient-to-br from-[#0A1633] via-[#060D21] to-[#030712]',
-      textColor: 'text-[#1E293B]',
-      subtextColor: 'text-[#64748B]',
-      headingColor: 'text-[#0A1633]',
-      accentColor: 'text-[#2563EB]',
-      cardBg: 'bg-white',
-      cardBorder: 'border-[#DBE6FE]',
-      shlokaBorder: 'border-[#3B82F6]/60',
-      shlokaBg: 'bg-white/10 backdrop-blur-md',
-      shlokaQuote: 'कर्मण्येवाधिकारस्ते मा फलेषु कदाचन॥',
-      shlokaTranslation: 'Optimize your operational facility for zero friction, and high yield follows.',
-      domainLabel: 'Industrial & Facility Engineering',
-      primaryBtn: 'bg-[#0A1633] text-white hover:bg-[#1E3A8A]',
-      secondaryBtn: 'border border-[#2563EB]/40 text-[#2563EB] hover:bg-[#2563EB]/10',
-      portraitSrc: '/images/dr-pradeep-sharma.png',
-      processBg: 'bg-[#EEF4FF] border-y border-[#DBE6FE]',
-    };
-  }
-
-  // 4. Emerald Forest (Hospitality, Hospitals, Health, Wellness, Interior, Renovation)
-  if (['hotel-vastu', 'restaurant-vastu', 'hospital-vastu', 'health-longevity-astrology', 'interior-vastu', 'renovation-vastu'].includes(serviceId)) {
-    return {
-      styleKey: 'emerald-forest',
-      pageBg: 'bg-[#F4FAF6]',
-      heroBg: 'bg-gradient-to-br from-[#062419] via-[#031710] to-[#010D08]',
-      textColor: 'text-[#1C2C24]',
-      subtextColor: 'text-[#566D60]',
-      headingColor: 'text-[#062419]',
-      accentColor: 'text-[#059669]',
-      cardBg: 'bg-white',
-      cardBorder: 'border-[#D1E7DD]',
-      shlokaBorder: 'border-[#10B981]/60',
-      shlokaBg: 'bg-white/10 backdrop-blur-md',
-      shlokaQuote: 'शरीरमाद्यं खलु धर्मसाधनम्॥',
-      shlokaTranslation: 'Biological & environmental harmony: aligning spaces to rejuvenate mind, body, and guest experience.',
-      domainLabel: 'Environmental Vitality Science',
-      primaryBtn: 'bg-[#062419] text-white hover:bg-[#059669]',
-      secondaryBtn: 'border border-[#059669]/40 text-[#059669] hover:bg-[#059669]/10',
-      portraitSrc: '/images/dr-pradeep.png',
-      processBg: 'bg-[#E8F5EF] border-y border-[#D1E7DD]',
-    };
-  }
-
-  // 5. Sandstone (Real Estate, Plots, Apartments, Villas, Property Vastu)
-  if (['commercial-plot', 'apartment-vastu', 'villa-vastu', 'plot-vastu'].includes(serviceId) || category === 'property') {
-    return {
-      styleKey: 'sandstone',
-      pageBg: 'bg-[#FAF6F0]',
-      heroBg: 'bg-gradient-to-br from-[#26201A] via-[#1A1511] to-[#0F0C0A]',
-      textColor: 'text-[#2B231D]',
-      subtextColor: 'text-[#6E6156]',
-      headingColor: 'text-[#26201A]',
-      accentColor: 'text-[#D97706]',
-      cardBg: 'bg-white',
-      cardBorder: 'border-[#EAE0D3]',
-      shlokaBorder: 'border-[#D97706]/60',
-      shlokaBg: 'bg-white/10 backdrop-blur-md',
-      shlokaQuote: 'गृहं हि राज्याधिकं सौख्यदं स्यात्॥',
-      shlokaTranslation: 'A Vastu-harmonized plot and home provides stability and peace exceeding a kingdom.',
-      domainLabel: 'Architectural Land & Living Audit',
-      primaryBtn: 'bg-[#26201A] text-white hover:bg-[#D97706]',
-      secondaryBtn: 'border border-[#D97706]/40 text-[#D97706] hover:bg-[#D97706]/10',
-      portraitSrc: '/images/dr-pradeep-sharma.png',
-      processBg: 'bg-[#F2E8DB] border-y border-[#EAE0D3]',
-    };
-  }
-
-  // 6. Solar Amber (Career, Executive Mentorship, Education, Investment, Remedies)
-  return {
-    styleKey: 'solar-amber',
-    pageBg: 'bg-[#FFFDF8]',
-    heroBg: 'bg-gradient-to-br from-[#332211] via-[#22160A] to-[#120B04]',
-    textColor: 'text-[#281D14]',
-    subtextColor: 'text-[#6B5A4B]',
-    headingColor: 'text-[#332211]',
-    accentColor: 'text-[#E67E22]',
-    cardBg: 'bg-white',
-    cardBorder: 'border-[#F5E6D3]',
-    shlokaBorder: 'border-[#E67E22]/60',
-    shlokaBg: 'bg-white/10 backdrop-blur-md',
-    shlokaQuote: 'योगः कर्मसु कौशलम्॥',
-    shlokaTranslation: 'Strategy is cosmic alignment, timing precision, and skill in action.',
-    domainLabel: 'Executive & Planetary Leadership',
-    primaryBtn: 'bg-[#332211] text-white hover:bg-[#E67E22]',
-    secondaryBtn: 'border border-[#E67E22]/40 text-[#E67E22] hover:bg-[#E67E22]/10',
-    portraitSrc: '/images/dr-pradeep.png',
-    processBg: 'bg-[#FDF3E7] border-y border-[#F5E6D3]',
-  };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// BESPOKE SOLUTION ENGINE COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
-function BespokeSolutionEngine({
+function BusinessVastuLayout({
   service,
   details,
 }: {
   service: ServiceDefinition;
-  details: SolutionDetail;
+  details: any;
 }) {
-  const theme = getSolutionTheme(service.id, service.category);
-  const isDarkTheme = theme.styleKey === 'dark-obsidian';
-
   return (
-    <div className={`${theme.pageBg} min-h-screen ${theme.textColor} transition-colors duration-500 font-inter`}>
-      {/* Navigation Top Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-4 relative z-20">
-        <Link
-          href="/solutions"
-          className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] font-poppins px-4 py-2 rounded-full border border-current opacity-70 hover:opacity-100 transition-opacity"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" /> Back to Portfolio
+    <div className="bg-[#FDF9F3] min-h-screen text-[#1E1A16]">
+      {/* Back to Solutions bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
+        <Link href="/solutions" className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#8B6914] hover:text-[#C99411] transition-colors font-poppins">
+          <ArrowLeft className="w-3 h-3" /> Back to Portfolio
         </Link>
       </div>
 
       {/* Hero Section */}
-      <section className={`relative overflow-hidden ${theme.heroBg} text-white py-16 lg:py-24 border-b border-white/10`}>
-        {/* Subtle Ambient Radial Glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(200,160,74,0.15),transparent_60%)] pointer-events-none" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Left Content */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md">
-                <Sparkles className="w-3.5 h-3.5 text-[#C8A04A]" />
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase font-poppins text-white/90">
-                  {theme.domainLabel}
-                </span>
-              </div>
-
-              <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.08] tracking-tight">
-                {service.name}
-              </h1>
-
-              {/* Sanskrit Shloka Callout */}
-              <div className={`border-l-2 ${theme.shlokaBorder} pl-5 py-3 ${theme.shlokaBg} rounded-r-xl space-y-1`}>
-                <p className="font-tiro-sanskrit text-lg italic text-[#E5C378] tracking-wide">
-                  &ldquo;{theme.shlokaQuote}&rdquo;
-                </p>
-                <p className="text-[10px] uppercase tracking-wider text-white/60 font-poppins font-medium">
-                  — {theme.shlokaTranslation}
-                </p>
-              </div>
-
-              <p className="text-white/75 text-sm md:text-base leading-relaxed max-w-2xl font-light">
-                {details.importance}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left: Text & Shloka */}
+          <div className="lg:col-span-7 space-y-6">
+            <span className="text-[10px] font-bold tracking-[0.2em] text-[#C8A04A] font-poppins uppercase block">
+              Spatial Resonance Science
+            </span>
+            <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.08] tracking-tight">
+              {service.name}
+            </h1>
+            
+            {/* Sanskrit Quote */}
+            <div className="border-l-2 border-[#C8A04A]/60 pl-4 py-1.5 my-6 space-y-1">
+              <p className="font-tiro-sanskrit text-lg italic text-[#8B6914] tracking-wide">
+                &ldquo;वास्तुशास्त्रं प्रवक्ष्यामि लोकानां हितकाम्यया।&rdquo;
               </p>
-
-              <div className="pt-4 flex flex-wrap items-center gap-4">
-                <Link
-                  href={`/book?service=${service.id}`}
-                  className={`px-8 py-4 rounded-full text-xs font-bold uppercase tracking-[0.15em] font-poppins transition-all shadow-lg hover:shadow-2xl ${theme.primaryBtn}`}
-                >
-                  Initiate Vetting
-                </Link>
-                <a
-                  href="#plans"
-                  className={`px-6 py-4 rounded-full text-xs font-bold uppercase tracking-[0.15em] font-poppins transition-all ${theme.secondaryBtn}`}
-                >
-                  View Scopes &rarr;
-                </a>
-              </div>
+              <p className="text-[10px] uppercase tracking-wider text-black/40 font-poppins">
+                — Vastu Shastra: Written for the prosperity of all operations
+              </p>
             </div>
 
-            {/* Right: Advisor Cutout Portrait */}
-            <div className="lg:col-span-5 relative flex justify-center">
-              <div className="relative w-full max-w-[340px] aspect-[4/5] rounded-3xl overflow-hidden border border-white/20 p-3 shadow-2xl bg-white/5 backdrop-blur-md">
-                <Image
-                  src={theme.portraitSrc}
-                  alt="Dr. Pradeep Sharma"
-                  fill
-                  className="object-cover object-top p-1"
-                  priority
-                />
-              </div>
+            <p className="text-[#6B5F52] text-sm leading-relaxed max-w-2xl font-inter">
+              {details.importance}
+            </p>
 
-              {/* Floating Badge */}
-              <div className="absolute -bottom-6 -right-2 sm:right-4 bg-white/95 backdrop-blur-xl text-[#1E1A16] p-4 rounded-2xl shadow-2xl border border-white/40 flex items-center gap-3 max-w-[220px]">
-                <div className="w-10 h-10 rounded-full bg-[#1E1A16] text-[#C8A04A] flex items-center justify-center font-bold font-heading text-lg shrink-0">
-                  25+
-                </div>
-                <div>
-                  <p className="text-[9px] font-bold uppercase tracking-wider font-poppins">Dr. Pradeep Sharma</p>
-                  <p className="text-[10px] text-[#6B5F52]">Vedic Science & Spatial Audit</p>
-                </div>
-              </div>
+            <div className="pt-4 flex items-center gap-4">
+              <Link href={`/book?service=${service.id}`} className="bg-[#1E1A16] hover:bg-[#C8A04A] hover:shadow-md text-white text-xs font-bold uppercase tracking-widest px-8 py-4 rounded-full transition-all font-poppins">
+                Book Vetting
+              </Link>
+              <a href="#plans" className="text-xs font-bold uppercase tracking-widest text-[#8B6914] hover:underline font-poppins">
+                View Plans &rarr;
+              </a>
+            </div>
+          </div>
+
+          {/* Right: Elegant Advisor Portrait cutout */}
+          <div className="lg:col-span-5 relative flex justify-center">
+            <div className="relative w-[320px] aspect-[4/5] bg-gradient-to-tr from-[#E6D3A3]/20 to-[#FFFDF9] rounded-2xl overflow-hidden border border-[#E6D3A3]/40 p-4">
+              <Image
+                src="/images/dr-pradeep-sharma.png"
+                alt="Dr. Pradeep Sharma"
+                fill
+                className="object-cover object-top p-1"
+                priority
+              />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Structural Highlights Grid */}
-      <section className={`py-20 ${isDarkTheme ? 'bg-[#0F0D0B]' : 'bg-white'}`}>
+      {/* Structural Highlights */}
+      <section className="bg-white border-y border-[#E6D3A3]/30 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-xl mx-auto mb-14 space-y-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C8A04A] font-poppins">Diagnostic Pillars</span>
-            <h2 className={`font-heading text-3xl font-bold ${isDarkTheme ? 'text-white' : theme.headingColor}`}>Core Scope Deliverables</h2>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {details.importancePoints.map((point: string, idx: number) => (
-              <div
-                key={idx}
-                className={`p-8 rounded-2xl border transition-all duration-300 hover:-translate-y-1 ${
-                  isDarkTheme
-                    ? 'bg-[#15120F] border-[#2A2318] text-[#D8D2C7]'
-                    : `${theme.cardBg} ${theme.cardBorder} shadow-sm hover:shadow-md`
-                }`}
-              >
-                <div className="w-10 h-10 rounded-full bg-[#C8A04A]/15 border border-[#C8A04A]/30 flex items-center justify-center mb-6">
-                  <span className="text-xs font-bold text-[#C8A04A] font-poppins">0{idx + 1}</span>
+              <div key={idx} className="space-y-3 p-4">
+                <div className="w-8 h-8 rounded-full bg-[#C8A04A]/10 flex items-center justify-center">
+                  <span className="text-xs font-bold text-[#8B6914] font-poppins">0{idx+1}</span>
                 </div>
-                <p className="text-xs sm:text-sm leading-relaxed font-light">{point}</p>
+                <p className="text-xs text-[#6B5F52] leading-relaxed font-inter">{point}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Process Calibration Stepper */}
-      <section className={`py-20 ${theme.processBg}`}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-xl mx-auto mb-14 space-y-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C8A04A] font-poppins">Audit Protocol</span>
-            <h2 className={`font-heading text-3xl font-bold ${isDarkTheme ? 'text-white' : theme.headingColor}`}>Step-by-Step Calibration</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-inter text-xs">
-            {details.process.map((step: { title: string; description: string }, idx: number) => (
-              <div
-                key={idx}
-                className={`p-6 rounded-2xl border ${
-                  isDarkTheme ? 'bg-[#161310] border-[#332A1C]' : 'bg-white border-black/5 shadow-sm'
-                } space-y-3 relative overflow-hidden`}
-              >
-                <span className="text-[9px] font-bold tracking-widest text-[#C8A04A] uppercase font-poppins block">
-                  PHASE 0{idx + 1}
-                </span>
-                <h4 className={`font-bold text-sm ${isDarkTheme ? 'text-white' : theme.headingColor}`}>{step.title}</h4>
-                <p className={`${isDarkTheme ? 'text-white/70' : theme.subtextColor} leading-relaxed`}>{step.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Plans Section (NO PRICES DISPLAYED) */}
-      <section id="plans" className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24`}>
-        <div className="text-center max-w-xl mx-auto mb-16 space-y-3">
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C8A04A] font-poppins">Engagement Matrix</span>
-          <h2 className={`font-heading text-3xl sm:text-4xl font-bold ${isDarkTheme ? 'text-white' : theme.headingColor}`}>
-            Select Consultation Scope
-          </h2>
-          <p className={`text-xs ${isDarkTheme ? 'text-white/60' : theme.subtextColor}`}>
-            Review scope features below. Pricing and payment options are presented during booking confirmation.
-          </p>
+      {/* Pricing Grid */}
+      <section id="plans" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center max-w-xl mx-auto mb-16 space-y-2">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#C8A04A] font-poppins">Scope Matrix</span>
+          <h2 className="font-heading text-3xl font-bold">Select Scope & Plan</h2>
         </div>
 
-        <div
-          className={`grid gap-8 max-w-5xl mx-auto ${
-            service.plans.length === 1
-              ? "grid-cols-1 max-w-md"
-              : service.plans.length === 2
-              ? "grid-cols-1 md:grid-cols-2 max-w-3xl"
-              : "grid-cols-1 lg:grid-cols-3"
-          }`}
-        >
+        <div className={`grid gap-8 max-w-5xl mx-auto ${
+          service.plans.length === 1 ? "grid-cols-1 max-w-md" :
+          service.plans.length === 2 ? "grid-cols-1 md:grid-cols-2 max-w-3xl" : "grid-cols-1 lg:grid-cols-3"
+        }`}>
           {service.plans.map((plan: ServicePlan) => {
             const isFeatured = plan.variant === "featured";
             return (
-              <div
-                key={plan.slug}
-                className={`rounded-3xl p-8 flex flex-col justify-between relative min-h-[440px] border transition-all duration-300 ${
-                  isDarkTheme
-                    ? isFeatured
-                      ? 'bg-[#1C1813] border-[#C8A04A] shadow-[0_8px_30px_rgba(200,160,74,0.15)]'
-                      : 'bg-[#12100D] border-[#2A2318]'
-                    : isFeatured
-                    ? 'bg-white border-[#C8A04A] shadow-xl'
-                    : 'bg-white border-black/10 shadow-sm'
-                }`}
-              >
+              <div key={plan.slug} className="bg-white border border-[#E6D3A3]/45 rounded-3xl p-8 shadow-sm flex flex-col justify-between relative min-h-[420px]">
                 {isFeatured && details.spikyBadgeText && <StarburstBadge text={details.spikyBadgeText} />}
-
+                
                 <div>
-                  <h3 className={`font-heading text-xl font-bold ${isDarkTheme ? 'text-white' : theme.headingColor}`}>
-                    {plan.name}
-                  </h3>
-                  <p className={`text-xs mt-1.5 font-inter leading-relaxed ${isDarkTheme ? 'text-white/70' : theme.subtextColor}`}>
-                    {plan.tagline}
-                  </p>
+                  <h3 className="font-heading text-lg font-bold text-[#1E1A16]">{plan.name}</h3>
+                  <p className="text-[11px] text-[#6B5F52] mt-1 font-inter leading-relaxed">{plan.tagline}</p>
+                  
+                  <div className="h-px bg-[#EFEBE1] w-full my-4" />
 
-                  <div className="h-px bg-current opacity-10 w-full my-6" />
-
-                  <ul className="space-y-3.5 mb-8">
+                  <ul className="space-y-3 mb-8">
                     {plan.features.map((f, i) => (
-                      <li key={i} className="flex gap-2.5 items-start text-xs font-inter">
-                        <Check className="w-4 h-4 text-[#C8A04A] shrink-0 mt-0.5" />
-                        <span className={isDarkTheme ? 'text-white/80' : 'text-[#4A4A4A]'}>{f}</span>
+                      <li key={i} className="flex gap-2 items-start text-[11px] text-[#4B5563] font-inter">
+                        <Check className="w-3.5 h-3.5 text-[#C8A04A] shrink-0 mt-0.5" />
+                        <span>{f}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <Link
-                  href={`/book?service=${service.id}&plan=${plan.slug}`}
-                  className={`w-full text-center text-xs font-bold uppercase tracking-wider py-4 rounded-full transition-all font-poppins shadow-md hover:shadow-lg ${
-                    isFeatured
-                      ? 'bg-gradient-to-r from-[#C8A04A] to-[#8B6914] text-white hover:from-[#D4AC5A] hover:to-[#9B7924]'
-                      : isDarkTheme
-                      ? 'bg-white/10 text-white hover:bg-white/20'
-                      : 'bg-[#1E1A16] text-white hover:bg-[#C8A04A]'
-                  }`}
-                >
-                  Select Plan
+                <Link href={`/book?service=${service.id}&plan=${plan.slug}`} className="w-full text-center bg-[#1E1A16] hover:bg-[#C8A04A] text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-full transition-all font-poppins">
+                  Choose Plan
                 </Link>
               </div>
             );
           })}
         </div>
       </section>
+    </div>
+  );
+}
 
-      {/* McKinsey Style Custom Evaluation Banner */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
-        <div className={`rounded-3xl p-8 sm:p-12 border flex flex-col md:flex-row items-center justify-between gap-8 ${
-          isDarkTheme ? 'bg-[#14110E] border-[#3A3020]' : 'bg-white border-[#E6D3A3]/50 shadow-sm'
-        }`}>
-          <div className="space-y-3 text-center md:text-left">
-            <h3 className={`font-heading text-2xl sm:text-3xl font-bold ${isDarkTheme ? 'text-white' : theme.headingColor}`}>
-              Need a Custom Scope for Your Operation?
-            </h3>
-            <p className={`text-xs sm:text-sm max-w-xl leading-relaxed ${isDarkTheme ? 'text-white/70' : theme.subtextColor}`}>
-              Schedule a preliminary assessment with our team to evaluate multi-site properties, complex leadership charts, or specialized timing directives.
-            </p>
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. LEADERSHIP STRATEGY LAYOUT (Category: 'leadership')
+// ─────────────────────────────────────────────────────────────────────────────
+function LeadershipStrategyLayout({
+  service,
+  details,
+}: {
+  service: ServiceDefinition;
+  details: any;
+}) {
+  return (
+    <div className="bg-[#FAFBF9] min-h-screen text-[#1E1A16]">
+      {/* Navigation bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
+        <Link href="/solutions" className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#8B6914] hover:text-[#C99411] transition-colors font-poppins">
+          <ArrowLeft className="w-3 h-3" /> Back to Portfolio
+        </Link>
+      </div>
+
+      {/* Hero Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left: Alternate portrait of Dr Pradeep */}
+          <div className="lg:col-span-5 order-last lg:order-first flex justify-center">
+            <div className="relative w-[320px] aspect-[4/5] bg-gradient-to-tr from-[#C8A04A]/10 to-[#FAFBF9] rounded-2xl overflow-hidden border border-[#E6D3A3]/40 p-4">
+              <Image
+                src="/images/dr-pradeep.png"
+                alt="Dr. Pradeep Sharma"
+                fill
+                className="object-cover object-top p-1"
+                priority
+              />
+            </div>
           </div>
-          <Link
-            href="/book"
-            className={`shrink-0 px-8 py-4 rounded-full text-xs font-bold uppercase tracking-wider font-poppins transition-all ${theme.primaryBtn}`}
-          >
-            Launch Vetting Session
+
+          {/* Right: Copy & Shloka */}
+          <div className="lg:col-span-7 space-y-6">
+            <span className="text-[10px] font-bold tracking-[0.2em] text-[#C8A04A] font-poppins uppercase block">
+              Astrological Timeline Optimization
+            </span>
+            <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.08] tracking-tight">
+              {service.name}
+            </h1>
+
+            {/* Sanskrit Quote */}
+            <div className="border-l-2 border-[#8B6914] pl-4 py-1.5 my-6 space-y-1">
+              <p className="font-tiro-sanskrit text-lg italic text-[#8B6914] tracking-wide">
+                &ldquo;योगः कर्मसु कौशलम्॥&rdquo;
+              </p>
+              <p className="text-[10px] uppercase tracking-wider text-black/40 font-poppins">
+                — Bhagavad Gita 2.50: Strategy is alignment and skill in action
+              </p>
+            </div>
+
+            <p className="text-[#6B5F52] text-sm leading-relaxed max-w-2xl font-inter">
+              {details.importance}
+            </p>
+
+            <div className="pt-4">
+              <Link href={`/book?service=${service.id}`} className="bg-[#1E1A16] hover:bg-[#C8A04A] text-white text-xs font-bold uppercase tracking-widest px-8 py-4 rounded-full transition-all font-poppins inline-block">
+                Initiate Vetting
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Strategic Process Framework */}
+      <section className="bg-white border-y border-[#E6D3A3]/30 py-16">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h3 className="font-heading text-xl font-bold text-[#1E1A16]">The Calibration Steps</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-inter text-xs">
+            {details.process.map((step: any, idx: number) => (
+              <div key={idx} className="border-t border-[#E6D3A3] pt-4 space-y-2">
+                <span className="text-[10px] font-bold text-[#C8A04A] block">PHASE 0{idx+1}</span>
+                <h4 className="font-bold text-[#1E1A16]">{step.title}</h4>
+                <p className="text-[#6B5F52] leading-relaxed">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <div className="bg-white border border-[#E6D3A3]/45 rounded-3xl p-10 shadow-sm relative">
+          {details.spikyBadgeText && <StarburstBadge text={details.spikyBadgeText} />}
+          
+          <span className="text-[10px] font-bold tracking-widest uppercase text-[#C8A04A] font-poppins block mb-2">Scope & Analysis</span>
+          <h3 className="font-heading text-2xl font-bold text-[#1E1A16] mb-4">{service.name} Analysis</h3>
+
+          <p className="text-xs text-[#6B5F52] font-inter max-w-md mx-auto mb-8 leading-relaxed">
+            Includes high-resolution planetary calculations, corporate synastry, and direct timing directives.
+          </p>
+
+          <Link href={`/book?service=${service.id}&plan=${service.plans[0]?.slug}`} className="bg-[#1E1A16] hover:bg-[#C8A04A] text-white text-xs font-bold uppercase tracking-widest px-8 py-4 rounded-full transition-all font-poppins inline-block">
+            Book Consulting Session
           </Link>
         </div>
       </section>
@@ -466,7 +291,199 @@ function BespokeSolutionEngine({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MAIN PAGE ROUTER
+// 3. PERSONAL BLUEPRINT LAYOUT (Category: 'personal')
+// ─────────────────────────────────────────────────────────────────────────────
+function PersonalBlueprintLayout({
+  service,
+  details,
+}: {
+  service: ServiceDefinition;
+  details: any;
+}) {
+  return (
+    <div className="bg-[#FDFBF7] min-h-screen text-[#1E1A16]">
+      {/* Back button */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
+        <Link href="/solutions" className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#8B6914] hover:text-[#C99411] transition-colors font-poppins">
+          <ArrowLeft className="w-3 h-3" /> Back to Portfolio
+        </Link>
+      </div>
+
+      {/* Split layout */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          
+          {/* Left Column: Sanskrit shloka + Dr. Pradeep photo */}
+          <div className="lg:col-span-5 space-y-8 flex flex-col items-center">
+            {/* Sanskrit shloka */}
+            <div className="bg-[#FFFDF9] border border-[#E6D3A3]/40 rounded-2xl p-6 text-center w-full max-w-[360px] space-y-2">
+              <p className="font-tiro-sanskrit text-base italic text-[#8B6914] leading-relaxed">
+                &ldquo;कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।&rdquo;
+              </p>
+              <p className="text-[9px] uppercase tracking-wider text-black/45 font-poppins">
+                — Action alone is in your sphere of influence
+              </p>
+            </div>
+
+            <div className="relative w-[280px] aspect-[4/5] bg-gradient-to-tr from-[#E6D3A3]/20 to-[#FFFDF7] rounded-2xl overflow-hidden border border-[#E6D3A3]/40 p-4">
+              <Image
+                src="/images/dr-pradeep-sharma.png"
+                alt="Dr. Pradeep Sharma"
+                fill
+                className="object-cover object-top p-1"
+              />
+            </div>
+          </div>
+
+          {/* Right Column: Content and plans list */}
+          <div className="lg:col-span-7 space-y-8">
+            <div className="space-y-4">
+              <span className="text-[9px] font-bold uppercase tracking-widest text-[#C8A04A] font-poppins block">
+                Personal Vedic Audit
+              </span>
+              <h1 className="font-heading text-4xl sm:text-5xl font-bold leading-tight text-[#1E1A16]">
+                {service.name}
+              </h1>
+              <p className="text-[#6B5F52] text-xs leading-relaxed font-inter">
+                {details.importance}
+              </p>
+            </div>
+
+            {/* Service Plans */}
+            <div className="space-y-6">
+              {service.plans.map((plan: ServicePlan) => (
+                <div key={plan.slug} className="bg-white border border-[#E6D3A3]/30 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 hover:border-[#C8A04A]/60 transition-colors shadow-sm relative overflow-hidden">
+                  <div className="space-y-2">
+                    <h3 className="font-heading text-base font-bold text-[#1E1A16]">{plan.name}</h3>
+                    <p className="text-[11px] text-[#6B5F52] font-inter">{plan.tagline}</p>
+                  </div>
+
+                  <Link href={`/book?service=${service.id}&plan=${plan.slug}`} className="bg-[#1E1A16] hover:bg-[#C8A04A] text-white text-[11px] font-bold uppercase tracking-wider px-6 py-3 rounded-full transition-all font-poppins shrink-0">
+                    Get Started
+                  </Link>
+                </div>
+              ))}
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. PROPERTY / RESIDENTIAL LAYOUT (Category: 'property')
+// ─────────────────────────────────────────────────────────────────────────────
+function PropertyVastuLayout({
+  service,
+  details,
+}: {
+  service: ServiceDefinition;
+  details: any;
+}) {
+  return (
+    <div className="bg-[#FAF6F0] min-h-screen text-[#1E1A16]">
+      {/* Back link */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
+        <Link href="/solutions" className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#8B6914] hover:text-[#C99411] transition-colors font-poppins">
+          <ArrowLeft className="w-3 h-3" /> Back to Portfolio
+        </Link>
+      </div>
+
+      {/* Hero */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left Text */}
+          <div className="lg:col-span-8 space-y-6">
+            <span className="text-[10px] font-bold tracking-[0.2em] text-[#C8A04A] font-poppins uppercase block">
+              Residential Harmony Engineering
+            </span>
+            <h1 className="font-heading text-4xl sm:text-5xl font-bold leading-tight">
+              {service.name}
+            </h1>
+
+            {/* Sanskrit Shloka */}
+            <div className="border-l-2 border-[#C8A04A] pl-4 py-1 my-6 space-y-1">
+              <p className="font-tiro-sanskrit text-base italic text-[#8B6914] tracking-wide">
+                &ldquo;गृहं हि राज्याधिकं सौख्यदं स्यात्।&rdquo;
+              </p>
+              <p className="text-[9px] uppercase tracking-wider text-black/45 font-poppins">
+                — A Vastu-aligned home provides joy exceeding a kingdom
+              </p>
+            </div>
+
+            <p className="text-[#6B5F52] text-sm leading-relaxed max-w-2xl font-inter">
+              {details.importance}
+            </p>
+
+            <div className="pt-2">
+              <Link href={`/book?service=${service.id}`} className="bg-[#1E1A16] hover:bg-[#C8A04A] text-white text-xs font-bold uppercase tracking-widest px-8 py-4 rounded-full transition-all font-poppins inline-block">
+                Schedule Audit
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Image */}
+          <div className="lg:col-span-4 flex justify-center">
+            <div className="relative w-[280px] aspect-[4/5] bg-gradient-to-tr from-[#C8A04A]/10 to-[#FAF6F0] rounded-2xl overflow-hidden border border-[#E6D3A3]/40 p-4">
+              <Image
+                src="/images/dr-pradeep.png"
+                alt="Dr. Pradeep Sharma"
+                fill
+                className="object-cover object-top p-1"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing plans */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-[#E6D3A3]/25">
+        <div className="text-center mb-16">
+          <h2 className="font-heading text-2xl font-bold">Plans & Deliverables</h2>
+        </div>
+
+        <div className={`grid gap-8 max-w-4xl mx-auto ${
+          service.plans.length === 1 ? "grid-cols-1 max-w-md" : "grid-cols-1 md:grid-cols-2"
+        }`}>
+          {service.plans.map((plan: ServicePlan) => {
+            const isFeatured = plan.variant === "featured";
+            return (
+              <div key={plan.slug} className="bg-white border border-[#E6D3A3]/45 rounded-3xl p-8 shadow-sm flex flex-col justify-between relative min-h-[420px]">
+                {isFeatured && details.spikyBadgeText && <StarburstBadge text={details.spikyBadgeText} />}
+                
+                <div>
+                  <h3 className="font-heading text-lg font-bold text-[#1E1A16]">{plan.name}</h3>
+                  <p className="text-[11px] text-[#6B5F52] mt-1 font-inter leading-relaxed">{plan.tagline}</p>
+                  
+                  <div className="h-px bg-[#EFEBE1] w-full my-4" />
+
+                  <ul className="space-y-3.5 mb-8">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex gap-2 items-start text-[11px] text-[#4B5563] font-inter">
+                        <Check className="w-3.5 h-3.5 text-[#C8A04A] shrink-0 mt-0.5" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <Link href={`/book?service=${service.id}&plan=${plan.slug}`} className="w-full text-center bg-[#1E1A16] hover:bg-[#C8A04A] text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-full transition-all font-poppins">
+                  Select Plan
+                </Link>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN PAGE COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 export default function SolutionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -478,7 +495,7 @@ export default function SolutionDetailPage({ params }: { params: Promise<{ id: s
     notFound();
   }
 
-  // Branch layout based on exact service ID for custom custom pages
+  // Branch layout based on exact service ID for custom premium layouts
   if (service.id === "business-vastu") {
     return <BusinessVastuPage service={service} details={details} />;
   }
@@ -489,6 +506,22 @@ export default function SolutionDetailPage({ params }: { params: Promise<{ id: s
     return <HomeVastuPage service={service} details={details} />;
   }
 
-  // Render bespoke solution UI engine configured for this exact solution
-  return <BespokeSolutionEngine service={service} details={details} />;
+  // Branch layout based on the category for custom layouts per solution category
+  if (service.category === "business") {
+    return <BusinessVastuLayout service={service} details={details} />;
+  }
+
+  if (service.category === "leadership") {
+    return <LeadershipStrategyLayout service={service} details={details} />;
+  }
+
+  if (service.category === "personal") {
+    return <PersonalBlueprintLayout service={service} details={details} />;
+  }
+
+  if (service.category === "property") {
+    return <PropertyVastuLayout service={service} details={details} />;
+  }
+
+  notFound();
 }
