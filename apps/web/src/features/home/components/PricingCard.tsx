@@ -5,7 +5,7 @@ interface PricingCardProps {
   name: string;
   subtitle: string;
   description: string;
-  price: string;
+  price?: string;
   features: string[];
   variant: "default" | "highlighted" | "dark";
   cta: string;
@@ -102,15 +102,17 @@ export default function PricingCard({
         })}
       </ul>
 
-      {/* Ornament Divider */}
-      <CustomDivider />
-
-      {/* Price - Playfair Display */}
-      <div className="text-center mb-6">
-        <span className="font-playfair text-2xl font-bold text-[#050B5C]">
-          {price}
-        </span>
-      </div>
+      {/* Ornament Divider & Price (if provided) */}
+      {price && (
+        <>
+          <CustomDivider />
+          <div className="text-center mb-6">
+            <span className="font-playfair text-2xl font-bold text-[#050B5C]">
+              {price}
+            </span>
+          </div>
+        </>
+      )}
 
       {/* CTA Button */}
       <button

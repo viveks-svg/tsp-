@@ -23,6 +23,7 @@ import { BookingsModule } from "./modules/bookings/booking.module";
 import { SlotsModule } from "./modules/slots/slots.module";
 import { ShopModule } from "./modules/shop/shop.module";
 import { OrdersModule } from "./modules/orders/orders.module";
+import { LeadsModule } from "./modules/leads/leads.module";
 import { RedisModule } from "./integrations/redis/redis.module";
 import { RedisService } from "./integrations/redis/redis.service";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
@@ -98,6 +99,7 @@ import configuration from "./config/configuration";
     SlotsModule,
     ShopModule,
     OrdersModule,
+    LeadsModule,
   ],
   providers: [
     {

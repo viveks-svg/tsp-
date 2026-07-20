@@ -100,7 +100,7 @@ export default function BusinessVastuPage({ service, details }: BusinessVastuPag
                 Book Vetting
               </Link>
               <a href="#plans" className="text-xs font-bold uppercase tracking-widest text-[#8B6914] hover:underline font-poppins flex items-center gap-2">
-                View Pricing <span className="text-[16px]">↓</span>
+                View Plans <span className="text-[16px]">↓</span>
               </a>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function BusinessVastuPage({ service, details }: BusinessVastuPag
                 name={plan.name}
                 subtitle={plan.tagline}
                 description=""
-                price={plan.priceLabel}
+                price=""
                 features={plan.features}
                 variant={isFeatured ? "dark" : "default"}
                 cta={plan.ctaText}

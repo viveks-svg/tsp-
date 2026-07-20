@@ -49,11 +49,11 @@ export default function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className="hidden md:flex w-9 h-9 items-center justify-center rounded-full hover:bg-white/[0.08] transition-colors duration-200 relative focus:outline-none"
+        className="flex w-9 h-9 items-center justify-center rounded-full hover:bg-white/[0.08] transition-colors duration-200 relative focus:outline-none"
         aria-label="Notifications"
         aria-expanded={isOpen}
       >
-        <Bell className="w-4.5 h-4.5 text-white/60" />
+        <Bell className="w-4.5 h-4.5 text-white/60 hover:text-white transition-colors" />
         {unreadCount > 0 && (
           <span className="absolute top-1 right-1 flex items-center justify-center min-w-[16px] h-[16px] px-1 text-[9px] font-bold text-white bg-rose-500 rounded-full border-2 border-[#0F0E0C]">
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -68,7 +68,7 @@ export default function NotificationBell() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 z-50 origin-top-right"
+            className="absolute right-0 z-50 origin-top-right mt-2"
           >
             <NotificationDropdown
               notifications={notifications}

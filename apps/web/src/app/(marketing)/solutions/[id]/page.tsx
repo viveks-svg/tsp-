@@ -103,7 +103,7 @@ function BusinessVastuLayout({
                 Book Vetting
               </Link>
               <a href="#plans" className="text-xs font-bold uppercase tracking-widest text-[#8B6914] hover:underline font-poppins">
-                View Pricing &rarr;
+                View Plans &rarr;
               </a>
             </div>
           </div>
@@ -160,10 +160,6 @@ function BusinessVastuLayout({
                   <h3 className="font-heading text-lg font-bold text-[#1E1A16]">{plan.name}</h3>
                   <p className="text-[11px] text-[#6B5F52] mt-1 font-inter leading-relaxed">{plan.tagline}</p>
                   
-                  <div className="my-6">
-                    <span className="font-heading text-3xl font-bold text-[#8B6914]">{plan.priceLabel}</span>
-                  </div>
-
                   <div className="h-px bg-[#EFEBE1] w-full my-4" />
 
                   <ul className="space-y-3 mb-8">
@@ -278,14 +274,8 @@ function LeadershipStrategyLayout({
         <div className="bg-white border border-[#E6D3A3]/45 rounded-3xl p-10 shadow-sm relative">
           {details.spikyBadgeText && <StarburstBadge text={details.spikyBadgeText} />}
           
-          <span className="text-[10px] font-bold tracking-widest uppercase text-[#C8A04A] font-poppins block mb-2">Investment</span>
+          <span className="text-[10px] font-bold tracking-widest uppercase text-[#C8A04A] font-poppins block mb-2">Scope & Analysis</span>
           <h3 className="font-heading text-2xl font-bold text-[#1E1A16] mb-4">{service.name} Analysis</h3>
-          
-          <div className="my-6">
-            <span className="font-heading text-4xl font-bold text-[#8B6914]">
-              {service.plans[0]?.priceLabel}
-            </span>
-          </div>
 
           <p className="text-xs text-[#6B5F52] font-inter max-w-md mx-auto mb-8 leading-relaxed">
             Includes high-resolution planetary calculations, corporate synastry, and direct timing directives.
@@ -366,7 +356,6 @@ function PersonalBlueprintLayout({
                   <div className="space-y-2">
                     <h3 className="font-heading text-base font-bold text-[#1E1A16]">{plan.name}</h3>
                     <p className="text-[11px] text-[#6B5F52] font-inter">{plan.tagline}</p>
-                    <span className="inline-block font-heading text-lg font-bold text-[#8B6914]">{plan.priceLabel}</span>
                   </div>
 
                   <Link href={`/book?service=${service.id}&plan=${plan.slug}`} className="bg-[#1E1A16] hover:bg-[#C8A04A] text-white text-[11px] font-bold uppercase tracking-wider px-6 py-3 rounded-full transition-all font-poppins shrink-0">
@@ -453,7 +442,7 @@ function PropertyVastuLayout({
       {/* Pricing plans */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-[#E6D3A3]/25">
         <div className="text-center mb-16">
-          <h2 className="font-heading text-2xl font-bold">Pricing & Deliverables</h2>
+          <h2 className="font-heading text-2xl font-bold">Plans & Deliverables</h2>
         </div>
 
         <div className={`grid gap-8 max-w-4xl mx-auto ${
@@ -469,10 +458,6 @@ function PropertyVastuLayout({
                   <h3 className="font-heading text-lg font-bold text-[#1E1A16]">{plan.name}</h3>
                   <p className="text-[11px] text-[#6B5F52] mt-1 font-inter leading-relaxed">{plan.tagline}</p>
                   
-                  <div className="my-6">
-                    <span className="font-heading text-3xl font-bold text-[#8B6914]">{plan.priceLabel}</span>
-                  </div>
-
                   <div className="h-px bg-[#EFEBE1] w-full my-4" />
 
                   <ul className="space-y-3.5 mb-8">

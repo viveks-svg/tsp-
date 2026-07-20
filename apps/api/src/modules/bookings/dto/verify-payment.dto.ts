@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class VerifyPaymentDto {
   @IsString()
@@ -16,4 +16,10 @@ export class VerifyPaymentDto {
   @IsString()
   @IsNotEmpty()
   razorpaySignature!: string;
+
+  // Lead capture session ID — if present, mark the lead as converted on success
+  @IsOptional()
+  @IsString()
+  leadSessionId?: string;
 }
+

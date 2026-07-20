@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { apiClient } from '@/lib/http/client';
+import { useBookingSession } from '@/lib/booking/useBookingSession';
 import {
   getServiceById,
   type ServiceDefinition,
@@ -113,6 +114,7 @@ function StepIndicator({ currentStep }: { currentStep: BookingPageStep }) {
 // ── Dynamic Form Step (inline) ───────────────────────────────────────────────
 
 function DynamicFormStep({
+  sessionId,
   service,
   formData,
   updateFormField,
@@ -125,6 +127,7 @@ function DynamicFormStep({
   onBack,
   onNext,
 }: {
+  sessionId?: string;
   service: ServiceDefinition;
   formData: Record<string, string>;
   updateFormField: (key: string, value: string) => void;
@@ -139,6 +142,7 @@ function DynamicFormStep({
 }) {
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Group fields by section
   const sections: Record<string, typeof service.formFields> = {};
@@ -149,7 +153,7 @@ function DynamicFormStep({
   }
 
   // Handle validation and proceed
-  const handleNext = () => {
+  const handleNext = async () => {
     setFormError(null);
     const newErrors: Record<string, string> = {};
 
@@ -229,6 +233,10 @@ function DynamicFormStep({
       }
     }
 
+    if (!formData.consentToContact || formData.consentToContact !== 'true') {
+      newErrors['consentToContact'] = 'You must consent to being contacted.';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setFieldErrors(newErrors);
       setFormError("Please fix the highlighted errors.");
@@ -236,7 +244,27 @@ function DynamicFormStep({
     }
 
     setFieldErrors({});
-    onNext();
+    setIsSubmitting(true);
+    try {
+      await apiClient.post('/leads/contact', {
+        sessionId,
+        solutionSlug: service.id,
+        solutionName: service.name,
+        name: formData.fullName || formData.name || '',
+        phone: formData.phone || '',
+        email: formData.email || undefined,
+        consentToContact: true,
+      });
+
+      await apiClient.patch(`/leads/${sessionId}/details`, {
+        formData: formData
+      });
+      onNext();
+    } catch (err: any) {
+      setFormError(err.message || 'Failed to save details.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -339,6 +367,31 @@ function DynamicFormStep({
             </div>
           </div>
         )}
+
+        {/* Consent Checkbox */}
+        <div className="mt-6 pt-6 border-t border-[#EFEBE1]">
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <div className="relative flex items-center justify-center mt-0.5">
+              <input
+                type="checkbox"
+                className="peer sr-only"
+                checked={formData.consentToContact === 'true'}
+                onChange={(e) => updateFormField('consentToContact', e.target.checked ? 'true' : 'false')}
+              />
+              <div className="w-5 h-5 border-2 border-[#EFEBE1] rounded bg-white transition-colors peer-checked:bg-[#C8A04A] peer-checked:border-[#C8A04A] group-hover:border-[#C8A04A]" />
+              <svg className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-[#1E1A16]">I consent to being contacted</span>
+              <span className="text-xs text-[#6B5F52]">We will only use this to discuss your consultation.</span>
+            </div>
+          </label>
+          {fieldErrors['consentToContact'] && (
+            <p className="text-xs text-rose-500 mt-2">{fieldErrors['consentToContact']}</p>
+          )}
+        </div>
       </div>
 
       {/* Next Button */}
@@ -349,10 +402,11 @@ function DynamicFormStep({
           </p>
         )}
         <button
+          disabled={isSubmitting}
           onClick={handleNext}
-          className="px-8 py-3 bg-[#1E1A16] text-white rounded-full text-sm font-semibold hover:bg-[#C8A04A] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-8 py-3 bg-[#1E1A16] text-white rounded-full text-sm font-semibold hover:bg-[#C8A04A] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          Review Booking →
+          {isSubmitting ? 'Saving...' : 'Review Booking →'}
         </button>
       </div>
     </div>
@@ -375,6 +429,8 @@ export default function BookingFlow() {
   const [urgencyTier, setUrgencyTier] = useState('STANDARD');
   const [confirmedBookingId, setConfirmedBookingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const { sessionId } = useBookingSession(selectedService?.id || 'default');
 
   // Pre-select from URL params
   useEffect(() => {
@@ -466,6 +522,7 @@ export default function BookingFlow() {
       }
 
       const data = await apiClient.post<any>('/bookings/initiate', {
+        leadSessionId: sessionId,
         serviceCategory: serviceCategoryFromCatalog(selectedService),
         serviceSlug,
         serviceName: `${selectedService.name} — ${selectedPlan.name}`,
@@ -583,6 +640,7 @@ export default function BookingFlow() {
 
         {step === 'form' && selectedService && selectedPlan && (
           <DynamicFormStep
+            sessionId={sessionId}
             service={selectedService}
             formData={dynamicFormData}
             updateFormField={updateFormField}
@@ -605,6 +663,7 @@ export default function BookingFlow() {
 
         {step === 'review' && selectedService && selectedPlan && (
           <ReviewStep
+            sessionId={sessionId}
             service={selectedService}
             plan={selectedPlan}
             formData={dynamicFormData}

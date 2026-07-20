@@ -2,6 +2,7 @@ import { Controller, Post, Req, Res, Headers, RawBodyRequest } from '@nestjs/com
 import { Request, Response } from 'express';
 import { RazorpayService } from '../razorpay.service';
 import { PrismaService } from '../../../database/prisma.service';
+import { LeadsService } from '../../leads/leads.service';
 import { BookingStatus } from '@prisma/client';
 import { Public } from '../../../common/decorators/public.decorator';
 
@@ -10,6 +11,7 @@ export class RazorpayWebhookHandler {
   constructor(
     private rzp: RazorpayService,
     private prisma: PrismaService,
+    private leads: LeadsService,
   ) {}
 
   @Public()
@@ -58,6 +60,31 @@ export class RazorpayWebhookHandler {
             },
           }),
         ]);
+
+        // Mark lead as converted if one exists for this booking
+        try {
+          const lead = await this.prisma.bookingLead.findFirst({
+            where: { convertedBookingId: null, solutionSlug: booking.serviceSlug },
+          });
+          // More precise: find by booking-created sessionId if stored, but for now
+          // find any unconverted lead matching this slug+phone combo
+          const matchedLead = await this.prisma.bookingLead.findFirst({
+            where: {
+              phone: booking.phone,
+              solutionSlug: booking.serviceSlug,
+              status: { not: 'CONVERTED' },
+            },
+            orderBy: { createdAt: 'desc' },
+          });
+          if (matchedLead) {
+            await this.leads.markConverted({
+              sessionId: matchedLead.sessionId,
+              bookingId: booking.id,
+            });
+          }
+        } catch (e) {
+          console.error('Webhook: failed to mark lead as converted', e);
+        }
       }
     }
 
@@ -85,3 +112,4 @@ export class RazorpayWebhookHandler {
     return res.status(200).json({ received: true });
   }
 }
+

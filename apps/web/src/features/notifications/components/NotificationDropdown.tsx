@@ -5,6 +5,8 @@ import { Notification } from "../api/notifications";
 import { cn } from "@/lib/cn";
 import { ROUTES } from "@/lib/constants/routes";
 
+import { useAuth } from "@/providers/AuthProvider";
+
 interface NotificationDropdownProps {
   notifications: Notification[];
   onMarkRead: (id: string) => void;
@@ -19,18 +21,24 @@ export default function NotificationDropdown({
   onClose,
 }: NotificationDropdownProps) {
   const router = useRouter();
+  const { user } = useAuth();
 
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.isRead) {
       onMarkRead(notification.id);
     }
     onClose();
-    // Navigate to admin dashboard as requested, could be made dynamic based on notification type
-    router.push("/astrologer/dashboard");
+    if ((notification as any).link) {
+      router.push((notification as any).link);
+    } else if (user?.role === "ASTROLOGER" || user?.role === "ADMIN") {
+      router.push("/astrologer/dashboard");
+    } else {
+      router.push(ROUTES.CONSULTATIONS);
+    }
   };
 
   return (
-    <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-[#1C1A17]/95 backdrop-blur-xl rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.3)] border border-white/[0.06] py-2 z-50 overflow-hidden flex flex-col max-h-[80vh]">
+    <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-[#1C1A17]/95 backdrop-blur-xl rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.3)] border border-white/[0.06] py-2 z-50 overflow-hidden flex flex-col max-h-[80vh]">
       <div className="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between sticky top-0 bg-[#1C1A17]/95 backdrop-blur-xl z-10">
         <h3 className="text-sm font-semibold text-white">Notifications</h3>
         {notifications.some((n) => !n.isRead) && (

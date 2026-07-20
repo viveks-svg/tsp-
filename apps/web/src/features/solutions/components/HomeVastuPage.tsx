@@ -113,7 +113,7 @@ export default function HomeVastuPage({ service, details }: HomeVastuPageProps) 
                 name={plan.name}
                 subtitle={plan.tagline}
                 description=""
-                price={plan.priceLabel}
+                price=""
                 features={plan.features}
                 variant={isFeatured ? "dark" : "default"}
                 cta={plan.ctaText}

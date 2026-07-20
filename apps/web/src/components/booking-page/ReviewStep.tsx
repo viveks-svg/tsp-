@@ -1,9 +1,12 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import type { ServiceDefinition, ServicePlan } from "@/lib/data/service-catalog";
+import { useEffect, useState } from "react";
+import { apiClient } from "@/lib/http/client";
 
 interface Props {
+  sessionId: string;
   service: ServiceDefinition;
   plan: ServicePlan;
   formData: Record<string, string>;
@@ -22,6 +25,7 @@ const SURCHARGE: Record<string, number> = {
 };
 
 export default function ReviewStep({
+  sessionId,
   service,
   plan,
   formData,
@@ -32,9 +36,23 @@ export default function ReviewStep({
   onConfirm,
   isLoading,
 }: Props) {
-  const surchargeFactor = SURCHARGE[urgencyTier] ?? 0;
-  const surchargeAmount = Math.round(plan.priceINR * surchargeFactor);
-  const total = plan.priceINR + surchargeAmount;
+  const [serverPrice, setServerPrice] = useState<{ amount: number; currency: string; breakdown: Record<string, number> } | null>(null);
+  const [isFetchingPrice, setIsFetchingPrice] = useState(true);
+  const [priceError, setPriceError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        const data = await apiClient.get<{ amount: number; currency: string; breakdown: Record<string, number> }>(`/leads/${sessionId}/price`);
+        setServerPrice(data);
+      } catch (err: any) {
+        setPriceError(err.message || "Failed to fetch price");
+      } finally {
+        setIsFetchingPrice(false);
+      }
+    };
+    fetchPrice();
+  }, [sessionId]);
 
   // Group form fields for display — skip empty values
   const displayFields = Object.entries(formData).filter(
@@ -161,28 +179,36 @@ export default function ReviewStep({
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm">
                 <span className="text-[#6B5F52]">{service.name} — {plan.name}</span>
-                <span className="text-[#1E1A16]">₹{plan.priceINR.toLocaleString('en-IN')}</span>
+                <span className="text-[#1E1A16]">
+                  {isFetchingPrice ? <Loader2 className="w-4 h-4 animate-spin text-[#C8A04A]" /> : `₹${(serverPrice?.breakdown?.basePrice || plan.priceINR).toLocaleString('en-IN')}`}
+                </span>
               </div>
-              {surchargeAmount > 0 && (
+              
+              {serverPrice?.breakdown?.urgencySurcharge ? (
                 <div className="flex justify-between text-sm">
                   <span className="text-[#C8A04A]">Priority Surcharge</span>
-                  <span className="text-[#C8A04A]">+ ₹{surchargeAmount.toLocaleString('en-IN')}</span>
+                  <span className="text-[#C8A04A]">+ ₹{serverPrice.breakdown.urgencySurcharge.toLocaleString('en-IN')}</span>
                 </div>
-              )}
+              ) : null}
+
               <div className="border-t border-[#EFEBE1] pt-3 flex justify-between">
                 <span className="font-semibold text-[#1E1A16]">Total</span>
                 <span className="font-heading text-xl font-bold text-[#1E1A16]">
-                  ₹{total.toLocaleString('en-IN')}
+                  {isFetchingPrice ? <Loader2 className="w-5 h-5 animate-spin text-[#1E1A16]" /> : `₹${(serverPrice?.amount || 0).toLocaleString('en-IN')}`}
                 </span>
               </div>
             </div>
 
+            {priceError && (
+              <p className="text-xs text-rose-500 mb-4 font-medium text-center">{priceError}</p>
+            )}
+
             <button
-              disabled={isLoading}
+              disabled={isLoading || isFetchingPrice || !!priceError}
               onClick={onConfirm}
               className="w-full bg-gradient-to-r from-[#C8A04A] to-[#A6832E] text-white py-3.5 rounded-full font-semibold text-sm hover:from-[#D4AC5A] hover:to-[#B8933E] shadow-[0_4px_20px_rgba(200,160,74,0.25)] hover:shadow-[0_6px_28px_rgba(200,160,74,0.35)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Processing…' : `Pay ₹${total.toLocaleString('en-IN')}`}
+              {isLoading ? 'Processing…' : isFetchingPrice ? 'Calculating...' : `Pay ₹${(serverPrice?.amount || 0).toLocaleString('en-IN')}`}
             </button>
 
             <p className="text-xs text-[#9CA3AF] mt-4 text-center leading-relaxed">

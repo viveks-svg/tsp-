@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ReportCard } from "@/types/home";
 import { useCart } from "@/providers/CartProvider";
+import ReportsCarousel from "./ReportsCarousel";
 
 const fadeInRightVariant = {
   hidden: { opacity: 0, x: 20 },
@@ -61,76 +62,8 @@ export default function ReportsSection() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-          {reports.map((report, index) => (
-            <motion.div
-              key={index}
-              custom={index}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.2 }}
-              variants={fadeInRightVariant}
-              className="group w-full rounded-[22px] overflow-hidden border border-[#332D68]/55 shadow-[0_20px_60px_rgba(0,0,0,0.24)] hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(0,0,0,0.35)] transition-all duration-500 bg-[#11102A] flex flex-col h-auto min-h-[390px] md:min-h-[410px]"
-            >
-              {/* Top visual area with integrated Next.js Image component */}
-              <div className="relative h-[220px] shrink-0 w-full overflow-hidden bg-gradient-to-br from-[#332D73] via-[#241F56] to-[#15142F]">
-
-                <Image
-                  src={report.imagePlaceholder || ""}
-                  alt={report.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
-                  priority={index < 2} // Optimizes loading speeds for above-the-fold elements
-                />
-
-                {/* Overlays applied directly on top of the image container */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
-
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10">
-                  <span className="inline-flex rounded-full border border-white/20 bg-black/45 backdrop-blur-md px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white">
-                    Detailed Report
-                  </span>
-                </div>
-
-                <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#11102A] to-transparent z-10" />
-              </div>
-
-              {/* Bottom content area */}
-              <div className="flex-1 bg-gradient-to-b from-[#FFFEFB] to-[#F4EEE3] px-4 py-4 md:px-5 md:py-5 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-playfair text-[16px] md:text-[17px] text-[#1E1A16] font-semibold leading-tight line-clamp-2">
-                    {report.title}
-                  </h3>
-
-                  <p className="mt-2 text-[11px] md:text-[12px] leading-relaxed text-[#6F665B] line-clamp-2">
-                    Personalized insights designed to bring clarity, direction, and practical guidance.
-                  </p>
-
-                  <div className="mt-4 h-px w-full bg-gradient-to-r from-transparent via-[#E2C15D] to-transparent" />
-                </div>
-
-                <div className="flex items-end justify-between gap-3 mt-auto">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] uppercase tracking-[0.22em] text-[#8A8274] mb-1">
-                      Starting at
-                    </span>
-                    <span className="font-playfair text-[22px] md:text-[24px] text-[#C99411] font-bold leading-none">
-                      ₹{report.price.toLocaleString("en-IN")}
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={() => handleAddReport(report)}
-                    className="inline-flex items-center justify-center rounded-full bg-[#0F1023] px-4 py-2 text-[11px] font-semibold text-white whitespace-nowrap shrink-0 transition-all duration-300 hover:bg-[#C99411] hover:text-black shadow-[0_8px_24px_rgba(15,16,35,0.25)]"
-                  >
-                    Get Report
-                  </button>
-
-                </div>
-              </div>
-            </motion.div>
-          ))}
+        <div className="mt-12 w-full">
+          <ReportsCarousel reports={reports} onAddReport={handleAddReport} />
         </div>
 
         <div className="mt-6 md:hidden">

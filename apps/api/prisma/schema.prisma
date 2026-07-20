@@ -530,10 +530,56 @@ model Booking {
   updatedAt         DateTime        @updatedAt
   confirmedAt       DateTime?
 
+  // Lead capture relation (optional — only set when booking came through lead flow)
+  bookingLead       BookingLead?
+
   @@index([email])
   @@index([status])
   @@index([serviceCategory])
   @@index([scheduledDate])
+}
+
+// ─── LEAD CAPTURE ─────────────────────────────────────────────────────────────
+
+enum LeadStatus {
+  STARTED
+  CONTACT_CAPTURED
+  DETAILS_COMPLETED
+  PRICE_REVEALED
+  PAYMENT_INITIATED
+  CONVERTED
+}
+
+model BookingLead {
+  id                 String     @id @default(cuid())
+  sessionId          String     @unique
+  solutionSlug       String
+  solutionName       String
+  name               String?
+  phone              String?
+  email              String?
+  formData           Json?
+  status             LeadStatus @default(STARTED)
+  consentToContact   Boolean    @default(false)
+  lastActivityAt     DateTime   @updatedAt
+  createdAt          DateTime   @default(now())
+  convertedBookingId String?    @unique
+  booking            Booking?   @relation(fields: [convertedBookingId], references: [id])
+  events             BookingLeadEvent[]
+
+  @@index([status, lastActivityAt])
+  @@index([phone])
+}
+
+model BookingLeadEvent {
+  id        String      @id @default(cuid())
+  leadId    String
+  lead      BookingLead @relation(fields: [leadId], references: [id])
+  eventType String      // "contact_captured" | "details_saved" | "price_revealed" | "payment_initiated" | "converted"
+  metadata  Json?
+  createdAt DateTime    @default(now())
+
+  @@index([leadId])
 }
 
 // ─── PAYMENT LEDGER ───────────────────────────────────────────────────────────

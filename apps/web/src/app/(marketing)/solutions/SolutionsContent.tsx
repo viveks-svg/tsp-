@@ -81,14 +81,7 @@ function ServiceCard({ service, index }: { service: ServiceDefinition; index: nu
       </div>
 
       <div className="pt-6 border-t border-[#EFEBE1]/60 mt-4 flex items-center justify-between">
-        {startingPrice ? (
-          <div className="flex flex-col">
-            <span className="text-[9px] uppercase tracking-wider text-black/40 font-inter">Engagement from</span>
-            <span className="text-xs font-bold text-[#8B6914] font-poppins">₹{startingPrice.toLocaleString('en-IN')}</span>
-          </div>
-        ) : (
-          <div />
-        )}
+        <div />
 
         {service.category === 'business' ? (
           /* 

@@ -390,7 +390,7 @@ export default function Navbar() {
             {/* Right side */}
             <div className="flex items-center gap-3">
               {/* Bell / Notification */}
-              {isAuthenticated && user && (user.role === "ADMIN" || user.role === "ASTROLOGER") ? (
+              {isAuthenticated && user ? (
                 <NotificationBell />
               ) : null}
 

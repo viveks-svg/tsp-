@@ -61,5 +61,9 @@ export class CreateBookingDto {
 
   @IsOptional() @IsString()
   notes?: string;
+
+  // Lead capture session ID — if present, the booking came through the lead flow
+  @IsOptional() @IsString()
+  leadSessionId?: string;
 }
 

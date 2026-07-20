@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../../database/prisma.service';
 import { RazorpayService } from '../payments/razorpay.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { LeadsService } from '../leads/leads.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import { ServiceCategory, UrgencyTier, BookingStatus } from '@prisma/client';
@@ -13,6 +14,7 @@ export class BookingsService {
     private prisma: PrismaService,
     private razorpay: RazorpayService,
     private notifications: NotificationsService,
+    private leads: LeadsService,
   ) {}
 
   // ── Compute pricing with urgency surcharge ──────────────────────────────────
@@ -123,6 +125,7 @@ export class BookingsService {
       amount: pricing.totalAmountPaise,
       currency: 'INR',
       pricing,
+      leadSessionId: dto.leadSessionId || null,
     };
   }
 
@@ -219,7 +222,23 @@ export class BookingsService {
       console.error('Failed to persist admin notification', e);
     }
 
+    // Mark lead as converted if this booking came through the lead flow
+    this.tryMarkLeadConverted(dto.leadSessionId, booking.id);
+
     return { success: true, bookingId: booking.id };
+  }
+
+  // ── Mark lead as converted after successful payment ─────────────────────────
+  // Called internally after verifyPayment succeeds. Fire-and-forget — booking
+  // confirmation is not blocked by lead tracking.
+  private async tryMarkLeadConverted(leadSessionId: string | undefined, bookingId: string) {
+    if (!leadSessionId) return;
+    try {
+      await this.leads.markConverted({ sessionId: leadSessionId, bookingId });
+    } catch (e) {
+      // Non-critical — log but don't fail the booking confirmation
+      console.error('Failed to mark lead as converted', e);
+    }
   }
 
   async getBookingById(id: string) {

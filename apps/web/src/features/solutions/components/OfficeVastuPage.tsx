@@ -134,7 +134,7 @@ export default function OfficeVastuPage({ service, details }: OfficeVastuPagePro
                 name={plan.name}
                 subtitle={plan.tagline}
                 description=""
-                price={plan.priceLabel}
+                price=""
                 features={plan.features}
                 variant={isFeatured ? "dark" : "default"}
                 cta={plan.ctaText}
