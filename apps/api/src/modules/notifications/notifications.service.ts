@@ -150,6 +150,14 @@ export class NotificationsService {
           bookingId,
           type: "NEW_BOOKING",
         },
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "default",
+            clickAction: "FLUTTER_NOTIFICATION_CLICK",
+            sound: "default",
+          },
+        },
         webpush: {
           fcmOptions: {
             link: "/astrologer/dashboard",
@@ -223,6 +231,14 @@ export class NotificationsService {
         data: {
           type: "TEST_NOTIFICATION",
           timestamp: new Date().toISOString(),
+        },
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "default",
+            clickAction: "FLUTTER_NOTIFICATION_CLICK",
+            sound: "default",
+          },
         },
         webpush: {
           fcmOptions: {
