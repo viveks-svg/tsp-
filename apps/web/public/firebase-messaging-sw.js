@@ -14,12 +14,13 @@ importScripts("https://www.gstatic.com/firebasejs/11.8.1/firebase-messaging-comp
 
 // Firebase config hardcoded to avoid evaluation errors if loaded without query params
 const firebaseConfig = {
-  apiKey: "AIzaSyAGu-_RsRa2x17QOTJzVFYxAd3Up8QUHgY",
+  apiKey: "AIzaSyBa-5-YFVF7HIn4IqP6J9w1CJAZy9cUofg",
   authDomain: "time-space-planet.firebaseapp.com",
   projectId: "time-space-planet",
   storageBucket: "time-space-planet.firebasestorage.app",
-  messagingSenderId: "372092763486",
-  appId: "1:372092763486:web:242051a838fb71c80a63cf",
+  messagingSenderId: "865105237106",
+  appId: "1:865105237106:web:8e64422e50d0f360889eeb",
+  measurementId: "G-758WW2LC3L"
 };
 
 firebase.initializeApp(firebaseConfig);

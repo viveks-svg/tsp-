@@ -2,13 +2,13 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAGu-_RsRa2x17QOTJzVFYxAd3Up8QUHgY",
-  authDomain: "time-space-planets.firebaseapp.com",
-  projectId: "time-space-planets",
-  storageBucket: "time-space-planets.firebasestorage.app",
-  messagingSenderId: "372092763486",
-  appId: "1:372092763486:web:242051a838fb71c80a63cf",
-  measurementId: "G-XV3B73DS02",
+  apiKey: "AIzaSyBa-5-YFVF7HIn4IqP6J9w1CJAZy9cUofg",
+  authDomain: "time-space-planet.firebaseapp.com",
+  projectId: "time-space-planet",
+  storageBucket: "time-space-planet.firebasestorage.app",
+  messagingSenderId: "865105237106",
+  appId: "1:865105237106:web:8e64422e50d0f360889eeb",
+  measurementId: "G-758WW2LC3L"
 };
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
