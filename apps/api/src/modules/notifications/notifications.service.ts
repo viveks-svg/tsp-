@@ -176,8 +176,10 @@ export class NotificationsService {
           if (resp.error) {
             const code = resp.error.code;
             this.logger.error(`FCM Push Error for token ${allTokens[idx]}: ${code} - ${resp.error.message}`);
-            // Let's aggressively clean up ANY token that returns an error to be safe
-            invalidTokens.push(allTokens[idx]);
+            // Only clean up tokens that are actually invalid/unregistered, not config errors
+            if (code === "messaging/invalid-registration-token" || code === "messaging/registration-token-not-registered") {
+              invalidTokens.push(allTokens[idx]);
+            }
           }
         });
 
