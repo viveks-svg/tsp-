@@ -61,11 +61,7 @@ export class UsersService {
       return { success: false, message: "User not found" };
     }
 
-    // Skip if the ONLY token in the database is already this token
-    if (user.fcmTokens.length === 1 && user.fcmTokens[0] === token) {
-      this.logger.log(`FCM token already registered for user ${userId}`);
-      return { success: true, message: "Token already registered", tokenCount: 1 };
-    }
+    this.logger.log(`[Token Wipe] Found ${user.fcmTokens.length} existing tokens for user ${userId}. Wiping them and saving ONLY the new one.`);
 
     // Overwrite the array completely with ONLY the new token per the user's explicit request
     const updatedTokens = [token];
