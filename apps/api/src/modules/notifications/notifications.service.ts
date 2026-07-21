@@ -176,8 +176,12 @@ export class NotificationsService {
           if (resp.error) {
             const code = resp.error.code;
             this.logger.error(`FCM Push Error for token ${allTokens[idx]}: ${code} - ${resp.error.message}`);
-            // Only clean up tokens that are actually invalid/unregistered, not config errors
-            if (code === "messaging/invalid-registration-token" || code === "messaging/registration-token-not-registered") {
+            // Clean up tokens that are invalid, unregistered, or mismatched with our current Firebase project
+            if (
+              code === "messaging/invalid-registration-token" || 
+              code === "messaging/registration-token-not-registered" ||
+              code === "messaging/mismatched-credential"
+            ) {
               invalidTokens.push(allTokens[idx]);
             }
           }
