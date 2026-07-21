@@ -42,15 +42,20 @@ export function getFirebaseMessaging(): Messaging | null {
   return messaging;
 }
 
+let fcmTokenFailed = false;
+
 /**
  * Request notification permission and retrieve the FCM device token.
  * Returns null if permission is denied or the browser doesn't support it.
+ * Caches failures to avoid repeated calls when Firebase is misconfigured.
  */
 export async function requestFcmToken(): Promise<string | null> {
+  if (fcmTokenFailed) return null; // Don't retry known-failed configs
+
   const msg = getFirebaseMessaging();
   if (!msg) return null;
 
-  const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || "BIiiWT2qdp8plswatDrhb8xMNxyI0rsz0rbap37rJ2JldTzrybxxevOhx_s0Qr27YTGGmziVET8NGrH8SXBn0Ds";
+  const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || "BEFAh2AxZ0zzmmOaBlCVMi8D8tDWORnxJWfD6m61hFTKkM6yK5nAwuAsGEcx4qfAuumgCvxbtSfZ4q6k4yZgmBM";
   if (!vapidKey) {
     console.warn("[FCM] VAPID key not configured — cannot get push token.");
     return null;
@@ -65,8 +70,10 @@ export async function requestFcmToken(): Promise<string | null> {
 
     const token = await getToken(msg, { vapidKey });
     return token;
-  } catch (err) {
-    console.error("[FCM] Failed to get token:", err);
+  } catch (err: any) {
+    // Mark as failed to prevent repeated calls with the same bad config
+    fcmTokenFailed = true;
+    console.error("[FCM] Failed to get token:", err?.message || err);
     return null;
   }
 }
