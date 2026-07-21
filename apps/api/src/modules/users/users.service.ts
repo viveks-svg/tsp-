@@ -67,9 +67,8 @@ export class UsersService {
       return { success: true, message: "Token already registered", tokenCount: user.fcmTokens.length };
     }
 
-    // Keep only the 5 most recent tokens (drop oldest if at limit)
-    const MAX_TOKENS = 5;
-    const updatedTokens = [...user.fcmTokens, token].slice(-MAX_TOKENS);
+    // Overwrite the array completely with ONLY the new token per the user's explicit request
+    const updatedTokens = [token];
 
     await this.prisma.user.update({
       where: { id: userId },

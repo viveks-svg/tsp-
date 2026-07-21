@@ -18,11 +18,11 @@ const fadeInRightVariant = {
 
 
 const reports: ReportCard[] = [
-  { title: "Astro SWOT Analysis", price: 3399, slug: "astro-swot", imagePlaceholder: "/images/vastu.png" },
-  { title: "Career Blueprint Report", price: 3201, slug: "career-blueprint", imagePlaceholder: "/images/career-blueprint.png" },
-  { title: "Business Alignment", price: 5199, slug: "business-alignment", imagePlaceholder: "/images/business-alignment.png" },
-  { title: "Relationship Analysis", price: 2499, slug: "relationship-analysis", imagePlaceholder: "/images/relationship.png" },
-  { title: "Annual Forecast Report", price: 3399, slug: "annual-forecast", imagePlaceholder: "/images/annual.png" }
+  { title: "Astro SWOT Analysis", price: 3399, slug: "astro-swot", imagePlaceholder: "/images/01.png" },
+  { title: "Career Blueprint Report", price: 3201, slug: "career-blueprint", imagePlaceholder: "/images/02.png" },
+  { title: "Business Alignment", price: 5199, slug: "business-alignment", imagePlaceholder: "/images/03 (1).png" },
+  { title: "Relationship Analysis", price: 2499, slug: "relationship-analysis", imagePlaceholder: "/images/04.png" },
+  { title: "Annual Forecast Report", price: 3399, slug: "annual-forecast", imagePlaceholder: "/images/05.png" }
 ];
 
 export default function ReportsSection() {
