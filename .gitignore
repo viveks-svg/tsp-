@@ -47,3 +47,8 @@ next-env.d.ts
 dist/
 **/dist/
 
+# secrets & service accounts
+service-account*.json
+*-private-key.json
+apps/api/src/integrations/google-calendar/service-account.json
+
