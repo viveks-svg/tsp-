@@ -45,7 +45,7 @@ export default function AuthProvider({
     user: initialUser,
     accessToken: null,
     walletBalance: Number(initialWalletBalance ?? 0),
-    isLoading: false,
+    isLoading: !initialUser, // Block guards until localStorage is checked
     isAuthenticated: Boolean(initialUser),
   });
 
@@ -60,21 +60,28 @@ export default function AuthProvider({
   // Load from localStorage on mount if no initialUser was provided by SSR
   useEffect(() => {
     if (!initialUser && typeof window !== "undefined") {
+      let foundInStorage = false;
       try {
         const storedAuth = localStorage.getItem("tsp_auth_state");
         if (storedAuth) {
           const parsed = JSON.parse(storedAuth);
           if (parsed && parsed.user) {
+            foundInStorage = true;
             setState((prev) => ({
               ...prev,
               user: parsed.user,
               isAuthenticated: true,
               walletBalance: Number(parsed.walletBalance ?? 0),
+              isLoading: false,
             }));
           }
         }
       } catch (e) {
         // ignore storage errors
+      }
+      
+      if (!foundInStorage) {
+        setState((prev) => ({ ...prev, isLoading: false }));
       }
     }
   }, [initialUser]);
@@ -105,6 +112,7 @@ export default function AuthProvider({
       try {
         const data = await apiClient.get<AuthMeResponse>(ENDPOINTS.AUTH.ME);
         if (cancelled || opId !== authOperationId) return;
+        
         setState({
           user: data.user,
           accessToken: stateRef.current.accessToken,

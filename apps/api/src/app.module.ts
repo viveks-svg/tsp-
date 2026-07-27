@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { BullModule } from '@nestjs/bullmq';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from "@nestjs/core";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
@@ -24,6 +25,10 @@ import { SlotsModule } from "./modules/slots/slots.module";
 import { ShopModule } from "./modules/shop/shop.module";
 import { OrdersModule } from "./modules/orders/orders.module";
 import { LeadsModule } from "./modules/leads/leads.module";
+import { CampaignModule } from "./modules/campaign/campaign.module";
+import { QueueModule } from "./modules/queue/queue.module";
+import { PromoModule } from "./modules/promo/promo.module";
+import { GoogleCalendarModule } from "./integrations/google-calendar/google-calendar.module";
 import { RedisModule } from "./integrations/redis/redis.module";
 import { RedisService } from "./integrations/redis/redis.service";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
@@ -39,6 +44,7 @@ import configuration from "./config/configuration";
       isGlobal: true,
       load: [configuration],
     }),
+    ScheduleModule.forRoot(),
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
@@ -100,6 +106,10 @@ import configuration from "./config/configuration";
     ShopModule,
     OrdersModule,
     LeadsModule,
+    CampaignModule,
+    QueueModule,
+    PromoModule,
+    GoogleCalendarModule,
   ],
   providers: [
     {

@@ -20,7 +20,7 @@ export class NotificationsService {
     private readonly realtimeGateway: RealtimeGateway,
   ) { }
 
-  async sendOrderConfirmationEmail(toEmail: string, customerName: string, orderId: string, totalAmount: number) {
+  async sendOrderConfirmationEmail(toEmail: string, customerName: string, orderId: string, totalAmount: number, meetLink?: string) {
     try {
       const response = await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -38,6 +38,7 @@ export class NotificationsService {
               <p>Thank you for your order. We have successfully received your payment.</p>
               <p><strong>Order ID:</strong> ${orderId}</p>
               <p><strong>Total Amount Paid:</strong> ₹${totalAmount}</p>
+              ${meetLink ? `<br/><p><strong>Your Google Meet Link:</strong> <a href="${meetLink}">${meetLink}</a></p>` : ''}
               <br/>
               <p>Our Pandits will soon begin planetary energization calculations if applicable. You can track your orders in your dashboard.</p>
               <p>Divine Blessings,<br/>Time Space & Planets Team</p>
@@ -53,7 +54,7 @@ export class NotificationsService {
     }
   }
 
-  async sendOrderConfirmationSMS(toNumber: string, customerName: string, orderId: string, scheduledDate?: Date | null) {
+  async sendOrderConfirmationSMS(toNumber: string, customerName: string, orderId: string, scheduledDate?: Date | null, meetLink?: string) {
     try {
       // Ensure phone number starts with country code, default to +91
       let phone = toNumber.trim();
@@ -82,10 +83,15 @@ export class NotificationsService {
         timeStr = `${hours}${ampm}`;
       }
 
+      let messageBody = `Your appointment is coming up on ${dateStr} at ${timeStr}.`;
+      if (meetLink) {
+        messageBody += ` Join via Google Meet: ${meetLink}`;
+      }
+
       const bodyParams = new URLSearchParams();
       bodyParams.append("To", `whatsapp:${phone}`);
       bodyParams.append("From", "whatsapp:+14155238886");
-      bodyParams.append("Body", `Your appointment is coming up on ${dateStr} at ${timeStr}`);
+      bodyParams.append("Body", messageBody);
 
       const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
         method: "POST",

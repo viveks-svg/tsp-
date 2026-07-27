@@ -3,6 +3,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { RazorpayService } from '../payments/razorpay.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { LeadsService } from '../leads/leads.service';
+import { GoogleCalendarService } from '../../integrations/google-calendar/google-calendar.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import { ServiceCategory, UrgencyTier, BookingStatus } from '@prisma/client';
@@ -15,6 +16,7 @@ export class BookingsService {
     private razorpay: RazorpayService,
     private notifications: NotificationsService,
     private leads: LeadsService,
+    private googleCalendar: GoogleCalendarService,
   ) {}
 
   // ── Compute pricing with urgency surcharge ──────────────────────────────────
@@ -157,6 +159,27 @@ export class BookingsService {
       throw new BadRequestException('Payment signature verification failed');
     }
 
+    let meetLink: string | undefined;
+    let calendarEventId: string | undefined;
+
+    if (booking.scheduledDate) {
+      const scheduledStart = new Date(booking.scheduledDate);
+      const scheduledEnd = new Date(scheduledStart.getTime() + 60 * 60 * 1000); // Default 1 hour
+
+      const meetDetails = await this.googleCalendar.createEventWithMeetLink(
+        `TSP Booking: ${booking.serviceName} for ${booking.fullName}`,
+        `Booking ID: ${booking.id}\nService: ${booking.serviceName}`,
+        scheduledStart,
+        scheduledEnd,
+        [booking.email]
+      );
+
+      if (meetDetails) {
+        meetLink = meetDetails.meetLink;
+        calendarEventId = meetDetails.eventId;
+      }
+    }
+
     await this.prisma.$transaction([
       this.prisma.booking.update({
         where: { id: booking.id },
@@ -165,6 +188,8 @@ export class BookingsService {
           razorpayPaymentId: dto.razorpayPaymentId,
           razorpaySignature: dto.razorpaySignature,
           confirmedAt: new Date(),
+          meetLink,
+          calendarEventId,
         },
       }),
       this.prisma.paymentEvent.create({
@@ -182,14 +207,16 @@ export class BookingsService {
       booking.email,
       booking.fullName,
       booking.id,
-      booking.totalAmountPaise / 100
+      booking.totalAmountPaise / 100,
+      meetLink
     );
 
     this.notifications.sendOrderConfirmationSMS(
       booking.phone,
       booking.fullName,
       booking.id,
-      booking.scheduledDate
+      booking.scheduledDate,
+      meetLink
     );
 
     // Send push notification to admin(s)

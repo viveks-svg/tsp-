@@ -10,8 +10,12 @@ import {
 import "./globals.css";
 import { rootMetadata } from "@/lib/seo/metadata";
 import AuthProvider from "@/providers/AuthProvider";
+import { Toaster } from "sonner";
 import { getServerAuth } from "@/lib/auth/getServerAuth";
 import { FcmInitializer } from "@/components/FcmInitializer";
+import { CampaignStrip } from "@/components/campaign/CampaignStrip";
+import { PromoPopup } from "@/components/campaign/PromoPopup";
+import { QueueSocketProvider } from "@/providers/QueueSocketProvider";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +82,7 @@ export default async function RootLayout({
                 history.scrollRestoration = 'manual';
 
                 var routeGroup = function (pathname) {
+                  if (pathname.indexOf('/admin') === 0) return 'admin';
                   if (pathname.indexOf('/astrologer') === 0) return 'astrologer';
                   if (pathname.indexOf('/login') === 0 || pathname.indexOf('/signup') === 0) return 'auth';
                   if (pathname.match(/^\\/(dashboard|kundli|wallet|profile|subscriptions|orders|settings)/)) return 'user';
@@ -133,8 +138,13 @@ export default async function RootLayout({
           initialUser={initialAuth?.user ?? null}
           initialWalletBalance={initialAuth?.walletBalance ?? 0}
         >
-          <FcmInitializer />
-          {children}
+          <QueueSocketProvider>
+            <CampaignStrip />
+            <FcmInitializer />
+            {children}
+            <PromoPopup />
+            <Toaster richColors position="top-right" />
+          </QueueSocketProvider>
         </AuthProvider>
       </body>
     </html>

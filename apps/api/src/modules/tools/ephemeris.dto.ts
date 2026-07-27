@@ -56,3 +56,30 @@ export class AyanamsaDto {
   @IsDateString()
   birthDate!: string;
 }
+
+export class PanchangDto {
+  @ApiProperty({ example: '2026-07-24' })
+  @IsDateString()
+  date!: string;
+
+  @ApiProperty({ example: 'Delhi, India' })
+  @IsString()
+  @IsNotPurelyNumeric()
+  location!: string;
+}
+
+export class ShubhMuhuratDto {
+  @ApiProperty({ example: '2026-07-24' })
+  @IsDateString()
+  date!: string;
+
+  @ApiProperty({ example: 'Delhi, India' })
+  @IsString()
+  @IsNotPurelyNumeric()
+  location!: string;
+
+  @ApiProperty({ example: 'Marriage' })
+  @IsString()
+  activity!: string;
+}
+

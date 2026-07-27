@@ -284,12 +284,15 @@ export const freeServicesConfigs: Record<string, FreeServiceConfig> = {
     description: "Check today's detailed Panchang parameters — Tithi, Nakshatra, Yoga, and auspicious timings.",
     fields: [
       { name: "date", label: "Select Date", type: "date", required: true },
-      { name: "location", label: "Location", type: "text", required: true, placeholder: "City, Country" },
+      { name: "location", label: "Location", type: "places-autocomplete", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Generate Almanac",
-    compute: (values) => {
+    compute: async (values) => {
       const dateStr = values.date || "Today";
-      const location = values.location || "Current Location";
+      const location = values.location || "Delhi, India";
+
+      const { fetchPanchang } = await import("@/lib/api/ephemeris");
+      const data = await fetchPanchang({ date: values.date, location });
 
       return (
         <ServiceResultCard title={`Vedic Panchang: ${dateStr}`}>
@@ -299,44 +302,41 @@ export const freeServicesConfigs: Record<string, FreeServiceConfig> = {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 bg-card border border-border rounded-xl space-y-1">
                 <span className="block text-muted font-bold uppercase text-[9px] tracking-wider">Tithi (Lunar Day)</span>
-                <span className="text-sm font-bold text-navy">Ekadashi (Shukla Paksha)</span>
-                <span className="block text-[10px] text-paragraph leading-relaxed">Highly auspicious for fasting and meditation. Ends at 04:15 PM.</span>
+                <span className="text-sm font-bold text-navy">{data.tithi}</span>
               </div>
               <div className="p-3 bg-card border border-border rounded-xl space-y-1">
                 <span className="block text-muted font-bold uppercase text-[9px] tracking-wider">Nakshatra (Star)</span>
-                <span className="text-sm font-bold text-navy">Rohini</span>
-                <span className="block text-[10px] text-paragraph leading-relaxed">Governed by Moon/Brahma. Creative, nurturing, stable.</span>
+                <span className="text-sm font-bold text-navy">{data.nakshatra}</span>
+                <span className="block text-[10px] text-paragraph leading-relaxed">Lord: {data.nakshatraLord}</span>
               </div>
               <div className="p-3 bg-card border border-border rounded-xl space-y-1">
                 <span className="block text-muted font-bold uppercase text-[9px] tracking-wider">Yoga</span>
-                <span className="text-sm font-bold text-navy">Harshana</span>
-                <span className="block text-[10px] text-paragraph leading-relaxed">Spells happiness and jovial atmospheres. Good for reunions.</span>
+                <span className="text-sm font-bold text-navy">{data.yoga}</span>
               </div>
               <div className="p-3 bg-card border border-border rounded-xl space-y-1">
                 <span className="block text-muted font-bold uppercase text-[9px] tracking-wider">Karana</span>
-                <span className="text-sm font-bold text-navy">Bava</span>
-                <span className="block text-[10px] text-paragraph leading-relaxed">Governed by Vishnu. Good for business expansions and agriculture.</span>
+                <span className="text-sm font-bold text-navy">{data.karana}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 bg-card border border-border rounded-xl space-y-1">
+                <span className="block text-muted font-bold uppercase text-[9px] tracking-wider">Ascendant (Lagna)</span>
+                <span className="text-sm font-bold text-navy">{data.ascendant}</span>
+                <span className="block text-[10px] text-paragraph leading-relaxed">Lord: {data.ascendantLord}</span>
               </div>
             </div>
 
             <div className="border-t border-border pt-4">
-              <span className="block text-xs font-bold text-navy uppercase tracking-wider mb-2.5">Sun & Moon Coordinates</span>
-              <div className="grid grid-cols-4 gap-2 text-center">
+              <span className="block text-xs font-bold text-navy uppercase tracking-wider mb-2.5">Sun Coordinates</span>
+              <div className="grid grid-cols-2 gap-2 text-center">
                 <div className="p-2 bg-cream-dark/20 border border-border/60 rounded">
                   <span className="block text-muted text-[8px] font-bold">Sunrise</span>
-                  <span className="font-semibold text-navy">05:43 AM</span>
+                  <span className="font-semibold text-navy">{data.sunrise}</span>
                 </div>
                 <div className="p-2 bg-cream-dark/20 border border-border/60 rounded">
                   <span className="block text-muted text-[8px] font-bold">Sunset</span>
-                  <span className="font-semibold text-navy">07:02 PM</span>
-                </div>
-                <div className="p-2 bg-cream-dark/20 border border-border/60 rounded">
-                  <span className="block text-muted text-[8px] font-bold">Moonrise</span>
-                  <span className="font-semibold text-navy">02:15 PM</span>
-                </div>
-                <div className="p-2 bg-cream-dark/20 border border-border/60 rounded">
-                  <span className="block text-muted text-[8px] font-bold">Moonset</span>
-                  <span className="font-semibold text-navy">01:50 AM</span>
+                  <span className="font-semibold text-navy">{data.sunset}</span>
                 </div>
               </div>
             </div>

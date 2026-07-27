@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, Menu, X, User, ChevronDown, LogOut, Wallet, UserCircle, ReceiptText, CalendarClock, LayoutDashboard } from "lucide-react";
+import { ROLE_PANEL_CONFIG, type Role } from "@/lib/config/role-panel.config";
 import Image from "next/image";
 import { cn } from "@/lib/cn";
 import { navLinks, type NavLink } from "@/lib/constants/nav";
@@ -438,15 +439,19 @@ export default function Navbar() {
 
                         {/* Menu Items */}
                         <div className="py-1">
-                          {(user.role === "ASTROLOGER" || user.role === "ADMIN") && (
-                            <a
-                              href="/astrologer/dashboard"
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#C8A04A] hover:bg-white/[0.05] transition-colors font-poppins"
-                            >
-                              <LayoutDashboard className="w-4 h-4 text-[#C8A04A]" />
-                              Admin Panel
-                            </a>
-                          )}
+                          {(() => {
+                            const panelConfig = ROLE_PANEL_CONFIG[user.role as Role];
+                            if (!panelConfig) return null;
+                            return (
+                              <a
+                                href={panelConfig.href}
+                                className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#C8A04A] hover:bg-white/[0.05] transition-colors font-poppins"
+                              >
+                                <LayoutDashboard className="w-4 h-4 text-[#C8A04A]" />
+                                {panelConfig.label}
+                              </a>
+                            );
+                          })()}
                           <a
                             href={ROUTES.PROFILE}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/60 hover:bg-white/[0.05] hover:text-white transition-colors font-poppins"
@@ -564,15 +569,19 @@ export default function Navbar() {
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2 mt-3">
-                        {(user.role === "ASTROLOGER" || user.role === "ADMIN") && (
-                          <Link
-                            href="/astrologer/dashboard"
-                            onClick={() => setMobileOpen(false)}
-                            className="col-span-2 text-center text-xs font-semibold py-2.5 rounded-lg bg-[#C8A04A]/15 text-[#C8A04A] border border-[#C8A04A]/30 hover:bg-[#C8A04A]/20 transition-colors"
-                          >
-                            Admin Dashboard
-                          </Link>
-                        )}
+                        {(() => {
+                          const panelConfig = ROLE_PANEL_CONFIG[user.role as Role];
+                          if (!panelConfig) return null;
+                          return (
+                            <Link
+                              href={panelConfig.href}
+                              onClick={() => setMobileOpen(false)}
+                              className="col-span-2 text-center text-xs font-semibold py-2.5 rounded-lg bg-[#C8A04A]/15 text-[#C8A04A] border border-[#C8A04A]/30 hover:bg-[#C8A04A]/20 transition-colors"
+                            >
+                              {panelConfig.label}
+                            </Link>
+                          );
+                        })()}
                         <Link
                           href={ROUTES.PROFILE}
                           onClick={() => setMobileOpen(false)}

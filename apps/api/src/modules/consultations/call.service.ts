@@ -185,7 +185,7 @@ export class CallService {
       throw new NotFoundException("Consultation not found");
     }
 
-    if (consultation.astrologer.userId !== astrologerUserId) {
+    if (consultation.astrologer?.userId !== astrologerUserId) {
       throw new ForbiddenException("You are not the astrologer for this consultation");
     }
 
@@ -301,7 +301,7 @@ export class CallService {
       throw new NotFoundException("Consultation not found");
     }
 
-    if (consultation.astrologer.userId !== astrologerUserId) {
+    if (consultation.astrologer?.userId !== astrologerUserId) {
       throw new ForbiddenException("You are not the astrologer for this consultation");
     }
 
@@ -431,7 +431,7 @@ export class CallService {
     }
 
     const isClient = consultation.userId === userId;
-    const isAstrologer = consultation.astrologer.userId === userId;
+    const isAstrologer = consultation.astrologer?.userId === userId || consultation.adminProviderId === userId;
     if (!isClient && !isAstrologer) {
       throw new ForbiddenException("You are not a participant in this call");
     }
@@ -517,20 +517,25 @@ export class CallService {
         consultation.userId,
         cost,
         "CONSULTATION",
-        `Call consultation fee with astrologer ${consultation.astrologer.user.name}`,
+        `Call consultation fee with provider ${consultation.astrologer?.user.name || "Admin"}`,
         consultation.id,
         true // allowNegative
       );
 
-      // 2. Credit astrologer wallet
-      await this.walletService.creditWallet(
-        tx,
-        consultation.astrologer.userId,
-        cost,
-        "CONSULTATION",
-        `Call consultation payout from user ${consultation.user.name}`,
-        consultation.id,
-      );
+      // 2. Credit astrologer or admin wallet
+      const providerUserId = consultation.astrologer?.userId || consultation.adminProviderId;
+      const providerName = consultation.astrologer?.user.name || "Admin";
+      
+      if (providerUserId) {
+        await this.walletService.creditWallet(
+          tx,
+          providerUserId,
+          cost,
+          "CONSULTATION",
+          `Call consultation payout from user ${consultation.user.name}`,
+          consultation.id,
+        );
+      }
 
       // 3. Update consultation
       await tx.consultation.update({
@@ -614,7 +619,7 @@ export class CallService {
     }
 
     const isClient = consultation.userId === userId;
-    const isAstrologer = consultation.astrologer.userId === userId;
+    const isAstrologer = consultation.astrologer?.userId === userId || consultation.adminProviderId === userId;
     if (!isClient && !isAstrologer) {
       throw new ForbiddenException("You are not a participant in this call");
     }
@@ -651,7 +656,7 @@ export class CallService {
     }
 
     const isClient = consultation.userId === userId;
-    const isAstrologer = consultation.astrologer.userId === userId;
+    const isAstrologer = consultation.astrologer?.userId === userId || consultation.adminProviderId === userId;
     if (!isClient && !isAstrologer) {
       throw new ForbiddenException("You are not a participant in this consultation");
     }
@@ -662,11 +667,11 @@ export class CallService {
         status: consultation.status,
         lockedPricingPerMin: consultation.lockedPricingPerMin,
         user: consultation.user,
-        astrologer: {
+        astrologer: consultation.astrologer ? {
           id: consultation.astrologerId,
           name: consultation.astrologer.user.name,
           userId: consultation.astrologer.userId,
-        },
+        } : undefined,
       },
       callSession: consultation.callSession,
     };

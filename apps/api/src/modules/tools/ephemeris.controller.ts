@@ -14,6 +14,8 @@ import {
   MangalDoshaDto,
   AyanamsaDto,
   BirthChartDto,
+  PanchangDto,
+  ShubhMuhuratDto,
 } from './ephemeris.dto';
 
 @ApiTags('Ephemeris')
@@ -153,4 +155,29 @@ export class EphemerisController {
       navamsaChartHouses: data.navamsaChartHouses,
     };
   }
+
+  @Post('panchang')
+  @ApiOperation({ summary: 'Get Panchang (Vedic almanac) for a date and location' })
+  async getPanchang(@Body() dto: PanchangDto) {
+    return this.ephemerisService.getStandalonePanchang(dto.date, dto.location);
+  }
+
+  @Post('hora')
+  @ApiOperation({ summary: 'Get Hora (planetary hours) for a date and location' })
+  async getHora(@Body() dto: PanchangDto) {
+    return this.ephemerisService.getHora(dto.date, dto.location);
+  }
+
+  @Post('choghadiya')
+  @ApiOperation({ summary: 'Get Choghadiya (planetary divisions) for a date and location' })
+  async getChoghadiya(@Body() dto: PanchangDto) {
+    return this.ephemerisService.getChoghadiya(dto.date, dto.location);
+  }
+
+  @Post('shubh-muhurat')
+  @ApiOperation({ summary: 'Get Shubh Muhurat for an activity, date, and location' })
+  async getShubhMuhurat(@Body() dto: ShubhMuhuratDto) {
+    return this.ephemerisService.getShubhMuhurat(dto.date, dto.location, dto.activity);
+  }
 }
+

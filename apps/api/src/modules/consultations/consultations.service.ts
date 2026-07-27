@@ -7,6 +7,7 @@ import {
 import { PrismaService } from "../../database/prisma.service";
 import { CreateConsultationDto, CompleteConsultationDto } from "./dto/consultation.dto";
 import { WalletService } from "../wallet/wallet.service";
+import { GoogleCalendarService } from "../../integrations/google-calendar/google-calendar.service";
 import { Prisma } from "@prisma/client";
 
 @Injectable()
@@ -14,6 +15,7 @@ export class ConsultationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly walletService: WalletService,
+    private readonly googleCalendarService: GoogleCalendarService,
   ) {}
 
   async create(userId: string, dto: CreateConsultationDto) {
@@ -85,6 +87,20 @@ export class ConsultationsService {
     if (scheduledDate <= new Date()) {
       throw new BadRequestException("Scheduled time must be in the future");
     }
+    
+    const clientUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true }
+    });
+
+    // Create Calendar Event & Meet Link
+    const meetDetails = await this.googleCalendarService.createEventWithMeetLink(
+      `TSP Consultation: ${clientUser?.name || "Client"} & ${astrologer.user.name}`,
+      `Consultation on TSP.`,
+      scheduledDate,
+      new Date(scheduledDate.getTime() + 15 * 60 * 1000), // Assuming 15 min duration
+      [clientUser?.email, astrologer.user.email].filter(Boolean) as string[],
+    );
 
     return this.prisma.consultation.create({
       data: {
@@ -93,6 +109,8 @@ export class ConsultationsService {
         lockedPricingPerMin: astrologer.pricingPerMin,
         scheduledAt: scheduledDate,
         status: "PENDING",
+        calendarEventId: meetDetails?.eventId,
+        meetLink: meetDetails?.meetLink,
       },
     });
   }
@@ -117,7 +135,7 @@ export class ConsultationsService {
 
     // Check ownership
     const isClient = consultation.userId === userId;
-    const isAstrologer = consultation.astrologer.userId === userId;
+    const isAstrologer = consultation.astrologer?.userId === userId || consultation.adminProviderId === userId;
 
     if (!isClient && !isAstrologer) {
       throw new ForbiddenException("You do not have access to start this consultation");
@@ -176,7 +194,7 @@ export class ConsultationsService {
 
     // Check ownership
     const isClient = consultation.userId === userId;
-    const isAstrologer = consultation.astrologer.userId === userId;
+    const isAstrologer = consultation.astrologer?.userId === userId || consultation.adminProviderId === userId;
 
     if (!isClient && !isAstrologer) {
       throw new ForbiddenException("You do not have access to complete this consultation");
@@ -191,19 +209,22 @@ export class ConsultationsService {
         consultation.userId,
         cost,
         "CONSULTATION",
-        `Consultation fee with astrologer ${consultation.astrologer.user.name}`,
+        `Consultation fee with provider ${consultation.astrologer?.user.name || "Admin"}`,
         consultation.id,
       );
 
       // 2. Add/Credit cost to astrologer wallet (with ledger entry & compatibility transaction)
-      await this.walletService.creditWallet(
-        tx,
-        consultation.astrologer.userId,
-        cost,
-        "CONSULTATION",
-        `Consultation session payout from user ${consultation.user.name}`,
-        consultation.id,
-      );
+      const providerUserId = consultation.astrologer?.userId || consultation.adminProviderId;
+      if (providerUserId) {
+        await this.walletService.creditWallet(
+          tx,
+          providerUserId,
+          cost,
+          "CONSULTATION",
+          `Consultation payout from user ${consultation.user.name}`,
+          consultation.id,
+        );
+      }
 
       // 3. Update ChatThread status if exists
       await tx.chatThread.updateMany({
@@ -243,7 +264,7 @@ export class ConsultationsService {
 
     // Check ownership
     const isClient = consultation.userId === userId;
-    const isAstrologer = consultation.astrologer.userId === userId;
+    const isAstrologer = consultation.astrologer?.userId === userId || consultation.adminProviderId === userId;
 
     if (!isClient && !isAstrologer) {
       throw new ForbiddenException("You do not have access to cancel this consultation");
@@ -279,6 +300,13 @@ export class ConsultationsService {
         astrologer: {
           include: {
             user: { select: { id: true, name: true, email: true } },
+          },
+        },
+        adminProvider: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
         chatThread: true,
@@ -327,7 +355,8 @@ export class ConsultationsService {
       create: {
         consultationId,
         userId,
-        astrologerId: consultation.astrologerId,
+        astrologerId: consultation.astrologerId ?? undefined,
+        adminProviderId: consultation.adminProviderId ?? undefined,
         rating,
         review: reviewText,
       },

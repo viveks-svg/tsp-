@@ -142,43 +142,23 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     ],
     submitLabel: "Calculate Dasha Periods",
     compute: async (values) => {
-      let dashas = [];
-      let currentDasha = null;
-      let balance = { years: 0, months: 0, days: 0 };
       const currentYear = new Date().getFullYear();
 
-      try {
-        const { fetchDasha } = await import("@/lib/api/ephemeris");
-        const apiData = await fetchDasha({
-          birthDate: values.birthDate,
-          birthTime: values.birthTime,
-          birthPlace: values.birthPlace,
-        });
+      const { fetchDasha } = await import("@/lib/api/ephemeris");
+      const apiData = await fetchDasha({
+        birthDate: values.birthDate,
+        birthTime: values.birthTime,
+        birthPlace: values.birthPlace,
+      });
 
-        dashas = apiData.mahadashas.map((d: any) => ({
-          planet: d.planet,
-          years: d.durationYears,
-          start: new Date(d.startDate).getFullYear(),
-        }));
+      const dashas = apiData.mahadashas.map((d: any) => ({
+        planet: d.planet,
+        years: d.durationYears,
+        start: new Date(d.startDate).getFullYear(),
+      }));
 
-        balance = apiData.balanceAtBirth;
-        currentDasha = dashas.find((d: any) => currentYear >= d.start && currentYear < d.start + d.years) || dashas[5];
-      } catch (error) {
-        // Fallback local calculation
-        const birthYear = values.birthDate ? new Date(values.birthDate).getFullYear() : currentYear;
-        dashas = [
-          { planet: "Ketu", years: 7, start: birthYear },
-          { planet: "Venus", years: 20, start: birthYear + 7 },
-          { planet: "Sun", years: 6, start: birthYear + 27 },
-          { planet: "Moon", years: 10, start: birthYear + 33 },
-          { planet: "Mars", years: 7, start: birthYear + 43 },
-          { planet: "Rahu", years: 18, start: birthYear + 50 },
-          { planet: "Jupiter", years: 16, start: birthYear + 68 },
-          { planet: "Saturn", years: 19, start: birthYear + 84 },
-          { planet: "Mercury", years: 17, start: birthYear + 103 },
-        ];
-        currentDasha = dashas.find(d => currentYear >= d.start && currentYear < d.start + d.years) || dashas[5];
-      }
+      const balance = apiData.balanceAtBirth;
+      const currentDasha = dashas.find((d: any) => currentYear >= d.start && currentYear < d.start + d.years) || dashas[5];
 
       return (
         <ServiceResultCard title="Your Vimshottari Dasha Timeline">
@@ -296,40 +276,19 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     ],
     submitLabel: "Find Rashi",
     compute: async (values) => {
-      let rashi;
-      try {
-        const { fetchRashi } = await import("@/lib/api/ephemeris");
-        const apiData = await fetchRashi({
-          birthDate: values.birthDate,
-          birthTime: values.birthTime,
-          birthPlace: values.birthPlace,
-        });
-        rashi = {
-          name: `${apiData.rashiEnglish} (${apiData.rashi})`,
-          planet: apiData.rulingPlanet,
-          element: apiData.element,
-          symbol: apiData.symbol,
-          traits: apiData.quality + " qualities.",
-        };
-      } catch (error) {
-        const birthDate = values.birthDate ? new Date(values.birthDate) : new Date();
-        const month = birthDate.getMonth(); // 0-11
-        const rashis = [
-          { name: "Aries (Mesha)", planet: "Mars", element: "Fire", symbol: "Ram", traits: "Energetic, dynamic, courageous, and direct." },
-          { name: "Taurus (Vrishabha)", planet: "Venus", element: "Earth", symbol: "Bull", traits: "Patient, reliable, artistic, and steady." },
-          { name: "Gemini (Mithuna)", planet: "Mercury", element: "Air", symbol: "Twins", traits: "Intellectual, witty, adaptable, and communicative." },
-          { name: "Cancer (Karka)", planet: "Moon", element: "Water", symbol: "Crab", traits: "Nurturing, intuitive, protective, and emotional." },
-          { name: "Leo (Simha)", planet: "Sun", element: "Fire", symbol: "Lion", traits: "Generous, expressive, proud, and charismatic." },
-          { name: "Virgo (Kanya)", planet: "Mercury", element: "Earth", symbol: "Virgin", traits: "Analytical, methodical, helpful, and detail-oriented." },
-          { name: "Libra (Tula)", planet: "Venus", element: "Air", symbol: "Scales", traits: "Harmonious, diplomatic, aesthetic, and relationship-focused." },
-          { name: "Scorpio (Vrishchika)", planet: "Mars", element: "Water", symbol: "Scorpion", traits: "Intense, mystical, resilient, and transformative." },
-          { name: "Sagittarius (Dhanu)", planet: "Jupiter", element: "Fire", symbol: "Archer", traits: "Optimistic, philosophical, adventurous, and truth-seeking." },
-          { name: "Capricorn (Makara)", planet: "Saturn", element: "Earth", symbol: "Sea-Goat", traits: "Ambitious, disciplined, structured, and patient." },
-          { name: "Aquarius (Kumbha)", planet: "Saturn", element: "Air", symbol: "Water Bearer", traits: "Humanitarian, innovative, detached, and intellectual." },
-          { name: "Pisces (Meena)", planet: "Jupiter", element: "Water", symbol: "Fish", traits: "Compassionate, spiritual, imaginative, and sacrifice-loving." },
-        ];
-        rashi = rashis[Math.min(month, 11)];
-      }
+      const { fetchRashi } = await import("@/lib/api/ephemeris");
+      const apiData = await fetchRashi({
+        birthDate: values.birthDate,
+        birthTime: values.birthTime,
+        birthPlace: values.birthPlace,
+      });
+      const rashi = {
+        name: `${apiData.rashiEnglish} (${apiData.rashi})`,
+        planet: apiData.rulingPlanet,
+        element: apiData.element,
+        symbol: apiData.symbol,
+        traits: apiData.quality + " qualities.",
+      };
 
       return (
         <ServiceResultCard title="Your Rashi (Moon Sign) Result">
@@ -372,27 +331,13 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     ],
     submitLabel: "Find Lagna",
     compute: async (values) => {
-      let lagna = "Aries";
-      try {
-        const { fetchLagna } = await import("@/lib/api/ephemeris");
-        const apiData = await fetchLagna({
-          birthDate: values.birthDate,
-          birthTime: values.birthTime,
-          birthPlace: values.birthPlace,
-        });
-        lagna = apiData.lagnaEnglish;
-      } catch (error) {
-        const birthTime = values.birthTime || "12:00";
-        const hours = parseInt(birthTime.split(":")[0], 10);
-
-        const signs = [
-          "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-          "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
-        ];
-        // Deterministically find sign based on birth hour
-        const index = Math.floor(hours / 2) % 12;
-        lagna = signs[index];
-      }
+      const { fetchLagna } = await import("@/lib/api/ephemeris");
+      const apiData = await fetchLagna({
+        birthDate: values.birthDate,
+        birthTime: values.birthTime,
+        birthPlace: values.birthPlace,
+      });
+      const lagna = apiData.lagnaEnglish;
 
       return (
         <ServiceResultCard title="Your Ascendant (Lagna) Report">
@@ -664,25 +609,28 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     description: "Determine the most auspicious windows for key life actions today.",
     fields: [
       { name: "date", label: "Date", type: "date", required: true },
+      { name: "birthPlace", label: "Coordinates (City)", type: "places-autocomplete", required: true, placeholder: "City, Country" },
       { name: "activity", label: "Activity Type", type: "select", options: ["Marriage", "Griha Pravesh", "Business Launch", "Vehicle Purchase"], required: true },
     ],
     submitLabel: "Find Muhurat Slots",
-    compute: (values) => {
+    compute: async (values) => {
       const activity = values.activity || "Marriage";
       const dateStr = values.date || "Today";
+      const location = values.birthPlace || "Delhi, India";
 
-      const slots = [
-        { name: "Abhijit Muhurat", time: "11:45 AM – 12:35 PM", status: "Highly Auspicious", quality: "Brings success in all endeavours. Governed by Vishnu." },
-        { name: "Amrit Kaal", time: "02:15 PM – 03:50 PM", status: "Excellent", quality: "Perfect for signatures, business inaugurals." },
-        { name: "Rahu Kaal (Avoid)", time: "04:30 PM – 06:00 PM", status: "Inauspicious", quality: "Avoid starting any new work or journey." },
-      ];
+      const { fetchShubhMuhurat } = await import("@/lib/api/ephemeris");
+      const apiData = await fetchShubhMuhurat({
+        date: values.date,
+        location,
+        activity,
+      });
 
       return (
         <ServiceResultCard title={`Shubh Muhurat for ${activity}`}>
           <div className="space-y-4 font-poppins">
-            <span className="text-xs text-muted block">Auspicious windows calculated for <strong className="text-navy">{dateStr}</strong>:</span>
+            <span className="text-xs text-muted block">Auspicious windows calculated for <strong className="text-navy">{location}</strong> on {dateStr}:</span>
             <div className="space-y-3">
-              {slots.map((s) => {
+              {apiData.slots.map((s: any) => {
                 const isAvoid = s.status === "Inauspicious";
                 return (
                   <div key={s.name} className={`p-3.5 border rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3 ${isAvoid ? "border-rose-200 bg-rose-50/50" : "border-border bg-card"}`}>
@@ -703,6 +651,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
       );
     },
   },
+
 
   "saturn-return": {
     title: "Saturn Return Calculator",
@@ -754,36 +703,19 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     ],
     submitLabel: "Find Nakshatra",
     compute: async (values) => {
-      let star;
-      try {
-        const { fetchNakshatra } = await import("@/lib/api/ephemeris");
-        const apiData = await fetchNakshatra({
-          birthDate: values.birthDate,
-          birthTime: values.birthTime,
-          birthPlace: values.birthPlace,
-        });
-        star = {
-          name: apiData.nakshatra,
-          lord: apiData.rulingLord,
-          deity: apiData.deity,
-          symbol: apiData.symbol,
-          traits: `Gana: ${apiData.gana}, Pada: ${apiData.pada}.`,
-        };
-      } catch (error) {
-        const birthDate = values.birthDate ? new Date(values.birthDate) : new Date();
-        const day = birthDate.getDate();
-
-        const stars = [
-          { name: "Ashwini", lord: "Ketu", deity: "Ashwini Kumars", symbol: "Horse Head", traits: "Swift, adventurous, healing focus, pioneering." },
-          { name: "Bharani", lord: "Venus", deity: "Yama", symbol: "Yoni", traits: "Resilient, creative, intense, subject to sudden shifts." },
-          { name: "Krittika", lord: "Sun", deity: "Agni", symbol: "Razor/Knife", traits: "Sharp mind, direct, purging energy, ambitious." },
-          { name: "Rohini", lord: "Moon", deity: "Brahma", symbol: "Chariot/Temple", traits: "Beautiful, artistic, growth-oriented, stable family bonds." },
-          { name: "Mrigashira", lord: "Mars", deity: "Soma", symbol: "Deer Head", traits: "Searching, curious, gentle, travel-loving." },
-          { name: "Ardra", lord: "Rahu", deity: "Rudra", symbol: "Teardrop", traits: "Transformative, intellectual, weathers emotional storms." },
-        ];
-
-        star = stars[day % stars.length];
-      }
+      const { fetchNakshatra } = await import("@/lib/api/ephemeris");
+      const apiData = await fetchNakshatra({
+        birthDate: values.birthDate,
+        birthTime: values.birthTime,
+        birthPlace: values.birthPlace,
+      });
+      const star = {
+        name: apiData.nakshatra,
+        lord: apiData.rulingLord,
+        deity: apiData.deity,
+        symbol: apiData.symbol,
+        traits: `Gana: ${apiData.gana}, Pada: ${apiData.pada}.`,
+      };
 
       return (
         <ServiceResultCard title="Your Birth Star (Nakshatra) Report">
@@ -824,28 +756,11 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
     ],
     submitLabel: "Calculate Ayanamsa",
     compute: async (values) => {
-      let degrees, minutes, seconds;
-
-      try {
-        const { fetchAyanamsa } = await import("@/lib/api/ephemeris");
-        const apiData = await fetchAyanamsa({
-          birthDate: values.birthDate || new Date().toISOString().split('T')[0],
-        });
-        degrees = apiData.degrees;
-        minutes = apiData.minutes;
-        seconds = apiData.seconds;
-      } catch (error) {
-        const year = values.birthDate ? new Date(values.birthDate).getFullYear() : new Date().getFullYear();
-
-        // Calculate Lahiri Ayanamsa: roughly 23.85 degrees + 50.29 seconds per year from 1950
-        const diffYears = year - 1950;
-        const secondsOffset = diffYears * 50.29;
-        const baseDeg = 23.16 + (secondsOffset / 3600);
-
-        degrees = Math.floor(baseDeg);
-        minutes = Math.floor((baseDeg - degrees) * 60);
-        seconds = Math.round((((baseDeg - degrees) * 60) - minutes) * 60);
-      }
+      const { fetchAyanamsa } = await import("@/lib/api/ephemeris");
+      const apiData = await fetchAyanamsa({
+        birthDate: values.birthDate || new Date().toISOString().split('T')[0],
+      });
+      const { degrees, minutes, seconds } = apiData;
 
       return (
         <ServiceResultCard title="Lahiri Ayanamsa Calculation">
@@ -873,21 +788,18 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
       { name: "birthPlace", label: "Coordinates (City)", type: "places-autocomplete", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Find Horas",
-    compute: (values) => {
+    compute: async (values) => {
       const dateStr = values.date || "Today";
+      const location = values.birthPlace || "Delhi, India";
 
-      const horas = [
-        { time: "06:00 AM – 07:00 AM", ruler: "Sun", effect: "Auspicious", desc: "Good for meetings, leadership tasks, public activities." },
-        { time: "07:00 AM – 08:00 AM", ruler: "Venus", effect: "Auspicious", desc: "Perfect for buying gems, art, dates, signing contracts." },
-        { time: "08:00 AM – 09:00 AM", ruler: "Mercury", effect: "Excellent", desc: "Best for writing, commerce, accounts, studies." },
-        { time: "09:00 AM – 10:00 AM", ruler: "Moon", effect: "Auspicious", desc: "Good for family meets, food industry, travels." },
-        { time: "10:00 AM – 11:00 AM", ruler: "Saturn", effect: "Avoid", desc: "Low energy. Complete pending chores or routine jobs." },
-        { time: "11:00 AM – 12:00 PM", ruler: "Jupiter", effect: "Highly Auspicious", desc: "Best for audits, meeting advisors, spiritual rituals." },
-        { time: "12:00 PM – 01:00 PM", ruler: "Mars", effect: "Avoid", desc: "Fierce energy. Good for exercise, bad for diplomatic talks." },
-      ];
+      const { fetchHora } = await import("@/lib/api/ephemeris");
+      const apiData = await fetchHora({
+        date: values.date,
+        location,
+      });
 
       return (
-        <ServiceResultCard title={`Hora Schedule for ${dateStr}`}>
+        <ServiceResultCard title={`Hora Schedule for ${location} on ${dateStr}`}>
           <div className="space-y-4 font-poppins">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
@@ -900,7 +812,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60 text-paragraph">
-                  {horas.map((h, idx) => {
+                  {apiData.horas.map((h: any, idx: number) => {
                     const isAvoid = h.effect === "Avoid";
                     return (
                       <tr key={idx} className={isAvoid ? "bg-rose-50/30" : ""}>
@@ -932,23 +844,21 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
       { name: "birthPlace", label: "Coordinates (City)", type: "places-autocomplete", required: true, placeholder: "City, Country" },
     ],
     submitLabel: "Find Choghadiya",
-    compute: (values) => {
+    compute: async (values) => {
       const dateStr = values.date || "Today";
+      const location = values.birthPlace || "Delhi, India";
 
-      const slots = [
-        { name: "Shubh", ruler: "Jupiter", type: "Auspicious", time: "06:00 AM – 07:30 AM", detail: "Excellent for educational and spiritual starts." },
-        { name: "Rog", ruler: "Mars", type: "Inauspicious", time: "07:30 AM – 09:00 AM", detail: "Causes friction and arguments. Avoid health checks." },
-        { name: "Udveg", ruler: "Sun", type: "Inauspicious", time: "09:00 AM – 10:30 AM", detail: "Causes anxiety. Avoid government dealings." },
-        { name: "Chal", ruler: "Venus", type: "Auspicious", time: "10:30 AM – 12:00 PM", detail: "Neutral/Favourable. Good for journeys and shopping." },
-        { name: "Labh", ruler: "Mercury", type: "Auspicious", time: "12:00 PM – 01:30 PM", detail: "Gainful period. Excellent for commercial deals." },
-        { name: "Amrit", ruler: "Moon", type: "Highly Auspicious", time: "01:30 PM – 03:00 PM", detail: "Best overall period. All actions supported." },
-      ];
+      const { fetchChoghadiya } = await import("@/lib/api/ephemeris");
+      const apiData = await fetchChoghadiya({
+        date: values.date,
+        location,
+      });
 
       return (
-        <ServiceResultCard title={`Choghadiya Slots for ${dateStr}`}>
+        <ServiceResultCard title={`Choghadiya Slots for ${location} on ${dateStr}`}>
           <div className="space-y-4 font-poppins">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {slots.map((s, idx) => {
+              {apiData.choghadiyas.map((s: any, idx: number) => {
                 const isAvoid = s.type === "Inauspicious";
                 return (
                   <div key={idx} className={`p-3 border rounded-xl space-y-1 ${isAvoid ? "border-rose-100 bg-rose-50/30" : "border-border bg-card"}`}>
@@ -956,7 +866,7 @@ export const calculatorConfigs: Record<string, CalculatorConfig> = {
                       <strong className={`text-sm font-bold ${isAvoid ? "text-rose-700" : "text-navy"}`}>{s.name} ({s.type})</strong>
                       <span className="text-xs text-gold font-semibold font-poppins">{s.time}</span>
                     </div>
-                    <span className="block text-[10px] text-muted font-medium uppercase tracking-wider">Ruled by {s.ruler}</span>
+                    <span className="block text-[10px] text-muted font-medium uppercase tracking-wider">Ruled by {s.ruler} ({s.isNight ? 'Night' : 'Day'})</span>
                     <p className="text-[11px] leading-relaxed text-paragraph mt-1">{s.detail}</p>
                   </div>
                 );

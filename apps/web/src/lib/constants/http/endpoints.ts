@@ -84,4 +84,33 @@ export const ENDPOINTS = {
     READ_ALL: "/notifications/read-all",
     READ: (id: string) => `/notifications/${id}/read`,
   },
+
+  // Admin
+  ADMIN: {
+    AVAILABILITY: "/admin/availability",
+    CAMPAIGNS: "/admin/campaigns",
+    CAMPAIGN: (id: string) => `/admin/campaigns/${id}`,
+    QUEUE: "/admin/queue",
+    QUEUE_SKIP: (id: string) => `/admin/queue/${id}/skip`,
+    QUEUE_REMOVE: (id: string) => `/admin/queue/${id}/remove`,
+    QUEUE_DEQUEUE: (campaignId: string) => `/admin/queue/dequeue/${campaignId}`,
+    QUEUE_FORCE_CLOSE: (consultationId: string) => `/admin/queue/force-close/${consultationId}`,
+  },
+
+  // Public availability
+  AVAILABILITY: {
+    DR_PRADEEP: "/availability/dr-pradeep",
+  },
+
+  // Public campaigns
+  CAMPAIGNS: {
+    ACTIVE: "/campaigns/active",
+  },
+
+  // Queue (user-facing)
+  QUEUE: {
+    JOIN: "/queue/join",
+    LEAVE: "/queue/leave",
+    POSITION: (campaignId: string) => `/queue/position?campaignId=${campaignId}`,
+  },
 } as const;

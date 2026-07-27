@@ -68,9 +68,26 @@ export async function fetchBirthChart(data: BirthChartInput) {
   return fetchWithFallback<any>('birth-chart', data);
 }
 
+export async function fetchPanchang(data: { date: string; location: string }) {
+  return fetchWithFallback<any>('panchang', data);
+}
+
+export async function fetchHora(data: { date: string; location: string }) {
+  return fetchWithFallback<any>('hora', data);
+}
+
+export async function fetchChoghadiya(data: { date: string; location: string }) {
+  return fetchWithFallback<any>('choghadiya', data);
+}
+
+export async function fetchShubhMuhurat(data: { date: string; location: string; activity: string }) {
+  return fetchWithFallback<any>('shubh-muhurat', data);
+}
+
 export async function fetchPlaces(query: string) {
   const url = `${API_BASE_URL}/geocoding/search?q=${encodeURIComponent(query)}`;
   const response = await fetch(url);
   if (!response.ok) return [];
   return response.json();
 }
+

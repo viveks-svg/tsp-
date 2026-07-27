@@ -134,7 +134,7 @@ export default function ConsultationsPageContent() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="font-heading text-xl font-bold text-dark">
-                      {consultation.astrologer.user.name || "TSP Astrologer"}
+                      {consultation.astrologer?.user?.name || "TSP Provider"}
                     </h2>
                     <p className="mt-1 text-sm text-muted">
                       {new Date(consultation.scheduledAt).toLocaleString("en-IN")}
@@ -161,12 +161,15 @@ export default function ConsultationsPageContent() {
                   </div>
                 </div>
                 {consultation.status === "ACTIVE" && (
-                  <Link
-                    href={`${ROUTES.CONSULTATIONS}/${consultation.id}/${consultation.type === "CALL" ? "call" : "chat"}`}
-                    className="mt-5 inline-flex rounded-button bg-navy hover:bg-navy-hover px-4 py-2 text-xs font-semibold text-white transition-colors"
-                  >
-                    {consultation.type === "CALL" ? "Join Call Room" : "Join Chat Room"}
-                  </Link>
+                  <div className="mt-5 flex gap-2">
+                    <Link
+                      href={`${ROUTES.CONSULTATIONS}/${consultation.id}/${consultation.type === "CALL" ? "call" : "chat"}`}
+                      className="inline-flex rounded-button bg-navy hover:bg-navy-hover px-4 py-2 text-xs font-semibold text-white transition-colors"
+                    >
+                      {consultation.type === "CALL" ? "Join Call Room" : "Join Chat Room"}
+                    </Link>
+
+                  </div>
                 )}
                 {consultation.status === "PENDING" && (
                   <button

@@ -52,7 +52,7 @@ export const TIER_FINANCIAL_CREATE = {
 // Admin dashboards, astrologer availability/status, KYC review.
 // Low traffic volume — internal users only.
 export const TIER_ADMIN_INTERNAL = {
-  default: { limit: 10, ttl: 60_000 },       // 10 req / 60s
+  default: { limit: 100, ttl: 60_000 },       // 100 req / 60s
 };
 
 // ─── Tier 6: Excluded ────────────────────────────────────────────────────────

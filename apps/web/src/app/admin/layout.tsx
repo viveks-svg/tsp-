@@ -6,6 +6,9 @@ import Link from "next/link";
 import {
   LayoutDashboard,
   Users,
+  Calendar,
+  Megaphone,
+  ListOrdered,
   LogOut,
   Loader2,
   Menu,
@@ -15,8 +18,10 @@ import { useAuth } from "@/providers/AuthProvider";
 import { cn } from "@/lib/cn";
 
 const NAV_ITEMS = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/leads", label: "Booking Leads", icon: Users },
+  { href: "/admin/queue",        label: "Live Queue",    icon: ListOrdered },
+  { href: "/admin/leads",        label: "Booking Leads", icon: Users },
+  { href: "/admin/availability", label: "Availability",  icon: Calendar },
+  { href: "/admin/campaigns",    label: "Campaigns",     icon: Megaphone },
 ];
 
 /**

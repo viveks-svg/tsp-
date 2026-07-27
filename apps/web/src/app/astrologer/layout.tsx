@@ -68,7 +68,7 @@ export default function AstrologerLayout({
       return;
     }
 
-    if (user?.role !== "ASTROLOGER" && user?.role !== "ADMIN") {
+    if (user?.role !== "ASTROLOGER") {
       router.replace("/dashboard");
     }
   }, [isLoading, isAuthenticated, user, router]);
@@ -81,7 +81,7 @@ export default function AstrologerLayout({
     );
   }
 
-  if (!isAuthenticated || (user?.role !== "ASTROLOGER" && user?.role !== "ADMIN")) {
+  if (!isAuthenticated || user?.role !== "ASTROLOGER") {
     return null;
   }
 
