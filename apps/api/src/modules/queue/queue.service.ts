@@ -542,7 +542,7 @@ export class QueueService {
     if (!consultation) {
       // Just in case there's a queue entry with this ID but no consultation
       await this.prisma.queueEntry.updateMany({
-        where: { consultationId, status: "IN_CALL" },
+        where: { consultationId, status: { in: ["WAITING", "CALLING", "IN_CALL"] } },
         data: { status: "COMPLETED" },
       });
       return { success: true, message: "Queue entry force-closed." };
@@ -565,9 +565,18 @@ export class QueueService {
         });
       }
 
-      // 3. Mark queue entry as COMPLETED
+      // 3. Mark queue entry as COMPLETED (by consultationId OR by user+campaign if stuck)
       await tx.queueEntry.updateMany({
-        where: { consultationId, status: "IN_CALL" },
+        where: {
+          OR: [
+            { consultationId },
+            ...(consultation.campaignId && consultation.userId ? [{
+              userId: consultation.userId,
+              campaignId: consultation.campaignId
+            }] : [])
+          ],
+          status: { in: ["WAITING", "CALLING", "IN_CALL"] }
+        },
         data: { status: "COMPLETED" },
       });
     });
@@ -607,13 +616,25 @@ export class QueueService {
           data: { status: "COMPLETED", endReason: "TIMEOUT_AUTO_CLEANUP", endedAt: new Date() }
         });
         await tx.queueEntry.updateMany({
-          where: { consultationId: c.id, status: "IN_CALL" },
+          where: { consultationId: c.id, status: { in: ["WAITING", "CALLING", "IN_CALL"] } },
           data: { status: "COMPLETED" },
         });
       });
       if (c.campaignId) {
         this.queueGateway.broadcastPositionUpdate(c.campaignId);
       }
+    }
+
+    // Also clean up any stale queue entries older than 2 hours that are still WAITING, CALLING, or IN_CALL
+    const staleEntries = await this.prisma.queueEntry.updateMany({
+      where: {
+        status: { in: ["WAITING", "CALLING", "IN_CALL"] },
+        joinedAt: { lt: twoHoursAgo },
+      },
+      data: { status: "COMPLETED" },
+    });
+    if (staleEntries.count > 0) {
+      this.logger.warn(`[QUEUE] Cleaned up ${staleEntries.count} stale queue entries older than 2 hours.`);
     }
   }
 }

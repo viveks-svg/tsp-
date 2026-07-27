@@ -91,6 +91,7 @@ export class CallService {
           where: { id: session.consultationId },
           data: { status: "CANCELLED" },
         });
+        await this.cleanupQueueEntry(this.prisma, session.consultationId);
       } else if (session.status === "ACTIVE") {
         try {
           await this.endCall(userId, session.consultationId, "SUPERSEDED");
@@ -105,6 +106,7 @@ export class CallService {
             where: { id: session.consultationId },
             data: { status: "CANCELLED" },
           });
+          await this.cleanupQueueEntry(this.prisma, session.consultationId);
         }
       }
     }
@@ -311,6 +313,7 @@ export class CallService {
 
     // Idempotent: already terminal → no-op
     if (isTerminal(consultation.callSession.status)) {
+      await this.cleanupQueueEntry(this.prisma, consultationId);
       this.logger.log(
         `[CALL:${consultationId}] Reject no-op — already ${consultation.callSession.status}`,
       );
@@ -332,6 +335,7 @@ export class CallService {
         where: { id: consultationId },
         data: { status: "CANCELLED" },
       });
+      await this.cleanupQueueEntry(this.prisma, consultationId);
       this.logger.log(`[CALL:${consultationId}] Rejected by ${astrologerUserId}`);
     }
 
@@ -363,6 +367,7 @@ export class CallService {
 
     // Idempotent: already terminal → return current state
     if (isTerminal(consultation.callSession.status)) {
+      await this.cleanupQueueEntry(this.prisma, consultationId);
       this.logger.log(
         `[CALL:${consultationId}] Cancel no-op — already ${consultation.callSession.status} (reason: ${consultation.callSession.endReason})`,
       );
@@ -397,6 +402,7 @@ export class CallService {
         where: { id: consultationId },
         data: { status: "CANCELLED" },
       });
+      await this.cleanupQueueEntry(this.prisma, consultationId);
       this.logger.log(`[CALL:${consultationId}] Cancelled by caller ${userId} — RINGING → CANCELLED`);
     } else {
       // Lost race — re-read to find what happened
@@ -442,6 +448,7 @@ export class CallService {
 
     // Idempotent: if already in a terminal state, return current state (no-op)
     if (isTerminal(consultation.callSession.status)) {
+      await this.cleanupQueueEntry(this.prisma, consultationId);
       this.logger.log(
         `[CALL:${consultationId}] endCall no-op — already ${consultation.callSession.status} (reason: ${consultation.callSession.endReason})`,
       );
@@ -548,11 +555,7 @@ export class CallService {
       });
 
       // 4. If this consultation came from the queue, mark the QueueEntry as COMPLETED.
-      //    updateMany is a no-op for non-queue consultations (no matching rows).
-      await tx.queueEntry.updateMany({
-        where: { consultationId, status: "IN_CALL" },
-        data: { status: "COMPLETED" },
-      });
+      await this.cleanupQueueEntry(tx, consultationId);
 
       this.logger.log(
         `[CALL:${consultationId}] Ended — ACTIVE → COMPLETED, duration=${durationSeconds}s, ` +
@@ -585,6 +588,7 @@ export class CallService {
     }
 
     if (callSession.status !== "RINGING") {
+      await this.cleanupQueueEntry(this.prisma, consultationId);
       this.logger.log(
         `[CALL:${consultationId}] markMissed no-op — already ${callSession.status}`,
       );
@@ -602,6 +606,7 @@ export class CallService {
         where: { id: consultationId },
         data: { status: "CANCELLED" },
       });
+      await this.cleanupQueueEntry(this.prisma, consultationId);
       this.logger.log(`[CALL:${consultationId}] Marked as MISSED — RINGING → MISSED (timeout)`);
     } else {
       this.logger.log(`[CALL:${consultationId}] markMissed lost race — session already transitioned`);
@@ -731,5 +736,20 @@ export class CallService {
         ],
       },
     });
+  }
+
+  /**
+   * Helper to mark any associated queue entry as COMPLETED when a call terminates.
+   */
+  private async cleanupQueueEntry(tx: any, consultationId: string) {
+    try {
+      const client = tx || this.prisma;
+      await client.queueEntry.updateMany({
+        where: { consultationId, status: { in: ["WAITING", "CALLING", "IN_CALL"] } },
+        data: { status: "COMPLETED" },
+      });
+    } catch (err) {
+      this.logger.error(`[CALL:${consultationId}] Failed to cleanup queue entry: ${(err as Error).message}`);
+    }
   }
 }
