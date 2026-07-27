@@ -106,28 +106,25 @@ export function useTrtcClient() {
           strRoomId: roomId,
         });
 
-        // Start local audio + video
+        // Start local audio + video independently so missing mic/camera doesn't kill the call
         try {
           await trtc.startLocalAudio();
+        } catch (audioErr) {
+          console.error("[TRTC] Failed to start local audio:", audioErr);
+        }
 
-          if (localVideoContainer) {
+        if (localVideoContainer) {
+          try {
             await trtc.startLocalVideo({
               view: localVideoContainer,
             });
-          }
-
-          setActive();
-        } catch (err) {
-          console.error("[TRTC] Failed to start local media:", err);
-          // Try audio-only fallback
-          try {
-            await trtc.startLocalAudio();
-            setActive();
-          } catch (audioErr) {
-            console.error("[TRTC] Failed to start audio:", audioErr);
-            setFailed("MEDIA_ACCESS_DENIED");
+          } catch (videoErr) {
+            console.error("[TRTC] Failed to start local video:", videoErr);
           }
         }
+
+        // Even if media failed, the user is successfully in the room and can receive remote streams
+        setActive();
       } catch (globalErr) {
         console.error("[TRTC] Global join room failure:", globalErr);
         isJoiningOrJoinedRef.current = false;

@@ -15,6 +15,7 @@ import { getServerAuth } from "@/lib/auth/getServerAuth";
 import { FcmInitializer } from "@/components/FcmInitializer";
 import { CampaignStrip } from "@/components/campaign/CampaignStrip";
 import { PromoPopup } from "@/components/campaign/PromoPopup";
+import { QuickContactPopup } from "@/components/campaign/QuickContactPopup";
 import { QueueSocketProvider } from "@/providers/QueueSocketProvider";
 
 export const dynamic = "force-dynamic";
@@ -143,6 +144,7 @@ export default async function RootLayout({
             <FcmInitializer />
             {children}
             <PromoPopup />
+            <QuickContactPopup />
             <Toaster richColors position="top-right" />
           </QueueSocketProvider>
         </AuthProvider>

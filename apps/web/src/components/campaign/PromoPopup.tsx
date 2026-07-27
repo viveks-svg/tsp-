@@ -45,7 +45,7 @@ export function PromoPopup() {
     });
 
     // Also fetch initial promos from REST API
-    fetch(`${NEXT_PUBLIC_API_URL}/promo/active`)
+    fetch(`${NEXT_PUBLIC_API_URL}/api/v1/promo/active`)
       .then(res => res.json())
       .then((promos: PromoEvent[]) => {
         if (promos && promos.length > 0) {
@@ -56,7 +56,7 @@ export function PromoPopup() {
           }
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       socket.disconnect();
@@ -81,7 +81,7 @@ export function PromoPopup() {
           className="fixed bottom-6 right-6 z-[100] w-full max-w-sm"
         >
           <div className="bg-[#1C1A17]/95 backdrop-blur-xl border border-[#C8A04A]/30 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.4)] overflow-hidden font-poppins">
-            <button 
+            <button
               onClick={handleDismiss}
               className="absolute top-3 right-3 p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors z-10"
             >
@@ -90,8 +90,8 @@ export function PromoPopup() {
 
             {promo.imageUrl && (
               <div className="h-32 w-full relative bg-[#0F0E0C]">
-                <img 
-                  src={promo.imageUrl} 
+                <img
+                  src={promo.imageUrl}
                   alt={promo.title}
                   className="w-full h-full object-cover opacity-80"
                 />
@@ -112,9 +112,9 @@ export function PromoPopup() {
               <p className="text-sm text-white/70 mb-5 leading-relaxed">
                 {promo.description}
               </p>
-              
+
               {promo.actionUrl && (
-                <Link 
+                <Link
                   href={promo.actionUrl}
                   onClick={handleDismiss}
                   className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#C8A04A] to-[#A6832E] text-white py-2.5 rounded-xl text-sm font-semibold hover:from-[#D4AC5A] hover:to-[#B8933E] transition-all shadow-[0_4px_12px_rgba(200,160,74,0.3)]"

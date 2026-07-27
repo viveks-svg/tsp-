@@ -297,6 +297,14 @@ export default function CallRoom({ consultationId }: CallRoomProps) {
         const currentState = useCallStore.getState();
         console.log(`[CallRoom] Real unmount — cleaning up, status: ${currentState.status}`);
 
+        // Only clean up if the store still belongs to THIS consultation.
+        // If another consultation has already been set up in the store
+        // (e.g., admin dequeued the next user), don't interfere.
+        if (currentState.consultationId && currentState.consultationId !== consultationId) {
+          console.log(`[CallRoom] Store consultationId (${currentState.consultationId}) differs from ours (${consultationId}) — skipping cleanup`);
+          return;
+        }
+
         if (currentState.status === "active") {
           endCall(consultationId);
         } else if (

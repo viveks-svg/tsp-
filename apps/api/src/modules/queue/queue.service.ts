@@ -299,7 +299,7 @@ export class QueueService {
       const cost = consultation ? consultation.lockedPricingPerMin.mul(durationMin) : new Prisma.Decimal(0);
 
       await this.prisma.$transaction(async (tx) => {
-        if (consultation) {
+        if (consultation && consultation.status === "ACTIVE") {
           // Debit user
           await this.walletService.debitWallet(
             tx, existingInCall.userId, cost, "CONSULTATION", "Queue Consultation Fee", existingInCall.consultationId!, true
@@ -314,7 +314,7 @@ export class QueueService {
             data: { status: "COMPLETED", durationMin, cost },
           });
           // If TRTC callSession exists, complete it too
-          if (consultation.callSession) {
+          if (consultation.callSession && consultation.callSession.status === "ACTIVE") {
             await tx.callSession.updateMany({
               where: { id: consultation.callSession.id },
               data: { status: "COMPLETED", durationSeconds, endReason: "ADMIN_ENDED_QUEUE", endedAt: new Date() }
@@ -533,9 +533,6 @@ export class QueueService {
     }
   }
 
-  /**
-   * Admin force-closes a stuck consultation.
-   */
   async forceCloseStuckConsultation(consultationId: string) {
     const consultation = await this.prisma.consultation.findUnique({
       where: { id: consultationId },
@@ -543,21 +540,25 @@ export class QueueService {
     });
 
     if (!consultation) {
-      throw new NotFoundException("Consultation not found.");
-    }
-    if (consultation.status !== "ACTIVE") {
-      throw new BadRequestException("Consultation is not ACTIVE.");
+      // Just in case there's a queue entry with this ID but no consultation
+      await this.prisma.queueEntry.updateMany({
+        where: { consultationId, status: "IN_CALL" },
+        data: { status: "COMPLETED" },
+      });
+      return { success: true, message: "Queue entry force-closed." };
     }
 
     await this.prisma.$transaction(async (tx) => {
       // 1. Close consultation
-      await tx.consultation.update({
-        where: { id: consultationId },
-        data: { status: "COMPLETED" },
-      });
+      if (consultation.status === "ACTIVE") {
+        await tx.consultation.update({
+          where: { id: consultationId },
+          data: { status: "COMPLETED" },
+        });
+      }
 
       // 2. Close call session if exists
-      if (consultation.callSession) {
+      if (consultation.callSession && consultation.callSession.status === "ACTIVE") {
         await tx.callSession.updateMany({
           where: { id: consultation.callSession.id },
           data: { status: "COMPLETED", endReason: "ADMIN_FORCE_CLOSE", endedAt: new Date() }

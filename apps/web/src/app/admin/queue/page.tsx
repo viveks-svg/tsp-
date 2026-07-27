@@ -121,6 +121,9 @@ export default function AdminQueuePage() {
       await fetchOverview();
 
       if (response.trtc) {
+        // Set consultationId first so any old CallRoom's unmount cleanup
+        // can detect the store has moved on and skip its cleanup.
+        useCallStore.getState().setInitiating(response.consultation.id);
         useCallStore.getState().setConnecting({
           channelName: response.trtc.channelName,
           userSig: response.trtc.astrologer.userSig,

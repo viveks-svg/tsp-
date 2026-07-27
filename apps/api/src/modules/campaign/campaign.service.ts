@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 import { CreateCampaignDto, UpdateCampaignDto } from "./campaign.dto";
 
@@ -7,6 +7,9 @@ export class CampaignService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateCampaignDto) {
+    if (dto.startTime >= dto.endTime) {
+      throw new BadRequestException("Start time must be before end time");
+    }
     return this.prisma.campaign.create({
       data: {
         title: dto.title,
@@ -24,6 +27,13 @@ export class CampaignService {
     const existing = await this.prisma.campaign.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException("Campaign not found");
+    }
+
+    const startTime = dto.startTime !== undefined ? dto.startTime : existing.startTime;
+    const endTime = dto.endTime !== undefined ? dto.endTime : existing.endTime;
+
+    if (startTime >= endTime) {
+      throw new BadRequestException("Start time must be before end time");
     }
 
     return this.prisma.campaign.update({
@@ -54,10 +64,6 @@ export class CampaignService {
     return campaign;
   }
 
-  /**
-   * Returns the currently active campaign along with live/countdown info.
-   * Used by the public banner endpoint.
-   */
   async getActiveCampaign() {
     const campaign = await this.prisma.campaign.findFirst({
       where: { isActive: true },
@@ -68,11 +74,12 @@ export class CampaignService {
       return null;
     }
 
-    const nowIST = new Date(
-      new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }),
-    );
-    const currentDay = nowIST.getDay();
-    const currentHHMM = `${nowIST.getHours().toString().padStart(2, "0")}:${nowIST.getMinutes().toString().padStart(2, "0")}`;
+    const IST_OFFSET = 5.5 * 60 * 60 * 1000; // 5.5 hours in ms
+    const now = new Date();
+    const nowIST = new Date(now.getTime() + IST_OFFSET);
+
+    const currentDay = nowIST.getUTCDay();
+    const currentHHMM = `${nowIST.getUTCHours().toString().padStart(2, "0")}:${nowIST.getUTCMinutes().toString().padStart(2, "0")}`;
 
     const isWithinWindow =
       campaign.dayOfWeek === currentDay &&
@@ -82,21 +89,24 @@ export class CampaignService {
     // Compute next window date
     let nextWindowDate: Date | null = null;
     if (!isWithinWindow) {
-      const daysUntil =
-        campaign.dayOfWeek === currentDay && currentHHMM >= campaign.endTime
-          ? 7 // Already passed today, next week
-          : ((campaign.dayOfWeek - currentDay + 7) % 7) || 7;
-
-      // If same day but before start time, daysUntil should be 0
-      const actualDays =
-        campaign.dayOfWeek === currentDay && currentHHMM < campaign.startTime
-          ? 0
-          : daysUntil;
+      let daysUntil = 0;
+      if (campaign.dayOfWeek === currentDay) {
+        if (currentHHMM >= campaign.endTime) {
+          daysUntil = 7; // Passed today, next week
+        } else {
+          daysUntil = 0; // Today but before start time
+        }
+      } else {
+        daysUntil = (campaign.dayOfWeek - currentDay + 7) % 7;
+      }
 
       const [h, m] = campaign.startTime.split(":").map(Number);
-      nextWindowDate = new Date(nowIST);
-      nextWindowDate.setDate(nextWindowDate.getDate() + actualDays);
-      nextWindowDate.setHours(h, m, 0, 0);
+      const nextIST = new Date(nowIST);
+      nextIST.setUTCDate(nextIST.getUTCDate() + daysUntil);
+      nextIST.setUTCHours(h, m, 0, 0);
+
+      // Convert back to standard UTC timestamp
+      nextWindowDate = new Date(nextIST.getTime() - IST_OFFSET);
     }
 
     return {
@@ -110,11 +120,10 @@ export class CampaignService {
    * Check if a campaign is currently within its active window (server-side validation).
    */
   isWithinWindow(campaign: { dayOfWeek: number; startTime: string; endTime: string }): boolean {
-    const nowIST = new Date(
-      new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }),
-    );
-    const currentDay = nowIST.getDay();
-    const currentHHMM = `${nowIST.getHours().toString().padStart(2, "0")}:${nowIST.getMinutes().toString().padStart(2, "0")}`;
+    const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+    const nowIST = new Date(Date.now() + IST_OFFSET);
+    const currentDay = nowIST.getUTCDay();
+    const currentHHMM = `${nowIST.getUTCHours().toString().padStart(2, "0")}:${nowIST.getUTCMinutes().toString().padStart(2, "0")}`;
 
     const isWithin = (
       campaign.dayOfWeek === currentDay &&

@@ -7,6 +7,8 @@ import { apiClient } from "@/lib/http/client";
 import { ENDPOINTS } from "@/lib/constants/http/endpoints";
 import { toast } from "sonner";
 import { useQueueSocket } from "@/providers/QueueSocketProvider";
+import { useAuth } from "@/providers/AuthProvider";
+import { useAuthModal } from "@/hooks/useAuthModal";
 
 interface ActiveCampaign {
   id: string;
@@ -19,6 +21,8 @@ interface ActiveCampaign {
 export function CampaignStrip() {
   const [campaign, setCampaign] = useState<ActiveCampaign | null>(null);
   const { joinQueueRoom } = useQueueSocket();
+  const { isAuthenticated } = useAuth();
+  const authModal = useAuthModal();
   const pathname = usePathname();
 
   // Do not show on admin or astrologer pages
@@ -33,6 +37,8 @@ export function CampaignStrip() {
         // The API returns 200 with an empty body or a specific campaign
         if (data && data.id) {
           setCampaign(data);
+          // Auto-join the room so they receive queue events like 'queue:promoted' globally
+          joinQueueRoom(data.id);
         } else {
           setCampaign(null);
         }
@@ -53,20 +59,21 @@ export function CampaignStrip() {
   const handleJoinClick = async () => {
     if (!campaign.isLiveNow) return;
     
+    if (!isAuthenticated) {
+      authModal.open("login");
+      return;
+    }
+    
     try {
       await apiClient.post(ENDPOINTS.QUEUE.JOIN, { campaignId: campaign.id });
       // Tell the global socket to subscribe to the queue room
       joinQueueRoom(campaign.id);
       
-      // Redirect to dashboard where the queue entry will be visible
+      // Redirect to consultations where the queue entry will be visible
       toast.success("Successfully joined the queue!");
-      window.location.href = "/dashboard";
+      window.location.href = "/dashboard/consultations";
     } catch (err: any) {
-      if (err.statusCode === 400) {
-        toast.error(err.message || "Failed to join queue");
-      } else {
-        toast.error("An unexpected error occurred while joining the queue.");
-      }
+      toast.error(err.message || "An unexpected error occurred while joining the queue.");
     }
   };
 

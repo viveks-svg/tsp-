@@ -547,6 +547,13 @@ export class CallService {
         },
       });
 
+      // 4. If this consultation came from the queue, mark the QueueEntry as COMPLETED.
+      //    updateMany is a no-op for non-queue consultations (no matching rows).
+      await tx.queueEntry.updateMany({
+        where: { consultationId, status: "IN_CALL" },
+        data: { status: "COMPLETED" },
+      });
+
       this.logger.log(
         `[CALL:${consultationId}] Ended — ACTIVE → COMPLETED, duration=${durationSeconds}s, ` +
         `cost=${cost.toString()}, reason=${resolvedEndReason}`,
