@@ -92,15 +92,24 @@ export interface LuckyAttributes {
 export function pickLuckyAttributes(
   sign: ZodiacSign,
   dominantTags: ThemeTag[],
+  period: string = 'DAILY',
 ): LuckyAttributes {
   const tagOffset = dominantTags.reduce((sum, tag) => sum + (TAG_WEIGHT[tag] ?? 0), 0);
+
+  // Add a deterministic offset based on period so daily/monthly/yearly shift colors and numbers
+  let periodOffset = 0;
+  for (let i = 0; i < period.length; i++) {
+    periodOffset += period.charCodeAt(i);
+  }
+
+  const finalOffset = tagOffset + periodOffset;
 
   const colors = SIGN_COLORS[sign];
   const numbers = SIGN_NUMBERS[sign];
 
   return {
-    color: colors[tagOffset % colors.length],
-    number: numbers[tagOffset % numbers.length],
-    time: TIME_SLOTS[tagOffset % TIME_SLOTS.length],
+    color: colors[finalOffset % colors.length],
+    number: numbers[finalOffset % numbers.length],
+    time: TIME_SLOTS[finalOffset % TIME_SLOTS.length],
   };
 }

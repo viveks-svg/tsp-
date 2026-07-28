@@ -47,7 +47,17 @@ export class HoroscopeContentService {
       .filter((r): r is TransitRule => Boolean(r));
 
     const allTags = matchedRules.flatMap((r) => r.tags);
-    const dominantTags = this.rankTagsByFrequency(allTags).slice(0, 4);
+    
+    // Take the top 8 valid tags
+    const rankedTags = this.rankTagsByFrequency(allTags);
+    const topCandidates = rankedTags.slice(0, 8);
+
+    const dateKey = date.toISOString().split('T')[0];
+
+    // Deterministically shuffle the top 8 based on period, and pick 4
+    const dominantTags = topCandidates
+      .sort((a, b) => this.hashString(a + sign + dateKey + period) - this.hashString(b + sign + dateKey + period))
+      .slice(0, 4);
 
     // Ensure we always have at least one tag
     if (dominantTags.length === 0) {
@@ -55,9 +65,7 @@ export class HoroscopeContentService {
     }
 
     const rating = this.computeRating(matchedRules);
-    const lucky = pickLuckyAttributes(sign, dominantTags);
-
-    const dateKey = date.toISOString().split('T')[0];
+    const lucky = pickLuckyAttributes(sign, dominantTags, period);
 
     return {
       overallText: this.pickTemplate('overall', dominantTags, sign, dateKey, period),
