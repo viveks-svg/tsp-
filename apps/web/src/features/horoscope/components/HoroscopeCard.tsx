@@ -150,9 +150,30 @@ export default function HoroscopeCard({
 
   const periodLabel = HOROSCOPE_PERIODS.find((p) => p.value === period)?.label ?? period;
 
-  // Format date correctly
-  const startDate = new Date(data.periodStartDate);
-  const formattedDate = startDate.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  // Format date correctly based on period
+  let formattedDate = "";
+  const baseDate = new Date(data.periodStartDate);
+
+  if (period === 'DAILY') {
+    formattedDate = baseDate.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  } else if (period === 'WEEKLY') {
+    const day = baseDate.getDay();
+    const diff = baseDate.getDate() - day + (day === 0 ? -6 : 1);
+    
+    const monday = new Date(baseDate);
+    monday.setDate(diff);
+    
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    
+    const startStr = monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const endStr = sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    formattedDate = `${startStr} - ${endStr}`;
+  } else if (period === 'MONTHLY') {
+    formattedDate = baseDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  } else if (period === 'YEARLY') {
+    formattedDate = baseDate.toLocaleDateString('en-US', { year: 'numeric' });
+  }
 
   const loveScore = getDeterministicScore(sign, data.periodStartDate, 'love');
   const careerScore = getDeterministicScore(sign, data.periodStartDate, 'career');
