@@ -21,7 +21,7 @@ interface ActiveCampaign {
 export function CampaignStrip() {
   const [campaign, setCampaign] = useState<ActiveCampaign | null>(null);
   const { joinQueueRoom } = useQueueSocket();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const authModal = useAuthModal();
   const pathname = usePathname();
 
@@ -63,6 +63,11 @@ export function CampaignStrip() {
       authModal.open("login");
       return;
     }
+
+    if (user?.role === "ADMIN") {
+      toast.error("You are logged in as an admin and cannot join the waitlist.");
+      return;
+    }
     
     try {
       await apiClient.post(ENDPOINTS.QUEUE.JOIN, { campaignId: campaign.id });
@@ -78,7 +83,7 @@ export function CampaignStrip() {
   };
 
   return (
-    <div className="bg-[#1E1A16] text-[#FDFBF7] text-sm py-2.5 px-4 font-poppins relative z-50">
+    <div className="bg-[#1E1A16] text-[#FDFBF7] text-sm py-2.5 px-4 font-poppins relative z-[100]">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-center">
         
         <div className="flex items-center gap-2">

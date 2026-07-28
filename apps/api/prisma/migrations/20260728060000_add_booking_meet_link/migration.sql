@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "meetLink" TEXT,
+ADD COLUMN IF NOT EXISTS "calendarEventId" TEXT;

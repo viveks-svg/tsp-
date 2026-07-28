@@ -31,7 +31,7 @@ interface CampaignForm {
 
 const DEFAULT_FORM: CampaignForm = {
   title: "Skip the Queue with Dr. Pradeep",
-  bannerText: "Get instant consultation with Dr. Pradeep Sharma at just ₹19/min! Live every Wednesday.",
+  bannerText: "Get instant consultation with Dr. Pradeep Sharma at just ₹19/min! Live every ${DAY_NAME[dayOfWeek]}.",
   ratePerMinute: "19.00",
   dayOfWeek: 3,
   startTime: "10:00",
@@ -254,11 +254,10 @@ export default function AdminCampaignsPage() {
                     {campaign.title}
                   </h3>
                   <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      campaign.isActive
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-gray-50 text-gray-400 border border-gray-200"
-                    }`}
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${campaign.isActive
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-gray-50 text-gray-400 border border-gray-200"
+                      }`}
                   >
                     {campaign.isActive ? "ACTIVE" : "INACTIVE"}
                   </span>
