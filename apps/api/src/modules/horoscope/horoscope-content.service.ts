@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ZodiacSign, GrahaName } from '@prisma/client';
+import { ZodiacSign, GrahaName, HoroscopePeriod } from '@prisma/client';
 import {
   PLANET_TRANSIT_RULES,
   TransitRule,
@@ -40,6 +40,7 @@ export class HoroscopeContentService {
     sign: ZodiacSign,
     transits: { graha: GrahaName; house: number; retrograde: boolean }[],
     date: Date = new Date(),
+    period: HoroscopePeriod = 'DAILY',
   ): AssembledReading {
     const matchedRules = transits
       .map((t) => this.findRule(t.graha, t.house, t.retrograde))
@@ -59,11 +60,11 @@ export class HoroscopeContentService {
     const dateKey = date.toISOString().split('T')[0];
 
     return {
-      overallText: this.pickTemplate('overall', dominantTags, sign, dateKey),
-      loveText: this.pickTemplate('love', dominantTags, sign, dateKey),
-      careerText: this.pickTemplate('career', dominantTags, sign, dateKey),
-      healthText: this.pickTemplate('health', dominantTags, sign, dateKey),
-      financeText: this.pickTemplate('finance', dominantTags, sign, dateKey),
+      overallText: this.pickTemplate('overall', dominantTags, sign, dateKey, period),
+      loveText: this.pickTemplate('love', dominantTags, sign, dateKey, period),
+      careerText: this.pickTemplate('career', dominantTags, sign, dateKey, period),
+      healthText: this.pickTemplate('health', dominantTags, sign, dateKey, period),
+      financeText: this.pickTemplate('finance', dominantTags, sign, dateKey, period),
       luckyColor: lucky.color,
       luckyNumber: lucky.number,
       luckyTime: lucky.time,
@@ -137,14 +138,15 @@ export class HoroscopeContentService {
     tags: ThemeTag[],
     sign: ZodiacSign,
     dateKey: string,
+    period: HoroscopePeriod,
   ): string {
     const candidates: string[] = [];
     for (const tag of tags) {
       const templates = TEXT_TEMPLATES[tag]?.[category];
       if (templates && templates.length > 0) {
-        // Add a deterministic shuffle based on sign and date so different signs get different order
+        // Add a deterministic shuffle based on sign, date, and period so different periods/signs get different sentences
         const shuffled = [...templates].sort(
-          (a, b) => this.hashString(a + sign + dateKey) - this.hashString(b + sign + dateKey)
+          (a, b) => this.hashString(a + sign + dateKey + period) - this.hashString(b + sign + dateKey + period)
         );
         candidates.push(...shuffled);
       }

@@ -105,7 +105,7 @@ export class HoroscopeService {
     let generated = 0;
     for (const sign of SIGN_ORDER) {
       const transits = transitMap[sign];
-      const assembled = this.contentService.assembleReading(sign, transits, targetDate);
+      const assembled = this.contentService.assembleReading(sign, transits, targetDate, period);
       await this.repository.upsertReading(
         sign,
         period,
