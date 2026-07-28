@@ -88,16 +88,15 @@ export function PromoPopup() {
               <X className="w-4 h-4" />
             </button>
 
-            {promo.imageUrl && (
-              <div className="h-32 w-full relative bg-[#0F0E0C]">
-                <img
-                  src={promo.imageUrl}
-                  alt={promo.title}
-                  className="w-full h-full object-cover opacity-80"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1C1A17] to-transparent" />
-              </div>
-            )}
+            <div className="h-32 w-full relative bg-[#0F0E0C]">
+              <img
+                src={promo.imageUrl || "/promo_popup_bg.png"}
+                alt={promo.title}
+                className="w-full h-full object-cover opacity-80"
+                onError={(e) => { e.currentTarget.src = "/promo_popup_bg.png"; }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1C1A17] to-transparent" />
+            </div>
 
             <div className="p-6 pt-5">
               <div className="flex items-center gap-2 mb-2">

@@ -103,14 +103,21 @@ export interface AyanamsaResult {
 
 export interface PanchangResult {
   tithi: string;
+  tithiEndTime: string;
   karana: string;
+  karanaEndTime: string;
   yoga: string;
+  yogaEndTime: string;
   nakshatra: string;
   nakshatraLord: string;
+  nakshatraEndTime: string;
   ascendant: string;
   ascendantLord: string;
   sunrise: string;
   sunset: string;
+  moonrise: string;
+  moonset: string;
+  weekday: string;
 }
 
 export interface AvakhadaResult {

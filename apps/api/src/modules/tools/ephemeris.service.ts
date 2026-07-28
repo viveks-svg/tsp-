@@ -861,16 +861,75 @@ export class EphemerisService implements OnModuleInit {
     // Compute sunrise/sunset using a standard solar algorithm
     const { sunrise, sunset } = this.computeSunriseSunset(dateObj, lat, lng);
     
+    // Calculate End Times (Approximations based on average speeds)
+    const formatTime = (date: Date) => {
+      let h = date.getHours();
+      let m = date.getMinutes();
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12;
+      h = h ? h : 12;
+      const mm = m < 10 ? '0'+m : m;
+      return `${h < 10 ? '0'+h : h}:${mm} ${ampm}`;
+    };
+
+    const tithiRemainingDeg = ((tithiIndex + 1) * 12) - ((moonLong - sunLong + 360) % 360);
+    const tithiEndTime = new Date(dateObj.getTime() + (tithiRemainingDeg / 0.50833) * 3600 * 1000);
+
+    const nakshatraIndex = Math.floor(moonLong / (360 / 27));
+    const nakshatraRemainingDeg = ((nakshatraIndex + 1) * (360 / 27)) - moonLong;
+    const nakshatraEndTime = new Date(dateObj.getTime() + (nakshatraRemainingDeg / 0.55) * 3600 * 1000);
+
+    const yogaRemainingDeg = ((yogaIndex + 1) * 13.333333) - ((moonLong + sunLong) % 360);
+    const yogaEndTime = new Date(dateObj.getTime() + (yogaRemainingDeg / 0.59166) * 3600 * 1000);
+
+    const karanaIndexVal = Math.floor(((moonLong - sunLong + 360) % 360) / 6);
+    const karanaRemainingDeg = ((karanaIndexVal + 1) * 6) - ((moonLong - sunLong + 360) % 360);
+    const karanaEndTime = new Date(dateObj.getTime() + (karanaRemainingDeg / 0.50833) * 3600 * 1000);
+
+    const parseTime = (timeStr: string) => {
+      const [h, m, s] = timeStr.split(':').map(Number);
+      return h + m/60 + s/3600;
+    };
+    
+    const formatDecTime = (decimalTime: number) => {
+        let time = decimalTime % 24;
+        if (time < 0) time += 24;
+        const hours = Math.floor(time);
+        const minutes = Math.floor((time - hours) * 60);
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        let h12 = hours % 12;
+        if (h12 === 0) h12 = 12;
+        return `${h12 < 10 ? '0'+h12 : h12}:${minutes < 10 ? '0'+minutes : minutes} ${ampm}`;
+    };
+
+    const sunriseDec = parseTime(sunrise);
+    const sunsetDec = parseTime(sunset);
+    const angleDiff = (moonLong - sunLong + 360) % 360;
+    const delayHours = (angleDiff / 360) * 24;
+    
+    const moonriseDec = sunriseDec + delayHours;
+    const moonsetDec = sunsetDec + delayHours;
+
+    const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const weekday = weekdays[dateObj.getDay()];
+
     return {
       tithi: tithis[tithiIndex % 15],
+      tithiEndTime: formatTime(tithiEndTime),
       karana,
+      karanaEndTime: formatTime(karanaEndTime),
       yoga: yogas[yogaIndex % 27],
+      yogaEndTime: formatTime(yogaEndTime),
       nakshatra: nakshatraResult.nakshatra,
       nakshatraLord: nakshatraResult.rulingLord,
+      nakshatraEndTime: formatTime(nakshatraEndTime),
       ascendant: RASHI_DATA.find(r => r.name === ascendant.rashi || r.english === ascendant.rashi)?.english || ascendant.rashi,
       ascendantLord: RASHI_DATA.find(r => r.name === ascendant.rashi || r.english === ascendant.rashi)?.ruler || '-',
-      sunrise,
-      sunset,
+      sunrise: formatDecTime(sunriseDec),
+      sunset: formatDecTime(sunsetDec),
+      moonrise: formatDecTime(moonriseDec),
+      moonset: formatDecTime(moonsetDec) + (moonsetDec >= 24 ? ', Next Day' : ''),
+      weekday,
     };
   }
 

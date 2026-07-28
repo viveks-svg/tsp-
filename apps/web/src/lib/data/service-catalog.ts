@@ -208,6 +208,37 @@ export const SERVICE_CATALOG: ServiceDefinition[] = [
     ],
   },
   {
+    id: 'vastu-masterclass',
+    category: 'business',
+    name: 'Vastu Masterclass',
+    shortDescription: 'Join our upcoming Vastu Masterclass and learn how to optimize your workspace for prosperity and flow.',
+    icon: 'GraduationCap',
+    requiresSlot: false,
+    tags: ['vastu', 'masterclass', 'learning', 'business'],
+    formFields: [
+      { name: 'fullName', label: 'Full Name', type: 'text', required: true, section: 'Your Details' },
+      { name: 'email', label: 'Email Address', type: 'email', required: true, section: 'Your Details' },
+      { name: 'phone', label: 'Phone Number', type: 'tel', required: true, section: 'Your Details' },
+    ],
+    plans: [
+      {
+        slug: 'standard',
+        name: 'Standard Registration',
+        tagline: 'Access to the live masterclass',
+        priceINR: 9999,
+        priceLabel: '₹9,999',
+        features: [
+          'Live 3-hour Vastu Masterclass',
+          'Interactive Q&A Session',
+          'Digital Course Materials',
+          'Certificate of Completion',
+        ],
+        ctaText: 'Register Now →',
+        variant: 'featured',
+      },
+    ],
+  },
+  {
     id: 'office-vastu',
     category: 'business',
     name: 'Office Vastu',

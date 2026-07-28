@@ -297,46 +297,70 @@ export const freeServicesConfigs: Record<string, FreeServiceConfig> = {
       return (
         <ServiceResultCard title={`Vedic Panchang: ${dateStr}`}>
           <div className="space-y-6 font-poppins text-xs">
-            <span className="text-muted block">Calculated for <strong className="text-navy">{location}</strong>:</span>
+            <div className="flex justify-between items-center bg-cream-dark/20 p-3 rounded-lg border border-border/60">
+              <span className="text-muted block">Calculated for <strong className="text-navy">{location}</strong></span>
+              <span className="text-navy font-bold">{data.weekday}</span>
+            </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 bg-card border border-border rounded-xl space-y-1">
-                <span className="block text-muted font-bold uppercase text-[9px] tracking-wider">Tithi (Lunar Day)</span>
-                <span className="text-sm font-bold text-navy">{data.tithi}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-3 bg-card border border-border rounded-xl flex flex-col justify-between">
+                <span className="block text-muted font-bold uppercase text-[9px] tracking-wider mb-1">Tithi (Lunar Day)</span>
+                <div>
+                  <span className="text-sm font-bold text-navy">{data.tithi}</span>
+                  <span className="block text-[10px] text-paragraph mt-0.5">upto {data.tithiEndTime}</span>
+                </div>
               </div>
-              <div className="p-3 bg-card border border-border rounded-xl space-y-1">
-                <span className="block text-muted font-bold uppercase text-[9px] tracking-wider">Nakshatra (Star)</span>
-                <span className="text-sm font-bold text-navy">{data.nakshatra}</span>
-                <span className="block text-[10px] text-paragraph leading-relaxed">Lord: {data.nakshatraLord}</span>
+              <div className="p-3 bg-card border border-border rounded-xl flex flex-col justify-between">
+                <span className="block text-muted font-bold uppercase text-[9px] tracking-wider mb-1">Nakshatra (Star)</span>
+                <div>
+                  <span className="text-sm font-bold text-navy">{data.nakshatra}</span>
+                  <span className="block text-[10px] text-paragraph mt-0.5">upto {data.nakshatraEndTime} | Lord: {data.nakshatraLord}</span>
+                </div>
               </div>
-              <div className="p-3 bg-card border border-border rounded-xl space-y-1">
-                <span className="block text-muted font-bold uppercase text-[9px] tracking-wider">Yoga</span>
-                <span className="text-sm font-bold text-navy">{data.yoga}</span>
+              <div className="p-3 bg-card border border-border rounded-xl flex flex-col justify-between">
+                <span className="block text-muted font-bold uppercase text-[9px] tracking-wider mb-1">Yoga</span>
+                <div>
+                  <span className="text-sm font-bold text-navy">{data.yoga}</span>
+                  <span className="block text-[10px] text-paragraph mt-0.5">upto {data.yogaEndTime}</span>
+                </div>
               </div>
-              <div className="p-3 bg-card border border-border rounded-xl space-y-1">
-                <span className="block text-muted font-bold uppercase text-[9px] tracking-wider">Karana</span>
-                <span className="text-sm font-bold text-navy">{data.karana}</span>
+              <div className="p-3 bg-card border border-border rounded-xl flex flex-col justify-between">
+                <span className="block text-muted font-bold uppercase text-[9px] tracking-wider mb-1">Karana</span>
+                <div>
+                  <span className="text-sm font-bold text-navy">{data.karana}</span>
+                  <span className="block text-[10px] text-paragraph mt-0.5">upto {data.karanaEndTime}</span>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 bg-card border border-border rounded-xl space-y-1">
-                <span className="block text-muted font-bold uppercase text-[9px] tracking-wider">Ascendant (Lagna)</span>
-                <span className="text-sm font-bold text-navy">{data.ascendant}</span>
-                <span className="block text-[10px] text-paragraph leading-relaxed">Lord: {data.ascendantLord}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-3 bg-card border border-border rounded-xl flex flex-col justify-between">
+                <span className="block text-muted font-bold uppercase text-[9px] tracking-wider mb-1">Ascendant (Lagna)</span>
+                <div>
+                  <span className="text-sm font-bold text-navy">{data.ascendant}</span>
+                  <span className="block text-[10px] text-paragraph mt-0.5">Lord: {data.ascendantLord}</span>
+                </div>
               </div>
             </div>
 
             <div className="border-t border-border pt-4">
-              <span className="block text-xs font-bold text-navy uppercase tracking-wider mb-2.5">Sun Coordinates</span>
-              <div className="grid grid-cols-2 gap-2 text-center">
-                <div className="p-2 bg-cream-dark/20 border border-border/60 rounded">
-                  <span className="block text-muted text-[8px] font-bold">Sunrise</span>
-                  <span className="font-semibold text-navy">{data.sunrise}</span>
+              <span className="block text-xs font-bold text-navy uppercase tracking-wider mb-3 text-center">Sunrise & Moonrise</span>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
+                <div className="p-2 bg-orange-500/10 border border-orange-500/20 rounded">
+                  <span className="block text-orange-700 text-[9px] font-bold uppercase mb-1">Sunrise</span>
+                  <span className="font-bold text-orange-900">{data.sunrise}</span>
                 </div>
-                <div className="p-2 bg-cream-dark/20 border border-border/60 rounded">
-                  <span className="block text-muted text-[8px] font-bold">Sunset</span>
-                  <span className="font-semibold text-navy">{data.sunset}</span>
+                <div className="p-2 bg-orange-500/10 border border-orange-500/20 rounded">
+                  <span className="block text-orange-700 text-[9px] font-bold uppercase mb-1">Sunset</span>
+                  <span className="font-bold text-orange-900">{data.sunset}</span>
+                </div>
+                <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded">
+                  <span className="block text-blue-700 text-[9px] font-bold uppercase mb-1">Moonrise</span>
+                  <span className="font-bold text-blue-900">{data.moonrise}</span>
+                </div>
+                <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded">
+                  <span className="block text-blue-700 text-[9px] font-bold uppercase mb-1">Moonset</span>
+                  <span className="font-bold text-blue-900">{data.moonset}</span>
                 </div>
               </div>
             </div>

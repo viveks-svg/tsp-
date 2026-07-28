@@ -18,6 +18,7 @@ export const SERVICE_PRICES: Record<string, number> = {
   'hotel-vastu':       4499900,   // ₹44,999
   'commercial-plot':   1999900,   // ₹19,999
   'coworking-vastu':   1999900,   // ₹19,999
+  'vastu-masterclass':  999900,   // ₹9,999
 
   // ─── Leadership & Strategy ─────────────────────────────────────────────────
   'strategic-consulting':  2499900,   // ₹24,999

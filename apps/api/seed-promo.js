@@ -12,8 +12,8 @@ async function seedPromo() {
       title: 'Vastu Masterclass',
       description: 'Join our upcoming Vastu Masterclass and learn how to optimize your workspace for prosperity and flow.',
       actionText: 'Register Now',
-      actionUrl: '/solutions/business-vastu',
-      imageUrl: 'https://images.unsplash.com/photo-1598462002773-19597c55c707?q=80&w=600&auto=format&fit=crop'
+      actionUrl: '/book?service=vastu-masterclass',
+      imageUrl: ''
     }
   });
   console.log("Promo seeded successfully.");
