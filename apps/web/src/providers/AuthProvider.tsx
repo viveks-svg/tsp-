@@ -131,7 +131,14 @@ export default function AuthProvider({
         });
       } catch {
         if (cancelled || opId !== authOperationId) return;
-        setState((prev) => ({ ...prev, isLoading: false }));
+        localStorage.removeItem("tsp_auth_state");
+        setState({
+          user: null,
+          accessToken: null,
+          walletBalance: 0,
+          isLoading: false,
+          isAuthenticated: false,
+        });
       }
     };
 

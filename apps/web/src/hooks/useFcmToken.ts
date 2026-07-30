@@ -55,7 +55,6 @@ export function useFcmToken() {
 
           registered.current = true;
           attemptCount.current = 0;
-          console.log("[useFcmToken] FCM token successfully registered on backend:", response);
         } catch (backendErr: any) {
           const msg = backendErr?.message || "";
           const isTransient = msg.includes("500") || msg.includes("ECONNREFUSED") || msg.includes("fetch failed");

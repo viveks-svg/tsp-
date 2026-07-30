@@ -98,7 +98,7 @@ export default function AdminLayout({
       >
         {/* Logo / Brand */}
         <div className="p-6 border-b border-[#EFEBE1]">
-          <Link href="/admin/dashboard" className="flex items-center gap-2">
+          <Link href="/admin/queue" className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-full bg-[#071B8D] flex items-center justify-center">
               <span className="text-white font-heading font-bold text-sm">T</span>
             </div>
