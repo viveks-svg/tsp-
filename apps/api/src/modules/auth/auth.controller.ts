@@ -9,12 +9,14 @@ import {
   Get,
   Param,
   Delete,
+  UseGuards,
 } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { SignupDto, LoginDto, RefreshTokenDto } from "./dto/auth.dto";
 import { FirebaseAuthDto } from "./dto/firebase-auth.dto";
 import { Public } from "../../common/decorators/public.decorator";
+import { OptionalJwtAuthGuard } from "../../common/guards/optional-jwt-auth.guard";
 import { TIER_AUTH_STRICT, TIER_AUTH_REFRESH } from "../../common/config/rate-limit.config";
 import { Request, Response } from "express";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
@@ -168,9 +170,17 @@ export class AuthController {
    * GET /auth/me
    * Returns the currently authenticated user and their wallet balance.
    * Used by the frontend to hydrate auth state on page load.
+   * Uses OptionalJwtAuthGuard so unauthenticated users get a 200 OK with null
+   * instead of a 401 Unauthorized (which causes browser console errors).
    */
+  @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @Get("me")
   async me(@CurrentUser() user: any) {
+    if (!user) {
+      return { user: null, walletBalance: 0 };
+    }
+
     // Fetch full user record + wallet balance
     const fullUser = await this.prisma.user.findUnique({
       where: { id: user.id },

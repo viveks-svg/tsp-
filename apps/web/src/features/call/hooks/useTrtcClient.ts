@@ -60,6 +60,10 @@ export function useTrtcClient() {
         }
 
         // Listen for remote stream events
+        trtc.on(TRTC.EVENT.REMOTE_USER_ENTER, ({ userId: remoteUserId }: { userId: string }) => {
+          console.log(`[TRTC] Remote user ENTERED the room: ${remoteUserId}`);
+        });
+
         trtc.on(TRTC.EVENT.REMOTE_VIDEO_AVAILABLE, ({ userId: remoteUserId }: { userId: string }) => {
           console.log(`[TRTC] Remote video available: ${remoteUserId}`);
           if (remoteVideoContainer) {
@@ -123,6 +127,22 @@ export function useTrtcClient() {
           }
         }
 
+        // DEBUG POLLING (To prove to the Flutter developer what the TRTC server sees)
+        const pollInterval = setInterval(() => {
+          if (!trtcRef.current) {
+            clearInterval(pollInterval);
+            return;
+          }
+          // In TRTC v5, we can check remote users if the API is available
+          try {
+            const remoteUsers = (trtcRef.current as any).getRemoteUsers ? (trtcRef.current as any).getRemoteUsers() : [];
+            console.log(`[TRTC Debug Poll] Remote users currently in room: ${remoteUsers.length > 0 ? JSON.stringify(remoteUsers) : "NONE"}`);
+          } catch (e) {}
+        }, 2000);
+
+        // Save interval to clear it on leave
+        (trtcRef.current as any)._debugPollInterval = pollInterval;
+
         // Even if media failed, the user is successfully in the room and can receive remote streams
         setActive();
       } catch (globalErr) {
@@ -142,6 +162,9 @@ export function useTrtcClient() {
     const trtc = trtcRef.current;
     if (trtc) {
       try {
+        if ((trtc as any)._debugPollInterval) {
+          clearInterval((trtc as any)._debugPollInterval);
+        }
         await trtc.stopLocalVideo();
         await trtc.stopLocalAudio();
         await trtc.exitRoom();

@@ -9,6 +9,7 @@ export function QuickContactPopup() {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [interest, setInterest] = useState("consultation");
 
   useEffect(() => {
@@ -18,7 +19,7 @@ export function QuickContactPopup() {
       if (!hasSeenPopup) {
         setIsVisible(true);
       }
-    }, 8000);
+    }, 7000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -28,15 +29,27 @@ export function QuickContactPopup() {
     sessionStorage.setItem("tsp_contact_popup_seen", "true");
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Strip all non-numeric characters
+    const numericValue = e.target.value.replace(/\D/g, "");
+    setPhone(numericValue);
+    // Clear error as user types
+    if (phoneError) setPhoneError("");
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone) return;
-    
-    // Here you would typically send this data to your API
-    // console.log("Lead captured:", { name, phone, interest });
-    
+
+    // Validate phone: must be exactly 10 digits
+    if (!/^\d{10}$/.test(phone)) {
+      setPhoneError("Phone number must be exactly 10 digits");
+      return;
+    }
+
+
     setHasSubmitted(true);
-    
+
     // Auto dismiss after 3 seconds of success
     setTimeout(() => {
       handleDismiss();
@@ -60,8 +73,8 @@ export function QuickContactPopup() {
           >
             {/* Background Accent */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C8A04A] via-[#E8D08B] to-[#C8A04A]"></div>
-            
-            <button 
+
+            <button
               onClick={handleDismiss}
               className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors z-10"
             >
@@ -105,7 +118,7 @@ export function QuickContactPopup() {
                     <label className="block text-xs font-medium text-white/80 mb-1.5 ml-1 uppercase tracking-wider">
                       Your Interest
                     </label>
-                    <select 
+                    <select
                       value={interest}
                       onChange={(e) => setInterest(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#C8A04A] focus:ring-1 focus:ring-[#C8A04A] transition-all appearance-none shadow-inner"
@@ -140,12 +153,22 @@ export function QuickContactPopup() {
                       <input
                         type="tel"
                         required
+                        inputMode="numeric"
+                        maxLength={10}
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="Mobile Number"
-                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-[#C8A04A] focus:ring-1 focus:ring-[#C8A04A] transition-all shadow-inner"
+                        onChange={handlePhoneChange}
+                        placeholder="Mobile Number (10 digits)"
+                        className={`w-full bg-white/5 border rounded-xl pl-11 pr-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-1 transition-all shadow-inner ${phoneError
+                            ? "border-red-400 focus:border-red-400 focus:ring-red-400"
+                            : "border-white/10 focus:border-[#C8A04A] focus:ring-[#C8A04A]"
+                          }`}
                       />
                     </div>
+                    {phoneError && (
+                      <p className="text-red-400 text-[11px] mt-1.5 ml-1 font-medium">
+                        {phoneError}
+                      </p>
+                    )}
                   </div>
 
                   <button
@@ -156,7 +179,7 @@ export function QuickContactPopup() {
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </form>
-                
+
                 <p className="text-center text-[10px] text-white/40 mt-5 uppercase tracking-widest font-light">
                   Your information is safe with us. We do not spam.
                 </p>

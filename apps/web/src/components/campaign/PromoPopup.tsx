@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { X, ArrowRight, Sparkles } from "lucide-react";
-import io, { Socket } from "socket.io-client";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
+import { apiClient } from "@/lib/http/client";
+import { ENDPOINTS } from "@/lib/constants/http/endpoints";
 
 interface PromoEvent {
   id: string;
@@ -21,45 +22,27 @@ export function PromoPopup() {
   const [dismissedPromos, setDismissedPromos] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    const socket: Socket = io(`${NEXT_PUBLIC_API_URL}/promo`, {
-      path: "/socket.io/",
-      transports: ["websocket", "polling"],
-      reconnectionAttempts: 5,
-    });
+    let mounted = true;
 
-    socket.on("connect", () => {
-      console.log("Connected to Promo Gateway");
-    });
-
-    socket.on("promo:update", (promos: PromoEvent[]) => {
-      if (promos && promos.length > 0) {
-        const latest = promos[0];
-        if (!dismissedPromos.has(latest.id)) {
-          setPromo(latest);
-          setIsVisible(true);
-        }
-      } else {
-        setIsVisible(false);
-      }
-    });
-
-    // Also fetch initial promos from REST API
-    fetch(`${NEXT_PUBLIC_API_URL}/api/v1/promo/active`)
-      .then(res => res.json())
-      .then((promos: PromoEvent[]) => {
-        if (promos && promos.length > 0) {
+    const fetchPromo = async () => {
+      try {
+        const promos = await apiClient.get<PromoEvent[]>(ENDPOINTS.PROMO.ACTIVE);
+        if (mounted && promos && promos.length > 0) {
           const latest = promos[0];
           if (!dismissedPromos.has(latest.id)) {
             setPromo(latest);
             setIsVisible(true);
           }
         }
-      })
-      .catch(() => { });
+      } catch (err) {
+        // Silently ignore if no promos are active
+      }
+    };
+
+    void fetchPromo();
 
     return () => {
-      socket.disconnect();
+      mounted = false;
     };
   }, [dismissedPromos]);
 
@@ -129,3 +112,4 @@ export function PromoPopup() {
     </AnimatePresence>
   );
 }
+

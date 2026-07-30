@@ -15,15 +15,21 @@ export interface KundaliMatchingInput {
   person2: { name: string; birthDate: string; birthTime: string; birthPlace: string };
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const API_BASE_URL = '/api';
 
-async function fetchWithFallback<T>(endpoint: string, body: any): Promise<T> {
+async function fetchWithFallback<T>(endpoint: string, body?: any): Promise<T> {
   const url = `${API_BASE_URL}/ephemeris/${endpoint}`;
-  const response = await fetch(url, {
-    method: 'POST',
+  
+  const options: RequestInit = {
+    method: body ? 'POST' : 'GET',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  };
+  
+  if (body) {
+    options.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(url, options);
 
   if (!response.ok) {
     throw new Error(`Ephemeris API error: ${response.statusText}`);

@@ -24,6 +24,13 @@ export const rootMetadata: Metadata = {
     "vastu shastra",
     "business astrology",
   ],
+  icons: {
+    icon: [
+      { url: "/icons/favicon.ico", sizes: "any" },
+      { url: "/icons/favicon.png", type: "image/png" },
+    ],
+    apple: "/icons/favicon.png",
+  },
   robots: {
     index: true,
     follow: true,

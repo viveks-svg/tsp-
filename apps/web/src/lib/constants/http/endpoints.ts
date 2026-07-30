@@ -107,6 +107,10 @@ export const ENDPOINTS = {
     ACTIVE: "/campaigns/active",
   },
 
+  PROMO: {
+    ACTIVE: "/promo/active",
+  },
+
   // Queue (user-facing)
   QUEUE: {
     JOIN: "/queue/join",

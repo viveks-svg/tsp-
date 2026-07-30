@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Heart, Briefcase, Activity, Wallet, Sparkles, ChevronRight, Zap, Sun } from "lucide-react";
 import {
   Card,
@@ -335,8 +336,9 @@ export default function HoroscopeCard({
           {zodiacSigns.map((otherSign) => {
             const matchScore = getCompatibilityScore(sign, otherSign);
             return (
-              <div
+              <Link
                 key={otherSign}
+                href={`/horoscope/${otherSign.toLowerCase()}`}
                 className="flex flex-col items-center justify-center py-4 px-2 bg-gray-50 rounded-xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50 transition-colors cursor-pointer group"
               >
                 <div className="flex items-center gap-2 mb-2">
@@ -353,7 +355,7 @@ export default function HoroscopeCard({
                 <div className="text-lg font-bold text-dark group-hover:text-purple-700 transition-colors">
                   {matchScore}%
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

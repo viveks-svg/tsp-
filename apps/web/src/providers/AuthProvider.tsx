@@ -108,6 +108,15 @@ export default function AuthProvider({
     let cancelled = false;
 
     const revalidate = async () => {
+      // Skip the background revalidation if the user is clearly not logged in.
+      // This prevents the browser from logging a 401 Unauthorized error in the console for fresh visitors.
+      const hasStoredAuth = localStorage.getItem("tsp_auth_state");
+      if (!hasStoredAuth && !stateRef.current.isAuthenticated) {
+        if (cancelled) return;
+        setState((prev) => ({ ...prev, isLoading: false }));
+        return;
+      }
+
       const opId = ++authOperationId;
       try {
         const data = await apiClient.get<AuthMeResponse>(ENDPOINTS.AUTH.ME);

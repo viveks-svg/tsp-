@@ -223,7 +223,7 @@ export default function BlogPage() {
 
         {/* Featured Post Card (Top Hero) */}
         {featuredPost && (
-          <div className="mb-10 group bg-white rounded-card-lg border border-border overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300">
+          <Link href={`/blog/${featuredPost.slug}`} className="mb-10 group bg-white rounded-card-lg border border-border overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 block">
             <div className="grid grid-cols-1 lg:grid-cols-12">
               {/* Image */}
               <div className="relative h-64 sm:h-96 lg:h-auto lg:col-span-7 bg-cream/50 overflow-hidden">
@@ -281,7 +281,7 @@ export default function BlogPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
         )}
 
         {/* Regular Posts Grid */}
@@ -293,8 +293,9 @@ export default function BlogPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {gridPosts.map((post) => (
-              <article
+              <Link
                 key={post.id}
+                href={`/blog/${post.slug}`}
                 className="bg-white rounded-card border border-border overflow-hidden shadow-card card-hover flex flex-col justify-between group"
               >
                 <div>
@@ -352,7 +353,7 @@ export default function BlogPage() {
                     <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                   </span>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         )}
