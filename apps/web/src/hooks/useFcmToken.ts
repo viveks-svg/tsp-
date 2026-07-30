@@ -40,7 +40,7 @@ export function useFcmToken() {
         const fcmToken = await requestFcmToken();
         if (!fcmToken) {
           // Don't retry — either permission denied or not supported
-          console.log("[useFcmToken] Could not retrieve FCM token (permission not granted or not supported)");
+
           return;
         }
 

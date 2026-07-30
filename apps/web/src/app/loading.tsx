@@ -14,7 +14,6 @@ export default function Loading() {
             alt="Aligning cosmic energies..."
             fill
             className="object-contain animate-spin-clockwise-60 filter drop-shadow-[0_0_20px_rgba(246,160,0,0.3)]"
-            priority
           />
         </div>
 

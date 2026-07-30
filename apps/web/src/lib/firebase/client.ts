@@ -64,7 +64,6 @@ export async function requestFcmToken(): Promise<string | null> {
   try {
     const permission = await Notification.requestPermission();
     if (permission !== "granted") {
-      console.log("[FCM] Notification permission denied.");
       return null;
     }
 
