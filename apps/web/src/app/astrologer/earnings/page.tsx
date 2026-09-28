@@ -1,105 +1,95 @@
 "use client";
 
-import { useAuth } from "@/providers/AuthProvider";
-import { IndianRupee, TrendingUp, Calendar, ArrowUpRight, DollarSign, Wallet } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { IndianRupee, Landmark, TrendingUp } from "lucide-react";
+import { apiClient } from "@/lib/http/client";
+import { ENDPOINTS } from "@/lib/constants/http/endpoints";
+import { cn } from "@/lib/cn";
+import { PageHeader, Panel, Skeleton, StatTile } from "@/features/admin/components/primitives";
+import { formatDateTime, formatINR } from "@/features/admin/lib/format";
 
-export default function AstrologerEarningsPage() {
-  const { walletBalance } = useAuth();
+interface Earnings {
+  balance: number;
+  lifetime: number;
+  entries: {
+    id: string;
+    amount: number;
+    type: "CREDIT" | "DEBIT";
+    purpose: string;
+    description: string;
+    balanceAfter: number;
+    createdAt: string;
+  }[];
+}
 
-  const mockTransactions = [
-    { id: "TXN001", client: "Amit Patel", type: "Chat", date: "June 16, 2026", duration: "15 min", amount: 450.00 },
-    { id: "TXN002", client: "Neha Sharma", type: "Call", date: "June 15, 2026", duration: "10 min", amount: 300.00 },
-    { id: "TXN003", client: "Rajesh Kumar", type: "Chat", date: "June 14, 2026", duration: "25 min", amount: 750.00 },
-    { id: "TXN004", client: "Priya Singh", type: "Call", date: "June 12, 2026", duration: "8 min", amount: 240.00 },
-  ];
+/** The astrologer's real earnings — every credit and debit on their TSP balance. */
+export default function EarningsPage() {
+  const [data, setData] = useState<Earnings | null>(null);
+
+  useEffect(() => {
+    apiClient
+      .get<Earnings>(ENDPOINTS.ASTROLOGER_PANEL.EARNINGS)
+      .then(setData)
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Could not load earnings"));
+  }, []);
 
   return (
-    <div className="p-6 md:p-10 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold font-poppins">
-          Astrologer Panel
-        </p>
-        <h1 className="mt-1 font-heading text-3xl font-bold text-dark">
-          Earnings & Payouts
-        </h1>
-        <p className="mt-1 text-sm text-paragraph">
-          Track your consultative earnings and payout history.
-        </p>
-      </div>
+    <div className="mx-auto max-w-[1100px] space-y-8 px-5 py-8 md:px-10 md:py-12">
+      <PageHeader
+        eyebrow="Practice"
+        title="Earnings"
+        description="What your consultations have earned. The TSP office settles your balance by bank transfer."
+      />
 
-      {/* Cards Grid */}
-      <div className="grid gap-6 md:grid-cols-3 mb-8">
-        <div className="bg-white border border-border rounded-card p-6 shadow-card flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-navy/10 flex items-center justify-center shrink-0">
-            <IndianRupee className="w-6 h-6 text-navy" />
+      {!data ? (
+        <Skeleton className="h-96" />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <StatTile label="Balance to be settled" icon={<Landmark className="h-4 w-4" />} value={formatINR(data.balance)} />
+            <StatTile label="Earned from consultations" icon={<TrendingUp className="h-4 w-4" />} value={formatINR(data.lifetime)} detail="Since you joined" />
+            <StatTile label="Entries" icon={<IndianRupee className="h-4 w-4" />} value={data.entries.length} detail="Most recent 100 shown" />
           </div>
-          <div>
-            <p className="text-sm font-medium text-muted">Current Balance</p>
-            <h3 className="text-2xl font-bold text-dark font-poppins mt-0.5">
-              ₹{Number(walletBalance).toFixed(2)}
-            </h3>
-          </div>
-        </div>
 
-        <div className="bg-white border border-border rounded-card p-6 shadow-card flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-            <TrendingUp className="w-6 h-6 text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted">This Month</p>
-            <h3 className="text-2xl font-bold text-dark font-poppins mt-0.5">
-              ₹1,740.00
-            </h3>
-          </div>
-        </div>
-
-        <div className="bg-white border border-border rounded-card p-6 shadow-card flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center shrink-0">
-            <Calendar className="w-6 h-6 text-gold" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted">Total Consultations</p>
-            <h3 className="text-2xl font-bold text-dark font-poppins mt-0.5">
-              4 Sessions
-            </h3>
-          </div>
-        </div>
-      </div>
-
-      {/* Transaction History */}
-      <div className="bg-white border border-border rounded-card-lg shadow-card overflow-hidden">
-        <div className="p-6 border-b border-border flex justify-between items-center">
-          <h2 className="font-heading text-lg font-bold text-dark">Recent Transactions</h2>
-          <span className="text-xs text-muted font-medium">Updated just now</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-cream/45 border-b border-border">
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted font-poppins">Txn ID</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted font-poppins">Client</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted font-poppins">Type</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted font-poppins">Date</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted font-poppins">Duration</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted font-poppins text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {mockTransactions.map((txn) => (
-                <tr key={txn.id} className="hover:bg-cream/20 transition-colors">
-                  <td className="px-6 py-4 text-sm font-medium text-dark font-mono">{txn.id}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-dark">{txn.client}</td>
-                  <td className="px-6 py-4 text-sm text-paragraph">{txn.type}</td>
-                  <td className="px-6 py-4 text-sm text-paragraph">{txn.date}</td>
-                  <td className="px-6 py-4 text-sm text-paragraph">{txn.duration}</td>
-                  <td className="px-6 py-4 text-sm font-bold text-navy text-right">₹{txn.amount.toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+          <Panel title="Statement" subtitle="Every change to your balance, newest first" bodyClassName="px-0 pb-2 md:px-0">
+            {data.entries.length === 0 ? (
+              <p className="px-6 pb-6 text-[14px] text-ink-3 md:px-7">No earnings yet. Completed consultations appear here.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[560px] text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-hairline text-[12px] text-ink-3">
+                      <th className="px-6 py-3 font-medium md:px-7">Date</th>
+                      <th className="px-3 py-3 font-medium">Details</th>
+                      <th className="px-3 py-3 text-right font-medium">Amount</th>
+                      <th className="px-6 py-3 text-right font-medium md:px-7">Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-hairline">
+                    {data.entries.map((e) => (
+                      <tr key={e.id}>
+                        <td className="px-6 py-3.5 whitespace-nowrap text-ink-2 md:px-7">{formatDateTime(e.createdAt)}</td>
+                        <td className="px-3 py-3.5 text-ink">{e.description}</td>
+                        <td
+                          className={cn(
+                            "px-3 py-3.5 text-right font-semibold whitespace-nowrap tabular-nums",
+                            e.type === "CREDIT" ? "text-emerald-deep" : "text-garnet",
+                          )}
+                        >
+                          {e.type === "CREDIT" ? "+" : "−"}
+                          {formatINR(e.amount)}
+                        </td>
+                        <td className="px-6 py-3.5 text-right whitespace-nowrap text-ink-2 tabular-nums md:px-7">{formatINR(e.balanceAfter)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Panel>
+        </>
+      )}
     </div>
   );
 }

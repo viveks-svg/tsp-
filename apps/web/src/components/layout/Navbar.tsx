@@ -95,7 +95,7 @@ export default function Navbar() {
 
   useEffect(() => {
     if (mobileOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = "";
     } else {
       document.body.style.overflow = "";
     }
@@ -132,17 +132,16 @@ export default function Navbar() {
 
   return (
     <>
-      <div className="sticky top-0 z-[60] w-full" style={{ height: 0 }}>
-        <nav
-          className={cn(
-            "absolute top-0 left-0 right-0 md:top-4 md:left-1/2 md:-translate-x-1/2 w-full md:w-[calc(100%-32px)] max-w-7xl md:rounded-full transition-all duration-500 ease-out",
-            mounted && (scrolled || pathname !== "/")
-              ? "bg-[#0F0E0C]/85 backdrop-blur-xl border-b border-white/10 md:border md:border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.18)]"
-              : "bg-transparent border-transparent shadow-none"
-          )}
-        >
-          <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16 md:min-h-[72px]">
+      <nav
+        className={cn(
+          "fixed top-0 left-0 right-0 md:top-4 md:left-1/2 md:-translate-x-1/2 z-50 w-full md:w-[calc(100%-32px)] max-w-7xl md:rounded-full transition-all duration-500 ease-out",
+          mounted && (scrolled || pathname !== "/")
+            ? "bg-[#0F0E0C]/85 backdrop-blur-xl border-b border-white/10 md:border md:border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.18)]"
+            : "bg-transparent border-transparent shadow-none"
+        )}
+      >
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 md:min-h-[72px]">
             {/* Logo */}
             <Link href="/" className="flex items-center shrink-0">
               <Image src="/logo/Group 2.svg" alt="Time Space & Planets" width={60} height={60}
@@ -467,15 +466,13 @@ export default function Navbar() {
                             <Wallet className="w-4 h-4" />
                             Wallet
                           </a>
-                          {user.role !== "ADMIN" && (
-                            <a
-                              href={ROUTES.CONSULTATIONS}
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/60 hover:bg-white/[0.05] hover:text-white transition-colors font-poppins"
-                            >
-                              <CalendarClock className="w-4 h-4" />
-                              Consultations
-                            </a>
-                          )}
+                          <a
+                            href={ROUTES.CONSULTATIONS}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/60 hover:bg-white/[0.05] hover:text-white transition-colors font-poppins"
+                          >
+                            <CalendarClock className="w-4 h-4" />
+                            Consultations
+                          </a>
                           <a
                             href={ROUTES.ORDERS}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/60 hover:bg-white/[0.05] hover:text-white transition-colors font-poppins"
@@ -534,7 +531,6 @@ export default function Navbar() {
           </div>
         </div>
       </nav >
-      </div>
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
@@ -600,15 +596,13 @@ export default function Navbar() {
                         >
                           Wallet
                         </Link>
-                        {user.role !== "ADMIN" && (
-                          <Link
-                            href={ROUTES.CONSULTATIONS}
-                            onClick={() => setMobileOpen(false)}
-                            className="text-center text-xs font-medium py-2 rounded-lg bg-white/[0.05] text-white/70 hover:bg-white/[0.08] transition-colors"
-                          >
-                            Consultations
-                          </Link>
-                        )}
+                        <Link
+                          href={ROUTES.CONSULTATIONS}
+                          onClick={() => setMobileOpen(false)}
+                          className="text-center text-xs font-medium py-2 rounded-lg bg-white/[0.05] text-white/70 hover:bg-white/[0.08] transition-colors"
+                        >
+                          Consultations
+                        </Link>
                         <Link
                           href={ROUTES.ORDERS}
                           onClick={() => setMobileOpen(false)}
@@ -795,7 +789,7 @@ export default function Navbar() {
                                                   href={calc.href}
                                                   onClick={() => setMobileOpen(false)}
                                                   className={cn(
-                                                    "flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs hover:bg-white/[0.05] transition-colors",
+                                                    "flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs hover:bg-white/[0.05] hover:text-white transition-colors text-white/60",
                                                     isActiveLink(pathname, calc.href) && "bg-[#C8A04A]/10 text-[#C8A04A] font-semibold"
                                                   )}
                                                 >

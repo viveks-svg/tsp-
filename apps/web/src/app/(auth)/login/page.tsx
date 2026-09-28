@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { User } from "@/types/user";
+import { homeForRole } from "@/lib/constants/route-ownership";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,17 +35,9 @@ export default function LoginPage() {
       {/* Login Form Component */}
       <LoginForm
         onSuccess={(user: User) => {
-          const role = user?.role;
-
-          if (role === "ASTROLOGER") {
-            router.push("/astrologer/dashboard");
-          } else if (role === "ADMIN") {
-            router.push("/admin");
-          } else {
-            router.push("/");
-          }
-
-          router.refresh();
+          // No router.refresh() here: refreshing while still on /login re-runs the
+          // proxy with the new cookie, which bounces every role back to "/".
+          router.replace(homeForRole(user?.role));
         }}
         onSwitchToSignup={() => router.push("/signup")}
       />
@@ -54,7 +47,8 @@ export default function LoginPage() {
         By signing in, you agree to our{" "}
         <Link href="/terms" className="underline hover:text-slate-600">
           Terms of Service
-        </Link>
+        </Link>{" "}
+        and{" "}
         <Link href="/privacy-policy" className="underline hover:text-slate-600">
           Privacy Policy
         </Link>

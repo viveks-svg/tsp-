@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import QueueStatusCard from "@/features/queue/components/QueueStatusCard";
 import Link from "next/link";
 import { CalendarClock, Loader2 } from "lucide-react";
 import { apiClient } from "@/lib/http/client";
@@ -100,6 +101,8 @@ export default function ConsultationsPageContent() {
         <p className="mt-2 text-sm text-paragraph">
           Your upcoming and completed sessions with TSP astrologers.
         </p>
+
+        <QueueStatusCard />
 
         {error && (
           <div className="mt-6 rounded-card border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">

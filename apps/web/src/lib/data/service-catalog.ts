@@ -57,6 +57,9 @@ export interface ServiceDefinition {
   formFields: FormField[];
   requiresSlot: boolean;
   tags: string[];         // for filtering/search
+  /** Backend booking category. Defaults from `category` when omitted
+   *  (business/property → BUSINESS_VASTU, otherwise CONSULTATION). */
+  bookingCategory?: 'CONSULTATION' | 'BUSINESS_VASTU' | 'REPORT';
 }
 
 // ── Category Labels ──────────────────────────────────────────────────────────
@@ -135,6 +138,22 @@ const SIGNATURE_ANALYSIS_FIELDS: FormField[] = [
   { name: 'dateOfBirth', label: 'Date of Birth', type: 'date', required: true, section: 'Birth Details' },
   { name: 'concerns', label: 'What would you like to improve? (e.g. confidence, career, wealth) (optional)', type: 'textarea', required: false, section: 'Your Goals' },
 ];
+
+const REPORT_BIRTH_FIELDS: FormField[] = [
+  ...COMMON_FIELDS,
+  { name: 'dateOfBirth', label: 'Date of Birth', type: 'date', required: true, section: 'Birth Details' },
+  { name: 'timeOfBirth', label: 'Time of Birth', type: 'time', required: true, section: 'Birth Details' },
+  { name: 'placeOfBirth', label: 'Place of Birth', type: 'text', placeholder: 'City, State, Country', required: true, section: 'Birth Details' },
+];
+
+const REPORT_QUESTION_FIELD: FormField = {
+  name: 'notes',
+  label: 'Your question or focus area (optional)',
+  type: 'textarea',
+  placeholder: 'Anything specific you would like Dr. Pradeep to address in your report…',
+  required: false,
+  section: 'Your Question',
+};
 
 // ── SERVICE CATALOG ──────────────────────────────────────────────────────────
 
@@ -718,6 +737,167 @@ export const SERVICE_CATALOG: ServiceDefinition[] = [
   },
 ];
 
+
+// ── REPORT CATALOG ───────────────────────────────────────────────────────────
+// Written reports (no session slot). Kept out of SERVICE_CATALOG so they don't
+// appear in the consultation menus, but bookable via /book?service=<slug>
+// (see getServiceById). Prices must match SERVICE_PRICES on the API.
+
+export const REPORT_CATALOG: ServiceDefinition[] = [
+  {
+    id: 'astro-swot',
+    category: 'personal',
+    bookingCategory: 'REPORT',
+    name: 'Astro SWOT Analysis',
+    shortDescription: 'Comprehensive strengths, weaknesses, opportunities, and threats mapped through your birth chart.',
+    icon: 'FileText',
+    requiresSlot: false,
+    tags: ['report', 'swot', 'birth chart'],
+    formFields: [...REPORT_BIRTH_FIELDS, REPORT_QUESTION_FIELD],
+    plans: [
+      {
+        slug: 'standard',
+        name: 'Report',
+        tagline: 'Personalised written report',
+        priceINR: 1999,
+        priceLabel: '₹1,999',
+        features: [
+          'Strengths & weaknesses from your birth chart',
+          'Opportunity and threat periods ahead',
+          'Practical remedies and focus areas',
+          'Signed PDF delivered within 7 working days',
+        ],
+        ctaText: 'Order Report →',
+        variant: 'featured',
+      },
+    ],
+  },
+  {
+    id: 'career-blueprint',
+    category: 'personal',
+    bookingCategory: 'REPORT',
+    name: 'Career Blueprint Report',
+    shortDescription: 'Detailed career direction analysis with Dasha-based timing for optimal career moves.',
+    icon: 'Briefcase',
+    requiresSlot: false,
+    tags: ['report', 'career', 'timing'],
+    formFields: [...REPORT_BIRTH_FIELDS, REPORT_QUESTION_FIELD],
+    plans: [
+      {
+        slug: 'standard',
+        name: 'Report',
+        tagline: 'Personalised written report',
+        priceINR: 2999,
+        priceLabel: '₹2,999',
+        features: [
+          'Career house & planetary analysis',
+          'Dasha-based timing for career moves',
+          'Suitable fields and roles',
+          'Signed PDF delivered within 7 working days',
+        ],
+        ctaText: 'Order Report →',
+        variant: 'featured',
+      },
+    ],
+  },
+  {
+    id: 'business-alignment',
+    category: 'business',
+    bookingCategory: 'REPORT',
+    name: 'Business Alignment Report',
+    shortDescription: 'Strategic alignment report for your business — partnerships, timing, and directional analysis.',
+    icon: 'Building2',
+    requiresSlot: false,
+    tags: ['report', 'business', 'alignment'],
+    formFields: [
+      ...REPORT_BIRTH_FIELDS,
+      { name: 'businessName', label: 'Business Name (optional)', type: 'text', required: false, section: 'Business Details' },
+      { name: 'businessAddress', label: 'Business Address (optional)', type: 'textarea', required: false, section: 'Business Details' },
+      REPORT_QUESTION_FIELD,
+    ],
+    plans: [
+      {
+        slug: 'standard',
+        name: 'Report',
+        tagline: 'Personalised written report',
+        priceINR: 6999,
+        priceLabel: '₹6,999',
+        features: [
+          'Business & partnership alignment',
+          'Favourable timing windows',
+          'Directional (Vastu) recommendations',
+          'Signed PDF delivered within 7 working days',
+        ],
+        ctaText: 'Order Report →',
+        variant: 'featured',
+      },
+    ],
+  },
+  {
+    id: 'relationship-analysis',
+    category: 'personal',
+    bookingCategory: 'REPORT',
+    name: 'Relationship Analysis',
+    shortDescription: 'Compatibility analysis and relationship timing insights for lasting partnerships.',
+    icon: 'Heart',
+    requiresSlot: false,
+    tags: ['report', 'relationship', 'compatibility'],
+    formFields: [
+      ...REPORT_BIRTH_FIELDS,
+      { name: 'partnerName', label: "Partner's Name (optional)", type: 'text', required: false, section: "Partner's Birth Details" },
+      { name: 'partnerDob', label: "Partner's Date of Birth (optional)", type: 'date', required: false, section: "Partner's Birth Details" },
+      { name: 'partnerTimeOfBirth', label: "Partner's Time of Birth (optional)", type: 'time', required: false, section: "Partner's Birth Details" },
+      { name: 'partnerPlaceOfBirth', label: "Partner's Place of Birth (optional)", type: 'text', required: false, section: "Partner's Birth Details" },
+      REPORT_QUESTION_FIELD,
+    ],
+    plans: [
+      {
+        slug: 'standard',
+        name: 'Report',
+        tagline: 'Personalised written report',
+        priceINR: 2499,
+        priceLabel: '₹2,499',
+        features: [
+          'Compatibility analysis',
+          'Relationship timing insights',
+          'Guidance for harmony',
+          'Signed PDF delivered within 7 working days',
+        ],
+        ctaText: 'Order Report →',
+        variant: 'featured',
+      },
+    ],
+  },
+  {
+    id: 'annual-forecast',
+    category: 'personal',
+    bookingCategory: 'REPORT',
+    name: 'Annual Forecast Report',
+    shortDescription: 'Month-by-month forecast for the coming year — finances, career, health, and relationships.',
+    icon: 'CalendarDays',
+    requiresSlot: false,
+    tags: ['report', 'forecast', 'annual'],
+    formFields: [...REPORT_BIRTH_FIELDS, REPORT_QUESTION_FIELD],
+    plans: [
+      {
+        slug: 'standard',
+        name: 'Report',
+        tagline: 'Personalised written report',
+        priceINR: 2499,
+        priceLabel: '₹2,499',
+        features: [
+          'Month-by-month forecast for the year',
+          'Finances, career, health & relationships',
+          'Key dates to act on or avoid',
+          'Signed PDF delivered within 7 working days',
+        ],
+        ctaText: 'Order Report →',
+        variant: 'featured',
+      },
+    ],
+  },
+];
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Get all services in a specific category */
@@ -727,7 +907,7 @@ export function getServicesByCategory(category: ServiceCategory): ServiceDefinit
 
 /** Find a service by its slug (id) */
 export function getServiceById(id: string): ServiceDefinition | undefined {
-  return SERVICE_CATALOG.find((s) => s.id === id);
+  return SERVICE_CATALOG.find((s) => s.id === id) ?? REPORT_CATALOG.find((s) => s.id === id);
 }
 
 /** Find a specific plan within a service */

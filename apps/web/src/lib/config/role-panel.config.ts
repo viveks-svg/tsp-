@@ -5,7 +5,7 @@
 export type Role = "USER" | "ASTROLOGER" | "ADMIN";
 
 export const ROLE_PANEL_CONFIG: Record<Role, { label: string; href: string } | null> = {
-  ADMIN:      { label: "Admin Panel",      href: "/admin/queue" },
+  ADMIN:      { label: "Admin Panel",      href: "/admin" },
   ASTROLOGER: { label: "Astrologer Panel", href: "/astrologer/dashboard" },
   USER:       null,
 };

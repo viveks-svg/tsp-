@@ -28,9 +28,15 @@ export default function NotificationDropdown({
       onMarkRead(notification.id);
     }
     onClose();
-    if ((notification as any).link) {
-      router.push((notification as any).link);
-    } else if (user?.role === "ASTROLOGER" || user?.role === "ADMIN") {
+    // Announcements from the TSP office carry their link in metadata.
+    const link = (notification as any).link ?? (notification as any).metadata?.link;
+    if (typeof link === "string" && /^https:\/\//.test(link)) {
+      window.open(link, "_blank", "noopener,noreferrer");
+    } else if (typeof link === "string" && /^\/(?![\/\\])/.test(link)) {
+      router.push(link);
+    } else if (user?.role === "ADMIN") {
+      router.push("/admin");
+    } else if (user?.role === "ASTROLOGER") {
       router.push("/astrologer/dashboard");
     } else {
       router.push(ROUTES.CONSULTATIONS);

@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback, use } from "react";
+import { getSocketUrl } from "@/features/call/hooks/useCallSocket";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { MessageSquare, Send, PhoneOff, AlertTriangle, Star, CheckCircle, Loader2 } from "lucide-react";
@@ -29,7 +31,11 @@ export default function ChatWindowPage({ params }: { params: Promise<{ id: strin
   const { id } = use(params);
 
   // Auth & store info
-  const { user, walletBalance, accessToken, hydrate } = useAuth();
+  const { user, walletBalance, hydrate } = useAuth();
+  // Only the client has a wallet countdown and reviews; the astrologer just chats.
+  const isClient = user?.role !== "ASTROLOGER";
+  // Balance when the chat opened (reading it live would reload the page when it changes after billing).
+  const openingBalance = useRef(walletBalance);
 
   // Component states
   const [consultation, setConsultation] = useState<any>(null);
@@ -101,21 +107,17 @@ export default function ChatWindowPage({ params }: { params: Promise<{ id: strin
           setThread(activeThread);
           setMessages(activeThread.messages || []);
 
-          // Calculate allowed duration
-          const rate = Number(activeCons.lockedPricingPerMin);
-          const balance = user?.role === "ASTROLOGER"
-            ? Number(activeCons.user?.wallet?.balance ?? 0)
-            : Number(walletBalance);
-
-          if (user?.role !== "ASTROLOGER" && balance < rate) {
-            throw new Error("Insufficient wallet balance to continue this chat.");
+          // The client's countdown: how long their wallet pays for (the server bills the real time, capped there too).
+          if (isClient) {
+            const rate = Number(activeCons.lockedPricingPerMin);
+            const balance = Number(openingBalance.current);
+            if (balance < rate) {
+              throw new Error("Insufficient wallet balance to continue this chat.");
+            }
+            const allowedSecs = Math.max(1, Math.floor(balance / rate)) * 60;
+            setSecondsRemaining(allowedSecs);
+            setInitialSeconds(allowedSecs);
           }
-
-          const allowedMins = Math.max(1, Math.floor(balance / rate));
-          const allowedSecs = allowedMins * 60;
-
-          setSecondsRemaining(allowedSecs);
-          setInitialSeconds(allowedSecs);
         }
       } catch (err) {
         if (!cancelled) {
@@ -131,31 +133,29 @@ export default function ChatWindowPage({ params }: { params: Promise<{ id: strin
     return () => {
       cancelled = true;
     };
-  }, [id, walletBalance, router]);
+  }, [id, isClient, router]);
 
   // 2. Setup WebSocket Connection — with JWT auth token
   useEffect(() => {
     if (!thread) return;
 
-    // Derive socket server URL from API base URL (remove /api/v1 suffix)
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
-    const socketUrl = apiUrl.replace(/\/api\/v1\/?$/, "");
-
-    // Connect to NestJS websocket server with auth token
-    const socket = io(socketUrl, {
+    // Same origin as the site: the session cookie authenticates the socket.
+    const socket = io(getSocketUrl(), {
       transports: ["websocket"],
       reconnectionAttempts: 5,
-      auth: {
-        token: accessToken ?? "",
-      },
+      withCredentials: true,
     });
 
     socketRef.current = socket;
 
+    // Join the chat room; retry briefly if the server hasn't finished checking the session yet.
+    const joinThread = (attempt = 0) =>
+      socket.emit("join_thread", { threadId: thread.id }, (ack?: { status: string }) => {
+        if (ack?.status !== "success" && attempt < 3) setTimeout(() => joinThread(attempt + 1), 800);
+      });
     socket.on("connect", () => {
       setSocketStatus("connected");
-      // Join consultation room
-      socket.emit("join_thread", { threadId: thread.id });
+      joinThread();
     });
 
     socket.on("disconnect", () => {
@@ -185,7 +185,7 @@ export default function ChatWindowPage({ params }: { params: Promise<{ id: strin
     return () => {
       socket.disconnect();
     };
-  }, [thread, accessToken]);
+  }, [thread]);
 
   // 3. Scroll to Bottom
   useEffect(() => {
@@ -194,7 +194,7 @@ export default function ChatWindowPage({ params }: { params: Promise<{ id: strin
 
   // 4. Timer Countdown & Auto-completion
   useEffect(() => {
-    if (loading || error || showReviewModal || secondsRemaining <= 0) return;
+    if (!isClient || loading || error || showReviewModal || secondsRemaining <= 0) return;
 
     timerRef.current = setInterval(() => {
       setSecondsRemaining((prev) => {
@@ -210,7 +210,7 @@ export default function ChatWindowPage({ params }: { params: Promise<{ id: strin
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [loading, error, secondsRemaining, showReviewModal]);
+  }, [isClient, loading, error, secondsRemaining, showReviewModal]);
 
   // Handle automatic session termination (wallet depleted)
   const autoEndSession = async () => {
@@ -233,7 +233,14 @@ export default function ChatWindowPage({ params }: { params: Promise<{ id: strin
     }
   };
 
+  // The other side ended it: the client refreshes their wallet and may leave a review;
+  // the astrologer goes back to their consultations.
   const handleSessionFinishedBySystem = () => {
+    if (!isClient) {
+      router.push("/astrologer/consultations");
+      return;
+    }
+    void hydrate();
     setShowReviewModal(true);
   };
 
@@ -242,9 +249,12 @@ export default function ChatWindowPage({ params }: { params: Promise<{ id: strin
     e.preventDefault();
     if (!inputMessage.trim() || !thread || !user) return;
 
-    socketRef.current?.emit("chat_message", {
-      threadId: thread.id,
-      content: inputMessage,
+    const content = inputMessage;
+    socketRef.current?.emit("chat_message", { threadId: thread.id, content }, (ack?: { status: string; error?: string }) => {
+      if (ack && ack.status !== "sent") {
+        toast.error(ack.error || "Your message wasn't sent. Please try again.");
+        setInputMessage((current) => current || content); // give it back to retry
+      }
     });
 
     setInputMessage("");
@@ -264,10 +274,14 @@ export default function ChatWindowPage({ params }: { params: Promise<{ id: strin
       });
 
       socketRef.current?.emit("end_session", { threadId: thread?.id });
+      if (!isClient) {
+        router.push("/astrologer/consultations");
+        return;
+      }
       await hydrate();
       setShowReviewModal(true);
     } catch (err) {
-      alert("Failed to complete session: " + (err instanceof Error ? err.message : "Error"));
+      toast.error("Could not end the consultation: " + (err instanceof Error ? err.message : "please try again"));
     }
   };
 
@@ -352,9 +366,9 @@ export default function ChatWindowPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
 
-          {/* Live timer display */}
+          {/* Live timer display (the client's wallet time) */}
           <div className="flex items-center gap-4">
-            <div className="bg-navy/5 border border-navy/15 rounded-lg px-4 py-2 text-center shrink-0 min-w-28">
+            <div className={cn("bg-navy/5 border border-navy/15 rounded-lg px-4 py-2 text-center shrink-0 min-w-28", !isClient && "hidden")}>
               <p className="text-[9px] text-muted uppercase font-bold tracking-wider font-poppins">Remaining</p>
               <p className={cn(
                 "text-lg font-bold font-poppins",
@@ -432,12 +446,13 @@ export default function ChatWindowPage({ params }: { params: Promise<{ id: strin
             placeholder={`Type your message to ${astroName}...`}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            disabled={secondsRemaining <= 0 || showReviewModal}
+            maxLength={2000}
+            disabled={(isClient && secondsRemaining <= 0) || showReviewModal}
             className="flex-1 px-4 py-3 bg-cream/40 border border-border rounded-xl text-sm focus:outline-none focus:border-gold transition-colors font-poppins disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={!inputMessage.trim() || secondsRemaining <= 0 || showReviewModal}
+            disabled={!inputMessage.trim() || (isClient && secondsRemaining <= 0) || showReviewModal}
             className="bg-navy hover:bg-navy-hover text-white p-3.5 rounded-xl disabled:opacity-50 transition-colors shadow-sm"
           >
             <Send className="w-4 h-4" />
@@ -446,7 +461,7 @@ export default function ChatWindowPage({ params }: { params: Promise<{ id: strin
       </footer>
 
       {/* Star Rating & Review Modal Overlay */}
-      {showReviewModal && (
+      {isClient && showReviewModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-card-lg border border-border p-8 max-w-md w-full shadow-2xl text-center space-y-6">
             

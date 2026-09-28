@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { apiClient } from '@/lib/http/client';
 import { useBookingSession } from '@/lib/booking/useBookingSession';
@@ -10,14 +10,15 @@ import {
   type ServiceDefinition,
   type ServicePlan,
 } from '@/lib/data/service-catalog';
+import { useAuth } from '@/providers/AuthProvider';
 
 import ServiceSelectStep from './ServiceSelectStep';
 import PlanSelectStep from './PlanSelectStep';
-import BookingCalendarStep from './BookingCalendarStep';
 import ReviewStep from './ReviewStep';
 import BookingSuccess from './BookingSuccess';
 import FormField from '@/components/ui/FormField';
 import { validateEmail } from '@/lib/validations/validators';
+import { formatCalendarDate, formatSlot, formatTime24, istDateString } from './booking-format';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,15 +56,53 @@ export interface BookingFormData {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function serviceCategoryFromCatalog(service: ServiceDefinition): BookingCategory {
+  if (service.bookingCategory) return service.bookingCategory;
   if (service.category === 'business' || service.category === 'property') return 'BUSINESS_VASTU';
   return 'CONSULTATION';
 }
 
-const SURCHARGE: Record<string, number> = {
-  STANDARD: 0,
-  NEXT_DAY: 0.25,
-  SAME_DAY: 0.50,
-};
+/** Name shown on the booking, receipts and Razorpay. */
+function bookingDisplayName(service: ServiceDefinition, plan: ServicePlan): string {
+  return service.bookingCategory === 'REPORT' ? service.name : `${service.name} — ${plan.name}`;
+}
+
+// Same rule as the API: letters (any script), spaces, full stops, apostrophes, hyphens.
+const PERSON_NAME_RE = /^[\p{L}][\p{L}\s.'\u2019-]*$/u;
+const PERSON_NAME_FIELDS = new Set(['fullName', 'name', 'partnerName']);
+const NOTES_MAX = 4000;
+
+// Form fields the booking API accepts directly. Everything else the client
+// tells us is folded into `notes` so Dr. Pradeep sees it.
+const DTO_FIELDS = new Set([
+  'fullName', 'email', 'phone', 'dateOfBirth', 'timeOfBirth', 'placeOfBirth',
+  'businessName', 'businessAddress', 'spaceType', 'notes',
+]);
+
+function cleanLabel(label: string): string {
+  return label.replace(/\s*\(optional\)\s*$/i, '').trim();
+}
+
+function buildNotes(service: ServiceDefinition, data: Record<string, string>): string | undefined {
+  const lines: string[] = [];
+  for (const field of service.formFields) {
+    if (field.type === 'file' || DTO_FIELDS.has(field.name)) continue;
+    const raw = (data[field.name] || '').trim();
+    if (!raw) continue;
+    const value =
+      field.type === 'date' ? formatCalendarDate(raw)
+        : field.type === 'time' ? formatTime24(raw)
+          : raw;
+    lines.push(`${cleanLabel(field.label)}: ${value}`);
+  }
+  const ownNotes = (data.notes || '').trim();
+  if (ownNotes) {
+    const notesField = service.formFields.find((f) => f.name === 'notes');
+    lines.push(`${notesField ? cleanLabel(notesField.label) : 'Notes'}: ${ownNotes}`);
+  }
+  if (lines.length === 0) return undefined;
+  const text = lines.join('\n');
+  return text.length > NOTES_MAX ? `${text.slice(0, NOTES_MAX - 1)}…` : text;
+}
 
 // ── Steps indicator ──────────────────────────────────────────────────────────
 
@@ -143,6 +182,42 @@ function DynamicFormStep({
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // After the first submit attempt, show every error — even on untouched fields.
+  const [submitted, setSubmitted] = useState(false);
+
+  const clearFieldError = (key: string) =>
+    setFieldErrors((prev) => (prev[key] ? { ...prev, [key]: '' } : prev));
+
+  // Sessions come from Dr. Pradeep's schedule (GET /slots), never a fixed list.
+  const [slots, setSlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  useEffect(() => {
+    if (!service.requiresSlot || !scheduledDate) {
+      setSlots([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingSlots(true);
+    apiClient
+      .get<{ slots?: string[] }>(`/slots?date=${scheduledDate}`)
+      .then((data) => {
+        if (cancelled) return;
+        const next = data.slots ?? [];
+        setSlots(next);
+        if (scheduledSlot && !next.includes(scheduledSlot)) setScheduledSlot('');
+      })
+      .catch(() => !cancelled && setSlots([]))
+      .finally(() => !cancelled && setLoadingSlots(false));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scheduledDate, service.requiresSlot]);
+
+  // Standard bookings need two days' notice (enforced by the API too), in IST.
+  // Dates are compared as YYYY-MM-DD strings so the client's timezone never matters.
+  const earliestDate = istDateString(2);
+  const todayIST = istDateString(0);
 
   // Group fields by section
   const sections: Record<string, typeof service.formFields> = {};
@@ -178,19 +253,19 @@ function DynamicFormStep({
       }
     }
 
-    // check name
-    const nameField = service.formFields.find(
-      (f) => f.name.toLowerCase().includes('name') && f.type === 'text'
-    );
-    if (nameField && formData[nameField.name]) {
-      const nameVal = formData[nameField.name].trim();
+    // check person names (not business names)
+    for (const nameField of service.formFields.filter((f) => PERSON_NAME_FIELDS.has(f.name))) {
+      const nameVal = (formData[nameField.name] || '').trim();
+      if (!nameVal) continue;
       if (nameVal.length < 2) {
         newErrors[nameField.name] = "Name must be at least 2 characters long.";
-      } else if (!/^[a-zA-Z\s]+$/.test(nameVal)) {
-        newErrors[nameField.name] = "Name must contain only letters and spaces.";
+      } else if (nameVal.length > 80) {
+        newErrors[nameField.name] = "Name must be 80 characters or fewer.";
+      } else if (!PERSON_NAME_RE.test(nameVal)) {
+        newErrors[nameField.name] = "Please use letters only (spaces, full stops, apostrophes and hyphens are fine).";
       }
     }
-    
+
     // Check email
     const emailField = service.formFields.find(
       (f) => f.type === 'email' || f.name.toLowerCase().includes('email')
@@ -215,19 +290,9 @@ function DynamicFormStep({
       }
 
       if (scheduledDate) {
-        const selected = new Date(scheduledDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (selected < today) {
+        if (scheduledDate < todayIST) {
           newErrors['scheduledDate'] = 'Cannot select a past date for booking.';
-        }
-
-        const minDate = new Date();
-        minDate.setDate(minDate.getDate() + 2);
-        minDate.setHours(0, 0, 0, 0);
-
-        if (selected < minDate && urgencyTier === 'STANDARD') {
+        } else if (scheduledDate < earliestDate && urgencyTier === 'STANDARD') {
           newErrors['scheduledDate'] = 'Standard booking requires at least 2 days advance notice.';
         }
       }
@@ -239,11 +304,33 @@ function DynamicFormStep({
 
     if (Object.keys(newErrors).length > 0) {
       setFieldErrors(newErrors);
+      setSubmitted(true);
       setFormError("Please fix the highlighted errors.");
+      // Bring the first problem into view (in on-screen order) and focus it.
+      const order = [
+        ...service.formFields.map((f) => f.name),
+        'scheduledDate',
+        'scheduledSlot',
+        'consentToContact',
+      ];
+      const first = order.find((k) => newErrors[k]);
+      if (first) {
+        requestAnimationFrame(() => {
+          const wrapper = document.querySelector<HTMLElement>(`[data-field="${first}"]`);
+          if (!wrapper) return;
+          wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          wrapper.querySelector<HTMLElement>('input, select, textarea')?.focus({ preventScroll: true });
+        });
+      }
       return;
     }
 
     setFieldErrors({});
+    if (!sessionId) {
+      // Lead tracking isn't ready yet (storage just initialising) — don't block the client.
+      onNext();
+      return;
+    }
     setIsSubmitting(true);
     try {
       await apiClient.post('/leads/contact', {
@@ -269,114 +356,115 @@ function DynamicFormStep({
 
   return (
     <div className="p-6 sm:p-8">
-      <button
-        onClick={onBack}
-        className="text-sm text-[#8B6914] hover:text-[#C99411] font-medium mb-6 flex items-center gap-1 transition-colors"
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        Change Plan
-      </button>
+        <button
+          onClick={onBack}
+          className="text-sm text-[#8B6914] hover:text-[#C99411] font-medium mb-4 flex items-center gap-1 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          {service.bookingCategory === 'REPORT' ? 'All Reports' : service.plans.length > 1 ? 'Change Plan' : 'Change Service'}
+        </button>
 
-      <div className="mb-8">
-        <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#1E1A16]">
-          Tell Us About Your Needs
-        </h2>
-        <p className="text-[#6B5F52] text-sm mt-2">
-          Fill in the details for your <span className="font-semibold text-[#1E1A16]">{service.name}</span> consultation.
-        </p>
-      </div>
+        <div className="mb-5">
+          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#1E1A16]">
+            Tell Us About Your Needs
+          </h2>
+          <p className="text-[#6B5F52] text-sm mt-2">
+            Fill in the details for your <span className="font-semibold text-[#1E1A16]">{service.name}</span>
+            {service.bookingCategory === 'REPORT' ? ' report.' : ' consultation.'}
+          </p>
+        </div>
 
-      <div className="space-y-8 max-w-2xl">
-        {Object.entries(sections).map(([sectionName, fields]) => (
-          <div key={sectionName}>
-            <h3 className="text-xs font-bold text-[#8B6914] uppercase tracking-[0.15em] mb-4 font-poppins">
-              {sectionName}
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {fields.map((field) => {
-                const value = formData[field.name] || '';
+        {/* ── All form fields in ONE continuous 2-column grid ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+          {service.formFields.map((field) => {
+            const value = formData[field.name] || '';
 
-                if (field.type === 'file') {
-                  return (
-                    <div key={field.name} className="sm:col-span-2">
-                      <label className="block text-sm text-[#4B5563] mb-1.5 font-medium">
-                        {field.label} {field.required && <span className="text-[#C8A04A]">*</span>}
-                      </label>
-                      <div className="w-full px-4 py-3 bg-[#FAFAF8] border border-dashed border-[#EFEBE1] rounded-xl text-sm text-[#9CA3AF] text-center cursor-not-allowed">
-                        File upload coming soon — share via email after booking
-                      </div>
-                    </div>
-                  );
-                }
+            if (field.type === 'file') {
+              return (
+                <div key={field.name} className="sm:col-span-2">
+                  <label className="block text-sm text-[#4B5563] mb-1.5 font-medium">
+                    {field.label} {field.required && <span className="text-[#C8A04A]">*</span>}
+                  </label>
+                  <div className="w-full px-4 py-3 bg-[#FAFAF8] border border-dashed border-[#EFEBE1] rounded-xl text-sm text-[#9CA3AF] text-center cursor-not-allowed">
+                    File upload coming soon — share via email after booking
+                  </div>
+                </div>
+              );
+            }
 
-                return (
-                  <FormField
-                    key={field.name}
-                    label={field.label}
-                    name={field.name}
-                    type={field.type as any}
-                    value={value}
-                    onChange={(val) => updateFormField(field.name, val)}
-                    required={field.required}
-                    placeholder={field.placeholder}
-                    options={field.options}
-                    error={fieldErrors[field.name]}
-                    className={field.type === 'textarea' ? 'sm:col-span-2' : ''}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        ))}
+            return (
+              <FormField
+                key={field.name}
+                label={field.label}
+                name={field.name}
+                type={field.type as any}
+                value={value}
+                onChange={(val) => { updateFormField(field.name, val); clearFieldError(field.name); }}
+                required={field.required}
+                placeholder={field.placeholder}
+                options={field.options}
+                error={fieldErrors[field.name]}
+                forceShowError={submitted}
+                maxLength={field.type === 'textarea' ? 2000 : undefined}
+                rows={field.type === 'textarea' ? 2 : undefined}
+                className={field.type === 'textarea' ? 'sm:col-span-2' : ''}
+              />
+            );
+          })}
+        </div>
 
-        {/* Date/Time for slot-based services */}
+        {/* Preferred Schedule — kept separate since slots are fetched dynamically */}
         {service.requiresSlot && (
-          <div>
-            <h3 className="text-xs font-bold text-[#8B6914] uppercase tracking-[0.15em] mb-4 font-poppins">
+          <div className="mt-5">
+            <h3 className="text-xs font-bold text-[#8B6914] uppercase tracking-[0.15em] mb-3 font-poppins">
               Preferred Schedule
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
               <FormField
                 label="Preferred Date"
                 name="scheduledDate"
                 type="date"
                 required
                 value={scheduledDate}
-                onChange={(val) => { setScheduledDate(val); setFieldErrors(prev => ({...prev, scheduledDate: ''})); }}
-                min={new Date().toISOString().split("T")[0]}
+                onChange={(val) => { setScheduledDate(val); clearFieldError('scheduledDate'); }}
+                min={earliestDate}
                 error={fieldErrors['scheduledDate']}
+                forceShowError={submitted}
               />
               <FormField
                 label="Preferred Time"
                 name="scheduledSlot"
                 type="select"
                 value={scheduledSlot}
-                onChange={(val) => { setScheduledSlot(val); setFieldErrors(prev => ({...prev, scheduledSlot: ''})); }}
+                onChange={(val) => { setScheduledSlot(val); clearFieldError('scheduledSlot'); }}
                 error={fieldErrors['scheduledSlot']}
-                options={[
-                  '10:00-11:00 AM',
-                  '11:00-12:00 PM',
-                  '02:00-03:00 PM',
-                  '03:00-04:00 PM',
-                  '04:00-05:00 PM',
-                  '05:00-06:00 PM'
-                ]}
+                forceShowError={submitted}
+                placeholder={
+                  !scheduledDate
+                    ? 'Choose a date first'
+                    : loadingSlots
+                      ? 'Finding available sessions…'
+                      : slots.length === 0
+                        ? 'No sessions available on this date'
+                        : 'Select a session'
+                }
+                options={slots.map((slot) => ({ value: slot, label: formatSlot(slot) }))}
               />
             </div>
           </div>
         )}
 
         {/* Consent Checkbox */}
-        <div className="mt-6 pt-6 border-t border-[#EFEBE1]">
+        <div className="mt-4 pt-4 border-t border-[#EFEBE1]" data-field="consentToContact">
           <label className="flex items-start gap-3 cursor-pointer group">
             <div className="relative flex items-center justify-center mt-0.5">
               <input
                 type="checkbox"
                 className="peer sr-only"
                 checked={formData.consentToContact === 'true'}
-                onChange={(e) => updateFormField('consentToContact', e.target.checked ? 'true' : 'false')}
+                onChange={(e) => { updateFormField('consentToContact', e.target.checked ? 'true' : 'false'); clearFieldError('consentToContact'); }}
               />
               <div className="w-5 h-5 border-2 border-[#EFEBE1] rounded bg-white transition-colors peer-checked:bg-[#C8A04A] peer-checked:border-[#C8A04A] group-hover:border-[#C8A04A]" />
               <svg className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -385,37 +473,50 @@ function DynamicFormStep({
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-sm font-medium text-[#1E1A16]">I consent to being contacted</span>
-              <span className="text-xs text-[#6B5F52]">We will only use this to discuss your consultation.</span>
+              <span className="text-xs text-[#6B5F52]">
+                We will only use this to discuss your {service.bookingCategory === 'REPORT' ? 'report' : 'consultation'}.
+              </span>
             </div>
           </label>
           {fieldErrors['consentToContact'] && (
             <p className="text-xs text-rose-500 mt-2">{fieldErrors['consentToContact']}</p>
           )}
         </div>
-      </div>
 
-      {/* Next Button */}
-      <div className="mt-8 flex flex-col sm:flex-row items-center justify-end gap-4">
-        {formError && (
-          <p className="text-sm font-semibold text-rose-500 animate-fade-in text-center sm:text-right">
-            {formError}
-          </p>
-        )}
-        <button
-          disabled={isSubmitting}
-          onClick={handleNext}
-          className="px-8 py-3 bg-[#1E1A16] text-white rounded-full text-sm font-semibold hover:bg-[#C8A04A] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {isSubmitting ? 'Saving...' : 'Review Booking →'}
-        </button>
-      </div>
+        {/* Next Button */}
+        <div className="mt-5 flex flex-col sm:flex-row items-center justify-end gap-4">
+          {formError && (
+            <p className="text-sm font-semibold text-rose-500 animate-fade-in text-center sm:text-right">
+              {formError}
+            </p>
+          )}
+          <button
+            disabled={isSubmitting}
+            onClick={handleNext}
+            className="px-8 py-3 bg-[#1E1A16] text-white rounded-full text-sm font-semibold hover:bg-[#C8A04A] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isSubmitting ? 'Saving...' : 'Review Booking →'}
+          </button>
+        </div>
     </div>
   );
 }
 
+// ── Background image per service ─────────────────────────────────────────────
+const SERVICE_BG_MAP: Record<string, string> = {
+  'relationship-guidance': '/images/booking-bg/relationship-guidance.jpg',
+  'partnership-analysis': '/images/booking-bg/partnership-analysis.jpg',
+  'residential-vastu': '/images/booking-bg/residential-vastu.jpg',
+  'apartment-vastu': '/images/booking-bg/residential-vastu.jpg',
+  'villa-planning': '/images/booking-bg/residential-vastu.jpg',
+  'new-construction': '/images/booking-bg/residential-vastu.jpg',
+  'career-guidance': '/images/booking-bg/career-guidance.jpg',
+};
+
 // ── Main Booking Flow ────────────────────────────────────────────────────────
 
 export default function BookingFlow() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const serviceParam = searchParams.get('service');
   const planParam = searchParams.get('plan');
@@ -429,8 +530,28 @@ export default function BookingFlow() {
   const [urgencyTier, setUrgencyTier] = useState('STANDARD');
   const [confirmedBookingId, setConfirmedBookingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  // True when Razorpay charged the client but our verify call failed; the
+  // webhook will still confirm the booking, so we must not offer Pay again.
+  const [pendingConfirmation, setPendingConfirmation] = useState(false);
 
-  const { sessionId } = useBookingSession(selectedService?.id || 'default');
+  // One lead session per service; empty until a service is chosen.
+  const { sessionId, resetSession } = useBookingSession(selectedService?.id ?? '');
+
+  const { user } = useAuth();
+  const [hasAutoFilled, setHasAutoFilled] = useState(false);
+
+  useEffect(() => {
+    if (user && !hasAutoFilled) {
+      setDynamicFormData((prev) => ({
+        ...prev,
+        fullName: prev.fullName || user.name || '',
+        email: prev.email || user.email || '',
+        phone: prev.phone || user.phone || '',
+      }));
+      setHasAutoFilled(true);
+    }
+  }, [user, hasAutoFilled]);
 
   // Pre-select from URL params
   useEffect(() => {
@@ -459,10 +580,10 @@ export default function BookingFlow() {
 
   const updateFormField = useCallback((key: string, value: string) => {
     let finalValue = value;
-    // We let the user type, but if they want "no numeric values allowed in name field" 
-    // strictly during typing, we can strip numbers here. The user requested this.
-    if (key.toLowerCase().includes("name")) {
-      finalValue = value.replace(/[0-9]/g, ""); 
+    // Person names: keep only what the API accepts (letters, spaces, . ' -).
+    // Business names may legitimately contain digits, so they're left alone.
+    if (PERSON_NAME_FIELDS.has(key)) {
+      finalValue = value.replace(/[^\p{L}\s.'\u2019-]/gu, '');
     }
     setDynamicFormData((prev) => ({ ...prev, [key]: finalValue }));
   }, []);
@@ -488,8 +609,9 @@ export default function BookingFlow() {
 
   // ── Payment ────────────────────────────────────────────────────────────────
   const handlePayment = async () => {
-    if (!selectedService || !selectedPlan) return;
+    if (!selectedService || !selectedPlan || pendingConfirmation) return;
     setIsLoading(true);
+    setPaymentError(null);
 
     const loadRazorpay = () => {
       return new Promise((resolve) => {
@@ -504,49 +626,58 @@ export default function BookingFlow() {
 
     const isLoaded = await loadRazorpay();
     if (!isLoaded) {
-      alert("Razorpay SDK failed to load. Are you offline?");
+      setPaymentError("We couldn't load the secure payment window. Please check your connection and try again.");
       setIsLoading(false);
       return;
     }
 
+    const service = selectedService;
+    const plan = selectedPlan;
+    const leadSessionId = sessionId || undefined;
+    const displayName = bookingDisplayName(service, plan);
+
     try {
       // Build a composite slug for the API
-      let serviceSlug = selectedService.id;
-      if (selectedService.plans.length > 1) {
+      let serviceSlug = service.id;
+      if (service.plans.length > 1) {
         // Backend maps 'standard' and 'basic' plans to the base service ID
-        if (['standard', 'basic'].includes(selectedPlan.slug)) {
-          serviceSlug = selectedService.id;
+        if (['standard', 'basic'].includes(plan.slug)) {
+          serviceSlug = service.id;
         } else {
-          serviceSlug = selectedPlan.slug;
+          serviceSlug = plan.slug;
         }
       }
 
+      // Reports (and other no-slot services) never carry a date or slot.
+      const withSlot = service.requiresSlot;
+
       const data = await apiClient.post<any>('/bookings/initiate', {
-        leadSessionId: sessionId,
-        serviceCategory: serviceCategoryFromCatalog(selectedService),
+        leadSessionId,
+        serviceCategory: serviceCategoryFromCatalog(service),
         serviceSlug,
-        serviceName: `${selectedService.name} — ${selectedPlan.name}`,
-        urgencyTier,
-        fullName: dynamicFormData.fullName || '',
-        email: dynamicFormData.email || '',
+        serviceName: displayName,
+        urgencyTier: withSlot ? urgencyTier : 'STANDARD',
+        fullName: (dynamicFormData.fullName || '').trim(),
+        email: (dynamicFormData.email || '').trim(),
         phone: dynamicFormData.phone || '',
-        businessName: dynamicFormData.businessName || undefined,
-        businessAddress: dynamicFormData.businessAddress || undefined,
+        businessName: dynamicFormData.businessName?.trim() || undefined,
+        businessAddress: dynamicFormData.businessAddress?.trim() || undefined,
         spaceType: dynamicFormData.spaceType || undefined,
         dateOfBirth: dynamicFormData.dateOfBirth || undefined,
         timeOfBirth: dynamicFormData.timeOfBirth || undefined,
-        placeOfBirth: dynamicFormData.placeOfBirth || undefined,
-        scheduledDate: scheduledDate || undefined,
-        scheduledSlot: scheduledSlot || undefined,
-        notes: dynamicFormData.notes || undefined,
+        placeOfBirth: dynamicFormData.placeOfBirth?.trim() || undefined,
+        scheduledDate: withSlot ? scheduledDate || undefined : undefined,
+        scheduledSlot: withSlot ? scheduledSlot || undefined : undefined,
+        notes: buildNotes(service, dynamicFormData),
       });
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        // The key of the Razorpay account that created this order (set in admin Settings).
+        key: data.key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: data.amount,
         currency: 'INR',
         name: 'Time Space & Planets',
-        description: `${selectedService.name} — ${selectedPlan.name}`,
+        description: displayName,
         image: '/images/logo.png',
         order_id: data.razorpayOrderId,
         prefill: {
@@ -556,7 +687,13 @@ export default function BookingFlow() {
         },
         theme: { color: '#1E1A16' },
         handler: async (response: any) => {
-          await confirmPayment(data.bookingId, response.razorpay_order_id, response.razorpay_payment_id, response.razorpay_signature);
+          await confirmPayment(
+            data.bookingId,
+            response.razorpay_order_id,
+            response.razorpay_payment_id,
+            response.razorpay_signature,
+            leadSessionId,
+          );
         },
         modal: {
           ondismiss: () => {
@@ -566,36 +703,53 @@ export default function BookingFlow() {
       };
       const rzp = new (window as any).Razorpay(options);
       rzp.on('payment.failed', function (response: any) {
-        console.error("Payment failed:", response?.error?.description);
+        // Razorpay keeps its window open so the client can retry; just explain.
+        setPaymentError(
+          response?.error?.description
+            ? `Payment failed: ${response.error.description}`
+            : 'Payment failed. Please try again or use another method.'
+        );
       });
       rzp.open();
     } catch (err: any) {
-      alert(err.message ?? 'Failed to initiate booking.');
+      setPaymentError(err?.message || "We couldn't start the payment. Please try again.");
       setIsLoading(false);
     }
   };
 
-  const confirmPayment = async (bookingId: string, orderId: string, paymentId: string, signature: string) => {
+  const confirmPayment = async (
+    bookingId: string,
+    orderId: string,
+    paymentId: string,
+    signature: string,
+    leadSessionId?: string,
+  ) => {
     try {
       await apiClient.post('/bookings/verify-payment', {
         bookingId,
         razorpayOrderId: orderId,
         razorpayPaymentId: paymentId,
         razorpaySignature: signature,
+        leadSessionId,
       });
-      setConfirmedBookingId(bookingId);
-      setStep('success');
+      setPendingConfirmation(false);
     } catch {
-      alert('Payment verification failed.');
-      setIsLoading(false);
+      // The money has been taken; the Razorpay webhook will confirm the booking.
+      setPendingConfirmation(true);
     }
+    // Either way this checkout is done: the next booking starts a fresh lead.
+    resetSession();
+    setPaymentError(null);
+    setIsLoading(false);
+    setConfirmedBookingId(bookingId);
+    setStep('success');
   };
 
   // ── Build legacy config for BookingSuccess compatibility ────────────────────
   const legacyConfig: BookingConfig | null = selectedService && selectedPlan ? {
     category: serviceCategoryFromCatalog(selectedService),
     slug: selectedPlan.slug,
-    name: `${selectedService.name} — ${selectedPlan.name}`,
+    name: bookingDisplayName(selectedService, selectedPlan),
     basePriceINR: selectedPlan.priceINR,
     requiresSlot: selectedService.requiresSlot,
     requiresBusinessDetails: selectedService.category === 'business' || selectedService.category === 'property',
@@ -615,11 +769,25 @@ export default function BookingFlow() {
     spaceType: dynamicFormData.spaceType || '',
   };
 
+  const bgImage = selectedService ? SERVICE_BG_MAP[selectedService.id] || null : null;
+  const showBg = bgImage && (step === 'form' || step === 'review');
+
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
 
-      <div className="w-full">
+      <div className="w-full relative overflow-hidden">
+        {/* Contextual background image — covers step indicator + form */}
+        {showBg && (
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${bgImage})` }}
+          >
+            <div className="absolute inset-0 bg-white/75 backdrop-blur-[2px]" />
+          </div>
+        )}
+
+        <div className="relative">
         {step !== 'success' && <StepIndicator currentStep={step} />}
 
         {step === 'service' && (
@@ -651,19 +819,23 @@ export default function BookingFlow() {
             setScheduledSlot={setScheduledSlot}
             setUrgencyTier={setUrgencyTier}
             onBack={() => {
-              if (selectedService.plans.length === 1) {
+              if (selectedService.bookingCategory === 'REPORT') {
+                router.push('/reports');
+              } else if (selectedService.plans.length === 1) {
                 setStep('service');
               } else {
                 setStep('plan');
               }
             }}
-            onNext={() => setStep('review')}
+            onNext={() => {
+              setPaymentError(null);
+              setStep('review');
+            }}
           />
         )}
 
         {step === 'review' && selectedService && selectedPlan && (
           <ReviewStep
-            sessionId={sessionId}
             service={selectedService}
             plan={selectedPlan}
             formData={dynamicFormData}
@@ -673,6 +845,7 @@ export default function BookingFlow() {
             onBack={() => setStep('form')}
             onConfirm={handlePayment}
             isLoading={isLoading}
+            error={paymentError}
           />
         )}
 
@@ -681,8 +854,10 @@ export default function BookingFlow() {
             bookingId={confirmedBookingId}
             config={legacyConfig}
             form={legacyFormData}
+            pendingConfirmation={pendingConfirmation}
           />
         )}
+        </div>
       </div>
     </>
   );

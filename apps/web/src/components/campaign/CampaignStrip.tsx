@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Megaphone, Clock, ArrowRight } from "lucide-react";
 import { apiClient } from "@/lib/http/client";
 import { ENDPOINTS } from "@/lib/constants/http/endpoints";
@@ -21,7 +21,8 @@ interface ActiveCampaign {
 export function CampaignStrip() {
   const [campaign, setCampaign] = useState<ActiveCampaign | null>(null);
   const { joinQueueRoom } = useQueueSocket();
-  const { isAuthenticated, user } = useAuth();
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const authModal = useAuthModal();
   const pathname = usePathname();
 
@@ -63,27 +64,21 @@ export function CampaignStrip() {
       authModal.open("login");
       return;
     }
-
-    if (user?.role === "ADMIN") {
-      toast.error("You are logged in as an admin and cannot join the waitlist.");
-      return;
-    }
     
     try {
       await apiClient.post(ENDPOINTS.QUEUE.JOIN, { campaignId: campaign.id });
       // Tell the global socket to subscribe to the queue room
       joinQueueRoom(campaign.id);
       
-      // Redirect to consultations where the queue entry will be visible
-      toast.success("Successfully joined the queue!");
-      window.location.href = "/dashboard/consultations";
+      // To their consultations, where their place in the queue is shown (no full reload: keeps the live connection).
+      router.push("/dashboard/consultations");
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred while joining the queue.");
     }
   };
 
   return (
-    <div className="bg-[#1E1A16] text-[#FDFBF7] text-sm py-2.5 px-4 font-poppins relative z-[100]">
+    <div className="bg-[#1E1A16] text-[#FDFBF7] text-sm py-2.5 px-4 font-poppins relative z-50">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-center">
         
         <div className="flex items-center gap-2">

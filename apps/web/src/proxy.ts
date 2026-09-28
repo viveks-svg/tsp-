@@ -1,6 +1,19 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { AUTH_ROUTES, USER_PORTAL_ROUTES, } from "@/lib/constants/route-ownership";
+import { ADMIN_ROUTES, ASTROLOGER_ROUTES, AUTH_ROUTES, USER_PORTAL_ROUTES, homeForRole } from "@/lib/constants/route-ownership";
+
+/**
+ * Reads the role claim from the access token WITHOUT verifying it — only used to
+ * pick a redirect target. The API verifies the token on every request.
+ */
+function roleFromToken(token: string): string | undefined {
+  try {
+    const payload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(payload)).role;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * Next.js Request Interceptor (Proxy) — Route Protection
@@ -22,17 +35,26 @@ export function proxy(request: NextRequest) {
   const isUserPortalRoute = USER_PORTAL_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
+  const isPanelRoute = [...ADMIN_ROUTES, ...ASTROLOGER_ROUTES].some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+  if (!isAuthenticated && isPanelRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
   if (!isAuthenticated && isUserPortalRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
-  // Auth routes (login/signup) — redirect to home if already authenticated
+  // Auth routes (login/signup) — send signed-in users to their role's home
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname === route);
   if (isAuthenticated && isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = homeForRole(roleFromToken(token!));
     return NextResponse.redirect(url);
   }
 

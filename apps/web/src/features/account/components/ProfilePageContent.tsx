@@ -9,6 +9,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import FormField from "@/components/ui/FormField";
 import { GENDERS, SUPPORTED_LANGUAGES } from "@/lib/validations/constants";
 import { validateDateOfBirth, validateLocation } from "@/lib/validations/validators";
+import SignInMethods from "./SignInMethods";
 
 export default function ProfilePageContent() {
   const { user } = useAuth();
@@ -48,6 +49,11 @@ export default function ProfilePageContent() {
     if (profile.pob) {
       const pobError = validateLocation(profile.pob);
       if (pobError) newErrors.pob = pobError;
+    }
+    
+    // Time of Birth validation (BUG-005)
+    if (!profile.tob) {
+      newErrors.tob = "Time of birth is required.";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -107,7 +113,7 @@ export default function ProfilePageContent() {
               name="dob"
               type="date"
               value={profile.dob?.slice(0, 10) || ""}
-              onChange={(val) => setProfile({ ...profile, dob: val || null })}
+              onChange={(val) => setProfile((prev: any) => ({ ...prev, dob: val || null }))}
               error={errors.dob}
               max={new Date().toISOString().split("T")[0]}
             />
@@ -116,14 +122,15 @@ export default function ProfilePageContent() {
               name="tob"
               type="time"
               value={profile.tob || ""}
-              onChange={(val) => setProfile({ ...profile, tob: val || null })}
+              onChange={(val) => setProfile((prev: any) => ({ ...prev, tob: val || null }))}
+              error={errors.tob}
             />
             <FormField
               label="Place of birth"
               name="pob"
               type="places-autocomplete"
               value={profile.pob || ""}
-              onChange={(val) => setProfile({ ...profile, pob: val || null })}
+              onChange={(val) => setProfile((prev: any) => ({ ...prev, pob: val || null }))}
               className="sm:col-span-2"
               error={errors.pob}
             />
@@ -131,9 +138,9 @@ export default function ProfilePageContent() {
               label="Preferred language"
               name="preferredLanguage"
               type="select"
-              options={SUPPORTED_LANGUAGES.map((l: any) => l.code)}
+              options={SUPPORTED_LANGUAGES.map((l: any) => ({ value: l.code, label: l.name }))}
               value={profile.preferredLanguage || ""}
-              onChange={(val) => setProfile({ ...profile, preferredLanguage: val })}
+              onChange={(val) => setProfile((prev: any) => ({ ...prev, preferredLanguage: val }))}
             />
             <FormField
               label="Gender"
@@ -141,7 +148,7 @@ export default function ProfilePageContent() {
               type="select"
               options={[...GENDERS]}
               value={profile.gender || ""}
-              onChange={(val) => setProfile({ ...profile, gender: val || null })}
+              onChange={(val) => setProfile((prev: any) => ({ ...prev, gender: val || null }))}
             />
             <div className="sm:col-span-2 flex items-center gap-4 mt-2">
               <button
@@ -166,6 +173,8 @@ export default function ProfilePageContent() {
         ) : (
           <p className="mt-8 text-sm text-rose-600">{message?.text}</p>
         )}
+
+        <SignInMethods />
       </div>
     </section>
   );

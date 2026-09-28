@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { BookingFormData } from './BookingFlow';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiClient } from '@/lib/http/client';
+import { formatCalendarDate, formatSlot, parseCalendarDate } from './booking-format';
 
 interface Props {
   form: BookingFormData;
@@ -53,7 +54,7 @@ export default function BookingCalendarStep({ form, updateForm, onNext }: Props)
       .then(data => {
         setSlots(data.slots ?? []);
         // Determine urgency
-        const selected = new Date(form.scheduledDate);
+        const selected = parseCalendarDate(form.scheduledDate) ?? today;
         const diffTime = selected.getTime() - today.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
@@ -134,7 +135,7 @@ export default function BookingCalendarStep({ form, updateForm, onNext }: Props)
         {form.scheduledDate ? (
           <>
             <h3 className="font-inter font-medium text-gray-700 mb-6">
-              Availability for {new Date(form.scheduledDate).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
+              Availability for {formatCalendarDate(form.scheduledDate, { weekday: 'long', day: 'numeric', month: 'long' })}
             </h3>
 
             {loadingSlots ? (
@@ -153,7 +154,7 @@ export default function BookingCalendarStep({ form, updateForm, onNext }: Props)
                         : 'border-[#071B8D] text-[#071B8D] bg-white hover:bg-[#071B8D]/5'
                     }`}
                   >
-                    {slot}
+                    {formatSlot(slot)}
                   </button>
                 ))}
               </div>

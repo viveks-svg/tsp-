@@ -4,6 +4,9 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { useAuth } from "@/providers/AuthProvider";
 import { useAuthModal } from "@/hooks/useAuthModal";
 
+/** The most of one item per order (the checkout allows 20). */
+const MAX_QUANTITY = 20;
+
 export interface CartItem {
   id: string;
   name: string;
@@ -51,7 +54,8 @@ export default function CartProvider({ children }: { children: ReactNode }) {
     try {
       const savedCart = localStorage.getItem(CART_STORAGE_KEY);
       if (savedCart) {
-        setCart(JSON.parse(savedCart));
+        // Reports used to be added to this cart; they're ordered through the booking checkout now.
+        setCart((JSON.parse(savedCart) as CartItem[]).filter((item) => item.type === "product"));
       }
     } catch {
       // ignore storage errors
@@ -92,7 +96,7 @@ export default function CartProvider({ children }: { children: ReactNode }) {
       if (existing) {
         return prev.map((current) =>
           current.id === item.id && current.type === item.type
-            ? { ...current, quantity: current.quantity + 1 }
+            ? { ...current, quantity: Math.min(MAX_QUANTITY, current.quantity + 1) }
             : current
         );
       }
@@ -106,7 +110,7 @@ export default function CartProvider({ children }: { children: ReactNode }) {
       prev
         .map((item) => {
           if (item.id !== id) return item;
-          const newQty = item.quantity + delta;
+          const newQty = Math.min(MAX_QUANTITY, item.quantity + delta);
           return newQty > 0 ? { ...item, quantity: newQty } : null;
         })
         .filter((item): item is CartItem => item !== null)

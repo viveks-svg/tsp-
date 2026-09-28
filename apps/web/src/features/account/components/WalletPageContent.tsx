@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ArrowDownLeft, ArrowUpRight, Loader2, WalletCards } from "lucide-react";
 import { apiClient } from "@/lib/http/client";
 import { ENDPOINTS } from "@/lib/constants/http/endpoints";
@@ -111,7 +112,8 @@ export default function WalletPageContent() {
         currency: "INR",
       });
 
-      if (orderData.mock || !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+      // Only the server decides when payments are simulated (local testing without keys).
+      if (orderData.mock) {
          await apiClient.post(ENDPOINTS.PAYMENTS.VERIFY, {
            orderId: orderData.id,
            gatewayTransactionId: "mock_txn_" + Math.random().toString(36).substring(7),
@@ -130,7 +132,8 @@ export default function WalletPageContent() {
       }
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || orderData.key,
+        // The key of the Razorpay account that created this order (set in admin Settings).
+        key: orderData.key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: numericAmount * 100,
         currency: "INR",
         name: "TSP Wallet",
@@ -143,9 +146,15 @@ export default function WalletPageContent() {
               gatewayTransactionId: response.razorpay_payment_id,
               signature: response.razorpay_signature,
             });
+            setError(null);
             await Promise.all([loadWallet(), hydrateAuth()]);
+            toast.success(`₹${numericAmount.toLocaleString("en-IN")} added to your wallet.`);
           } catch (err) {
-            setError(err instanceof Error ? err.message : "Payment verification failed.");
+            // Razorpay also tells our server directly, so a paid top-up is still credited.
+            setError(
+              (err instanceof Error ? err.message + " " : "") +
+                "If money was taken, it will be added to your wallet automatically within a few minutes.",
+            );
           } finally {
             setSubmitting(false);
           }
@@ -157,6 +166,11 @@ export default function WalletPageContent() {
         },
         theme: {
           color: "#D4AF37",
+        },
+        modal: {
+          ondismiss: function () {
+            setSubmitting(false);
+          },
         },
       };
 

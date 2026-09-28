@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { Loader2, Phone, Filter, CheckCircle2, AlertCircle } from "lucide-react";
-import { apiClient } from "@/lib/http/client";
+import { useState } from "react";
+import { Mail, MessageCircle, Phone } from "lucide-react";
+import { PageHeader, Panel } from "@/features/admin/components/primitives";
+import { Badge, FilterTabs, TableShell, td, th } from "@/features/admin/components/records";
+import { useAdminList } from "@/features/admin/hooks/useAdminList";
+import { formatDateTime } from "@/features/admin/lib/format";
 
 interface Lead {
   id: string;
@@ -19,161 +21,102 @@ interface Lead {
   convertedBookingId: string | null;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  STARTED: "bg-gray-100 text-gray-700",
-  CONTACT_CAPTURED: "bg-blue-50 text-blue-700 border-blue-200",
-  DETAILS_COMPLETED: "bg-purple-50 text-purple-700 border-purple-200",
-  PRICE_REVEALED: "bg-amber-50 text-amber-700 border-amber-200",
-  PAYMENT_INITIATED: "bg-orange-50 text-orange-700 border-orange-200",
-  CONVERTED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+/** How far a visitor got in the booking form before stopping. */
+const STAGE: Record<string, { label: string; tone: "neutral" | "info" | "waiting" | "good" }> = {
+  STARTED: { label: "Opened the form", tone: "neutral" },
+  CONTACT_CAPTURED: { label: "Left contact details", tone: "info" },
+  DETAILS_COMPLETED: { label: "Filled in details", tone: "info" },
+  PRICE_REVEALED: { label: "Saw the price", tone: "waiting" },
+  PAYMENT_INITIATED: { label: "Started paying", tone: "waiting" },
+  CONVERTED: { label: "Booked", tone: "good" },
 };
 
+const whatsapp = (phone: string) => `https://wa.me/${phone.replace(/\D/g, "").replace(/^(\d{10})$/, "91$1")}`;
+
+/**
+ * People who started booking a session but haven't finished — worth a call.
+ * Captured as visitors move through the booking form.
+ */
 export default function AdminLeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [staleOnly, setStaleOnly] = useState(true);
-
-  useEffect(() => {
-    fetchLeads();
-  }, [staleOnly]);
-
-  const fetchLeads = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await apiClient.get<Lead[]>(`/admin/leads${staleOnly ? "?stale=true" : ""}`);
-      setLeads(data);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch leads");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [view, setView] = useState<"open" | "all">("open");
+  const { data, loading } = useAdminList<Lead[]>("/admin/leads", { stale: view === "open" ? "true" : undefined });
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-[#1E1A16]">Booking Leads</h1>
-          <p className="text-sm text-[#6B5F52] mt-1">
-            Monitor prospective clients from the progressive lead capture flow.
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setStaleOnly(!staleOnly)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              staleOnly 
-                ? "bg-[#C8A04A]/10 text-[#8B6914] border border-[#C8A04A]/20" 
-                : "bg-white text-[#4B5563] border border-[#EFEBE1] hover:bg-[#FAFAF8]"
-            }`}
-          >
-            <Filter className="w-4 h-4" />
-            {staleOnly ? "Showing Unconverted Only" : "Showing All Leads"}
-          </button>
-          <button
-            onClick={fetchLeads}
-            disabled={isLoading}
-            className="px-4 py-2 bg-[#1E1A16] text-white rounded-full text-sm font-medium hover:bg-[#C8A04A] transition-colors disabled:opacity-50"
-          >
-            Refresh
-          </button>
-        </div>
-      </div>
+    <div className="mx-auto max-w-[1320px] space-y-8 px-5 py-8 md:px-10 md:py-12">
+      <PageHeader
+        eyebrow="Clientele"
+        title="Booking leads"
+        description="Visitors who started booking a session. Those who left a phone number but didn’t finish are worth a gentle call."
+      />
 
-      {error ? (
-        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-          <p className="text-sm text-rose-700">{error}</p>
-        </div>
-      ) : (
-        <div className="bg-white border border-[#EFEBE1] rounded-2xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-[#FAFAF8] border-b border-[#EFEBE1]">
-                <tr>
-                  <th className="px-6 py-4 font-semibold text-[#1E1A16]">Contact</th>
-                  <th className="px-6 py-4 font-semibold text-[#1E1A16]">Solution</th>
-                  <th className="px-6 py-4 font-semibold text-[#1E1A16]">Status</th>
-                  <th className="px-6 py-4 font-semibold text-[#1E1A16]">Last Active</th>
-                  <th className="px-6 py-4 font-semibold text-[#1E1A16]">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#EFEBE1]">
-                {isLoading && leads.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-[#C8A04A] mx-auto" />
+      <FilterTabs
+        value={view}
+        onChange={setView}
+        options={[
+          { value: "open", label: "Not booked yet", count: view === "open" ? data?.length : undefined },
+          { value: "all", label: "All leads" },
+        ]}
+      />
+
+      <Panel bodyClassName="px-0 pb-0 pt-0 md:px-0">
+        <TableShell loading={loading && !data} empty={data && data.length === 0 ? "No leads here." : null}>
+          <table className="w-full min-w-[860px]">
+            <thead>
+              <tr className="border-b border-hairline">
+                <th className={th}>Visitor</th>
+                <th className={th}>Interested in</th>
+                <th className={th}>Got as far as</th>
+                <th className={th}>Last active</th>
+                <th className={th} aria-label="Contact" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-hairline">
+              {data?.map((lead) => {
+                const stage = STAGE[lead.status] ?? { label: lead.status, tone: "neutral" as const };
+                return (
+                  <tr key={lead.id}>
+                    <td className={td}>
+                      <p className="font-medium text-ink">{lead.name || <span className="text-ink-3 italic">No name given</span>}</p>
+                      <p className="text-[12px] text-ink-3">{[lead.phone, lead.email].filter(Boolean).join(" · ") || "No contact details"}</p>
                     </td>
-                  </tr>
-                ) : leads.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-[#6B5F52]">
-                      No leads found matching current filters.
+                    <td className={`${td} text-ink`}>{lead.solutionName}</td>
+                    <td className={td}>
+                      <Badge tone={stage.tone}>{stage.label}</Badge>
                     </td>
-                  </tr>
-                ) : (
-                  leads.map((lead) => (
-                    <tr key={lead.id} className="hover:bg-[#FAFAF8] transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-[#1E1A16]">
-                          {lead.name || <span className="text-[#9CA3AF] italic">Unnamed</span>}
-                        </div>
+                    <td className={`${td} whitespace-nowrap`}>{formatDateTime(lead.lastActivityAt)}</td>
+                    <td className={`${td} text-right whitespace-nowrap`}>
+                      <span className="inline-flex gap-1.5">
                         {lead.phone && (
-                          <div className="text-xs text-[#6B5F52] mt-1 flex items-center gap-1">
-                            <Phone className="w-3 h-3" />
-                            {lead.phone}
-                          </div>
+                          <>
+                            <a href={`tel:${lead.phone}`} title="Call" aria-label="Call" className="rounded-lg border border-hairline bg-ivory p-2 text-ink-2 hover:border-champagne hover:text-ink">
+                              <Phone className="h-4 w-4" />
+                            </a>
+                            <a
+                              href={whatsapp(lead.phone)}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="WhatsApp"
+                              aria-label="WhatsApp"
+                              className="rounded-lg border border-hairline bg-ivory p-2 text-ink-2 hover:border-champagne hover:text-ink"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                            </a>
+                          </>
                         )}
-                        {lead.email && <div className="text-xs text-[#9CA3AF] mt-0.5">{lead.email}</div>}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-[#1E1A16] font-medium">{lead.solutionName}</div>
-                        <div className="text-xs text-[#9CA3AF] mt-1 font-mono">ID: {lead.sessionId.slice(-8)}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                            STATUS_COLORS[lead.status] || STATUS_COLORS.STARTED
-                          }`}
-                        >
-                          {lead.status.replace(/_/g, " ")}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-[#6B5F52]">
-                        <div>{format(new Date(lead.lastActivityAt), "MMM d, yyyy")}</div>
-                        <div className="text-xs text-[#9CA3AF] mt-1">
-                          {format(new Date(lead.lastActivityAt), "h:mm a")}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {lead.status === "CONVERTED" ? (
-                          <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 w-fit">
-                            <CheckCircle2 className="w-4 h-4" />
-                            Converted
-                          </div>
-                        ) : lead.phone ? (
-                          <a
-                            href={`tel:${lead.phone}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1E1A16] text-white text-xs font-medium rounded-lg hover:bg-[#C8A04A] transition-colors"
-                          >
-                            <Phone className="w-3.5 h-3.5" />
-                            Call Lead
+                        {lead.email && (
+                          <a href={`mailto:${lead.email}`} title="Email" aria-label="Email" className="rounded-lg border border-hairline bg-ivory p-2 text-ink-2 hover:border-champagne hover:text-ink">
+                            <Mail className="h-4 w-4" />
                           </a>
-                        ) : (
-                          <span className="text-xs text-[#9CA3AF] italic">No phone</span>
                         )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </TableShell>
+      </Panel>
     </div>
   );
 }

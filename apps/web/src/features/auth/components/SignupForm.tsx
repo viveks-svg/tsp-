@@ -8,14 +8,7 @@ import { ENDPOINTS } from "@/lib/constants/http/endpoints";
 import { useAuth } from "@/providers/AuthProvider";
 import type { AuthTokenResponse, User } from "@/types/user";
 import PasswordStrengthIndicator from "@/components/ui/PasswordStrengthIndicator";
-import { 
-  filterNameInput, 
-  filterPhoneInput, 
-  validateName, 
-  validateEmail, 
-  validatePassword, 
-  validatePhone 
-} from "@/lib/validations/validators";
+import { filterNameInput, validateName, validateEmail, validatePassword } from "@/lib/validations/validators";
 
 interface SignupFormProps {
   onSuccess?: (user: User) => void;
@@ -26,7 +19,6 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
   const { login } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,10 +39,6 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
     const passwordError = validatePassword(password);
     if (passwordError) return setError(passwordError);
 
-    if (phone) {
-      const phoneError = validatePhone(phone);
-      if (phoneError) return setError(phoneError);
-    }
 
     try {
       setLoading(true);
@@ -58,14 +46,14 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
         name: name.trim(),
         email: email.trim(),
         password,
-        ...(phone && { phone: phone.trim() }),
       });
 
       login(response.user, Number(response.walletBalance ?? 0), response.accessToken);
-      setSuccess("Account created successfully!");
+      // A mobile number can be added (and verified by SMS) from the profile.
+      setSuccess(`Welcome! We've emailed a link to ${email.trim()} — please click it to confirm your address.`);
       setTimeout(() => {
         onSuccess?.(response.user);
-      }, 500);
+      }, 2500);
     } catch (err: unknown) {
       const error = err as Error & { message?: string };
       console.error(error);
@@ -132,21 +120,6 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
               placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value.trim())}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="signup-phone" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Phone <span className="font-normal text-slate-400">(optional)</span>
-            </label>
-            <input
-              type="tel"
-              id="signup-phone"
-              maxLength={10}
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
-              placeholder="e.g. 9999999999"
-              value={phone}
-              onChange={(e) => setPhone(filterPhoneInput(e.target.value))}
             />
           </div>
 

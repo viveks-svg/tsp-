@@ -14,7 +14,8 @@ let listenersBound = false;
 let cachedWsToken: string | null = null;
 let tokenFetchPromise: Promise<string | null> | null = null;
 
-function getSocketUrl() {
+/** The socket server is the API origin, default namespace (the /api/v1 path is not a namespace). */
+export function getSocketUrl() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
   return apiUrl.replace(/\/api\/v1\/?$/, "");
 }

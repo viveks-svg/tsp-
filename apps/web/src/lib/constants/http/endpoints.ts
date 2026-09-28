@@ -62,7 +62,6 @@ export const ENDPOINTS = {
   // Wallet
   WALLET: {
     DETAIL: "/wallet",
-    ADD_FUNDS: "/wallet/add-funds",
   },
 
   // Payments
@@ -93,8 +92,24 @@ export const ENDPOINTS = {
     QUEUE: "/admin/queue",
     QUEUE_SKIP: (id: string) => `/admin/queue/${id}/skip`,
     QUEUE_REMOVE: (id: string) => `/admin/queue/${id}/remove`,
-    QUEUE_DEQUEUE: (campaignId: string) => `/admin/queue/dequeue/${campaignId}`,
     QUEUE_FORCE_CLOSE: (consultationId: string) => `/admin/queue/force-close/${consultationId}`,
+    ASTROLOGERS: "/admin/astrologers",
+    ASTROLOGER: (id: string) => `/admin/astrologers/${id}`,
+    ASTROLOGER_RESET_PASSWORD: (id: string) => `/admin/astrologers/${id}/reset-password`,
+  },
+
+  // The astrologer's own live queue (only the astrologer taking the queue can call)
+  // The signed-in astrologer's own panel
+  ASTROLOGER_PANEL: {
+    OVERVIEW: "/astrologer/overview",
+    HOURS: "/astrologer/hours",
+    EARNINGS: "/astrologer/earnings",
+    AVAILABILITY: "/astrologers/me/availability",
+  },
+
+  ASTROLOGER_QUEUE: {
+    OVERVIEW: "/astrologer/queue",
+    CALL_NEXT: (campaignId: string) => `/astrologer/queue/dequeue/${campaignId}`,
   },
 
   // Public availability

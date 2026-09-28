@@ -9,6 +9,14 @@
 const envUrl = process.env.NEXT_PUBLIC_API_URL;
 const API_BASE_URL = (envUrl && envUrl !== "undefined") ? envUrl : "http://127.0.0.1:3001/api/v1";
 
+/** An HTTP error from the API; keeps the status and body for callers that branch on them. */
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number, public readonly body: unknown) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -31,15 +39,17 @@ class ApiClient {
 
     if (!response.ok) {
       let message = `API Error: ${response.status} ${response.statusText}`;
+      let body: unknown;
       try {
-        const body = await response.json();
-        if (body?.message) {
-          message = typeof body.message === "string" ? body.message : body.message[0];
+        body = await response.json();
+        const m = (body as { message?: unknown })?.message;
+        if (m) {
+          message = typeof m === "string" ? m : Array.isArray(m) ? String(m[0]) : message;
         }
       } catch {
         // Use the default message.
       }
-      throw new Error(message);
+      throw new ApiError(message, response.status, body);
     }
 
     return response.json() as Promise<T>;

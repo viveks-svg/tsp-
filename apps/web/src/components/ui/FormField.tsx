@@ -7,17 +7,21 @@ import { fetchPlaces } from "@/lib/api/ephemeris";
 interface FormFieldProps {
   label: string;
   name: string;
-  type?: "text" | "tel" | "email" | "password" | "date" | "time" | "select" | "places-autocomplete";
+  type?: "text" | "tel" | "email" | "password" | "date" | "time" | "select" | "places-autocomplete" | "textarea";
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
   placeholder?: string;
   error?: string | null;
-  options?: string[]; // for select
+  options?: any[]; // for select (string or {value, label})
   className?: string;
   inputClassName?: string;
   min?: string;
   max?: string;
+  /** Show the error even if the field hasn't been touched (e.g. after a submit attempt). */
+  forceShowError?: boolean;
+  maxLength?: number;
+  rows?: number;
 }
 
 export default function FormField({
@@ -34,13 +38,16 @@ export default function FormField({
   inputClassName,
   min,
   max,
+  forceShowError = false,
+  maxLength,
+  rows = 4,
 }: FormFieldProps) {
   const [touched, setTouched] = useState(false);
   const [suggestions, setSuggestions] = useState<{ name: string }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
-  const showError = touched && error;
+  const showError = (touched || forceShowError) && error;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -76,7 +83,7 @@ export default function FormField({
   };
 
   const inputStyles = cn(
-    "w-full px-4 py-3 bg-cream border rounded-xl text-sm font-poppins outline-none transition-all",
+    "w-full px-4 py-3 bg-white shadow-sm border rounded-xl text-sm font-poppins outline-none transition-all",
     showError
       ? "border-rose-500 focus:ring-1 focus:ring-rose-500"
       : "border-border focus:border-gold focus:ring-1 focus:ring-gold",
@@ -84,13 +91,14 @@ export default function FormField({
   );
 
   return (
-    <div className={cn("space-y-1.5", className)}>
+    <div className={cn("space-y-1.5", className)} data-field={name}>
       <label className="block text-xs font-semibold text-dark font-poppins uppercase tracking-wider">
         {label} {required && <span className="text-rose-500">*</span>}
       </label>
 
       {type === "select" ? (
         <select
+          name={name}
           value={value}
           onChange={(e) => {
             onChange(e.target.value);
@@ -98,16 +106,21 @@ export default function FormField({
           }}
           onBlur={() => setTouched(true)}
           required={required}
+          aria-invalid={showError ? true : undefined}
           className={cn(inputStyles, "appearance-none cursor-pointer")}
         >
           <option value="" disabled>
             {placeholder || `Select ${label}`}
           </option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
+          {options.map((opt) => {
+            const val = typeof opt === "string" ? opt : opt.value;
+            const label = typeof opt === "string" ? opt : opt.label;
+            return (
+              <option key={val} value={val}>
+                {label}
+              </option>
+            );
+          })}
         </select>
       ) : type === "places-autocomplete" ? (
         <div className="relative" ref={dropdownRef}>
@@ -143,21 +156,22 @@ export default function FormField({
         </div>
       ) : type === "tel" ? (
         <div className="flex">
-          <select
+          {/* India numbers only — the booking API requires exactly 10 digits. */}
+          <span
             className={cn(
-              "px-3 py-3 bg-cream border border-r-0 border-border rounded-l-xl text-sm font-poppins outline-none appearance-none cursor-pointer focus:border-gold focus:ring-1 focus:ring-gold focus:z-10 bg-no-repeat bg-right",
+              "px-3 py-3 bg-white shadow-sm border border-r-0 border-border rounded-l-xl text-sm font-poppins text-muted select-none",
               { "border-rose-500": showError }
             )}
-            style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%231c253c%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundSize: '0.65rem auto', backgroundPosition: 'calc(100% - 0.5rem) center', paddingRight: '1.75rem' }}
+            aria-hidden="true"
           >
-            <option value="+91">🇮🇳 +91</option>
-            <option value="+1">🇺🇸 +1</option>
-            <option value="+44">🇬🇧 +44</option>
-            <option value="+61">🇦🇺 +61</option>
-            <option value="+971">🇦🇪 +971</option>
-          </select>
+            +91
+          </span>
           <input
             type="tel"
+            name={name}
+            inputMode="numeric"
+            autoComplete="tel-national"
+            aria-invalid={showError ? true : undefined}
             value={value}
             onChange={(e) => {
               const val = e.target.value.replace(/\D/g, ""); // strip non-digits automatically
@@ -165,12 +179,28 @@ export default function FormField({
               setTouched(true);
             }}
             onBlur={() => setTouched(true)}
-            placeholder={placeholder || "10-digit number"}
+            placeholder={placeholder || "10-digit mobile number"}
             required={required}
             className={cn(inputStyles, "rounded-l-none")}
             maxLength={10}
           />
         </div>
+      ) : type === "textarea" ? (
+        <textarea
+          name={name}
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setTouched(true);
+          }}
+          onBlur={() => setTouched(true)}
+          placeholder={placeholder}
+          required={required}
+          rows={rows}
+          aria-invalid={showError ? true : undefined}
+          className={cn(inputStyles, "resize-y min-h-[96px]")}
+          {...(maxLength ? { maxLength } : {})}
+        />
       ) : type === "time" ? (
         <div className="flex gap-2">
           <select
@@ -230,6 +260,8 @@ export default function FormField({
       ) : (
         <input
           type={type}
+          name={name}
+          aria-invalid={showError ? true : undefined}
           value={value}
           onChange={(e) => {
             onChange(e.target.value);
@@ -241,6 +273,7 @@ export default function FormField({
           className={inputStyles}
           {...(min ? { min } : {})}
           {...(max ? { max } : {})}
+          {...(maxLength ? { maxLength } : {})}
         />
       )}
 

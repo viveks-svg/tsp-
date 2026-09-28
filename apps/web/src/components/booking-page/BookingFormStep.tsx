@@ -5,6 +5,7 @@ import { BookingFormData } from './BookingFlow';
 import { ChevronLeft } from 'lucide-react';
 import { apiClient } from '@/lib/http/client';
 import Script from 'next/script';
+import { formatCalendarDate, formatSlot } from './booking-format';
 
 interface Props {
   form: BookingFormData;
@@ -219,7 +220,7 @@ export default function BookingFormStep({ form, updateForm, onBack, onSuccess }:
             <p className="font-medium text-gray-800">{form.config?.name}</p>
             {form.config?.requiresSlot && (
               <p className="text-gray-600 text-sm mt-1">
-                {new Date(form.scheduledDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} at {form.scheduledSlot}
+                {formatCalendarDate(form.scheduledDate)} at {formatSlot(form.scheduledSlot)}
               </p>
             )}
             <p className="text-sm mt-2 text-[#071B8D] font-semibold bg-[#071B8D]/5 inline-block px-2 py-1 rounded">

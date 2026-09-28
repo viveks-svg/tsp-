@@ -357,7 +357,18 @@ export default function CallRoom({ consultationId }: CallRoomProps) {
     );
   }
 
-  // Ended/Failed — show review modal
+  // Ended/Failed — the astrologer returns to their consultations; the client may review.
+  if ((status === "ended" || status === "failed") && authUser?.role === "ASTROLOGER") {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[#0a0a1a] text-white">
+        <p className="font-playfair text-2xl">Call ended</p>
+        <p className="text-sm text-white/60">{Math.max(1, Math.ceil(durationSeconds / 60))} min</p>
+        <a href="/astrologer/consultations" className="rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold hover:bg-white/20">
+          Back to consultations
+        </a>
+      </div>
+    );
+  }
   if (status === "ended" || status === "failed") {
     const elapsedMin = Math.max(1, Math.ceil(durationSeconds / 60));
     const cost = sessionMeta

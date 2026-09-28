@@ -23,6 +23,7 @@ type Booking = {
   status: string;
   totalAmountPaise: number;
   scheduledDate?: string;
+  scheduledSlot?: string;
   createdAt: string;
 };
 
@@ -40,6 +41,47 @@ const statusClasses: Record<string, string> = {
   PENDING_PAYMENT: "bg-amber-50 text-amber-700",
   FAILED: "bg-rose-50 text-rose-700",
 };
+
+// Friendly booking statuses. PENDING_PAYMENT means the client opened checkout
+// but never paid — it isn't a real booking, so it's shown muted and last.
+const bookingStatusMeta: Record<string, { label: string; className: string }> = {
+  CONFIRMED: { label: "Confirmed", className: "bg-emerald-50 text-emerald-700" },
+  COMPLETED: { label: "Completed", className: "bg-purple-50 text-purple-700" },
+  CANCELLED: { label: "Cancelled", className: "bg-gray-100 text-gray-600" },
+  REFUNDED: { label: "Refunded", className: "bg-blue-50 text-blue-700" },
+  PENDING_PAYMENT: { label: "Payment not completed", className: "bg-gray-50 text-gray-500" },
+};
+
+// Friendly shop order statuses; PENDING means checkout was opened but never paid.
+const shopStatusMeta: Record<string, { label: string; className: string }> = {
+  PENDING: { label: "Payment not completed", className: "bg-gray-50 text-gray-500" },
+  PAID: { label: "Paid", className: "bg-emerald-50 text-emerald-700" },
+  PROCESSING: { label: "Being prepared", className: "bg-sky-50 text-sky-700" },
+  SHIPPED: { label: "Shipped", className: "bg-indigo-50 text-indigo-700" },
+  DELIVERED: { label: "Delivered", className: "bg-emerald-50 text-emerald-700" },
+  CANCELLED: { label: "Cancelled", className: "bg-gray-100 text-gray-600" },
+};
+
+function bookingStatus(status: string) {
+  return (
+    bookingStatusMeta[status] ?? {
+      label: status
+        .toLowerCase()
+        .replace(/_/g, " ")
+        .replace(/^./, (c) => c.toUpperCase()),
+      className: "bg-gray-50 text-gray-700",
+    }
+  );
+}
+
+function sortBookings(bookings: Booking[]): Booking[] {
+  return [...bookings].sort((a, b) => {
+    const aPending = a.status === "PENDING_PAYMENT" ? 1 : 0;
+    const bPending = b.status === "PENDING_PAYMENT" ? 1 : 0;
+    if (aPending !== bPending) return aPending - bPending;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+}
 
 export default function OrdersPageContent() {
   const [data, setData] = useState<OrdersData>({ shopOrders: [], bookings: [] });
@@ -115,7 +157,9 @@ export default function OrdersPageContent() {
                 <h2 className="font-heading text-xl font-bold text-dark flex items-center gap-2 border-b border-border pb-2">
                   <Package className="w-5 h-5 text-gold" /> Shop Orders
                 </h2>
-                {data.shopOrders.map((order) => (
+                {[...data.shopOrders]
+                  .sort((a, b) => (a.status === "PENDING" ? 1 : 0) - (b.status === "PENDING" ? 1 : 0))
+                  .map((order) => (
                   <article
                     key={order.id}
                     className="rounded-card-lg border border-border bg-white p-6 shadow-card"
@@ -136,9 +180,9 @@ export default function OrdersPageContent() {
                         </p>
                       </div>
                       <span
-                        className={`h-fit w-fit rounded-button px-3 py-1 text-xs font-semibold ${statusClasses[order.status] || "bg-gray-50 text-gray-700"}`}
+                        className={`h-fit w-fit rounded-button px-3 py-1 text-xs font-semibold ${shopStatusMeta[order.status]?.className ?? statusClasses[order.status] ?? "bg-gray-50 text-gray-700"}`}
                       >
-                        {order.status}
+                        {shopStatusMeta[order.status]?.label ?? order.status}
                       </span>
                     </div>
 
@@ -164,10 +208,13 @@ export default function OrdersPageContent() {
                 <h2 className="font-heading text-xl font-bold text-dark flex items-center gap-2 border-b border-border pb-2">
                   <Calendar className="w-5 h-5 text-gold" /> Service Bookings
                 </h2>
-                {data.bookings.map((booking) => (
+                {sortBookings(data.bookings).map((booking) => {
+                  const status = bookingStatus(booking.status);
+                  const unpaid = booking.status === "PENDING_PAYMENT";
+                  return (
                   <article
                     key={booking.id}
-                    className="rounded-card-lg border border-border bg-white p-6 shadow-card"
+                    className={`rounded-card-lg border border-border bg-white p-6 shadow-card ${unpaid ? "opacity-60" : ""}`}
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
                       <div>
@@ -186,20 +233,28 @@ export default function OrdersPageContent() {
                         <p className="mt-1 text-xs text-muted">
                           Booked on: {new Date(booking.createdAt).toLocaleString("en-IN")}
                         </p>
-                        {booking.scheduledDate && (
+                        {booking.scheduledDate && !unpaid && (
                           <p className="mt-1 text-xs font-medium text-emerald-700">
-                            Scheduled: {new Date(booking.scheduledDate).toLocaleDateString("en-IN")}
+                            {/* Stored as a calendar date (UTC midnight) — read it in UTC so it never shifts a day. */}
+                            Scheduled: {new Date(booking.scheduledDate).toLocaleDateString("en-IN", { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" })}
+                            {booking.scheduledSlot ? `, ${booking.scheduledSlot} IST` : ""}
+                          </p>
+                        )}
+                        {unpaid && (
+                          <p className="mt-1 text-xs text-muted">
+                            This checkout wasn&apos;t completed, so nothing was booked.
                           </p>
                         )}
                       </div>
                       <span
-                        className={`h-fit w-fit rounded-button px-3 py-1 text-xs font-semibold ${statusClasses[booking.status] || "bg-gray-50 text-gray-700"}`}
+                        className={`h-fit w-fit rounded-button px-3 py-1 text-xs font-semibold ${status.className}`}
                       >
-                        {booking.status}
+                        {status.label}
                       </span>
                     </div>
                   </article>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

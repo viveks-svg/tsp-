@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { ReportCard } from "@/types/home";
-import { useCart } from "@/providers/CartProvider";
+import { useRouter } from "next/navigation";
 import ReportsCarousel from "./ReportsCarousel";
 
 const fadeInRightVariant = {
@@ -17,27 +17,20 @@ const fadeInRightVariant = {
 };
 
 
+// Same prices as the Reports page and checkout (backend SERVICE_PRICES).
 const reports: ReportCard[] = [
-  { title: "Astro SWOT Analysis", price: 3399, slug: "astro-swot", imagePlaceholder: "/images/01.png" },
-  { title: "Career Blueprint Report", price: 3201, slug: "career-blueprint", imagePlaceholder: "/images/career-blueprint.png" },
-  { title: "Business Alignment", price: 5199, slug: "business-alignment", imagePlaceholder: "/images/business-alignment.png" },
+  { title: "Astro SWOT Analysis", price: 1999, slug: "astro-swot", imagePlaceholder: "/images/01.png" },
+  { title: "Career Blueprint Report", price: 2999, slug: "career-blueprint", imagePlaceholder: "/images/career-blueprint.png" },
+  { title: "Business Alignment", price: 6999, slug: "business-alignment", imagePlaceholder: "/images/business-alignment.png" },
   { title: "Relationship Analysis", price: 2499, slug: "relationship-analysis", imagePlaceholder: "/images/relationship.png" },
-  { title: "Annual Forecast Report", price: 3399, slug: "annual-forecast", imagePlaceholder: "/images/annual.png" }
+  { title: "Annual Forecast Report", price: 2499, slug: "annual-forecast", imagePlaceholder: "/images/annual.png" }
 ];
 
 export default function ReportsSection() {
-  const { addToCart } = useCart();
+  const router = useRouter();
 
-  const handleAddReport = (report: ReportCard) => {
-    addToCart({
-      id: report.slug,
-      name: report.title,
-      price: report.price,
-      type: "report",
-      image: report.imagePlaceholder,
-      description: report.title,
-    });
-  };
+  // Reports are ordered through the booking checkout (birth details + payment), not the shop cart.
+  const handleAddReport = (report: ReportCard) => router.push(`/book?service=${report.slug}`);
 
   return (
     <section className="relative w-full bg-gradient-to-b from-[#2E2740] via-[#1A1730] to-[#12101F] py-12 md:py-16 lg:py-24 overflow-hidden">

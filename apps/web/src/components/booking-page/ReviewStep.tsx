@@ -1,12 +1,10 @@
 "use client";
 
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import type { ServiceDefinition, ServicePlan } from "@/lib/data/service-catalog";
-import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/http/client";
+import { formatCalendarDate, formatSlot, formatTime24 } from "./booking-format";
 
 interface Props {
-  sessionId: string;
   service: ServiceDefinition;
   plan: ServicePlan;
   formData: Record<string, string>;
@@ -16,6 +14,8 @@ interface Props {
   onBack: () => void;
   onConfirm: () => void;
   isLoading: boolean;
+  /** Message from the last failed payment attempt, shown above the Pay button. */
+  error?: string | null;
 }
 
 const SURCHARGE: Record<string, number> = {
@@ -25,7 +25,6 @@ const SURCHARGE: Record<string, number> = {
 };
 
 export default function ReviewStep({
-  sessionId,
   service,
   plan,
   formData,
@@ -35,32 +34,26 @@ export default function ReviewStep({
   onBack,
   onConfirm,
   isLoading,
+  error,
 }: Props) {
-  const [serverPrice, setServerPrice] = useState<{ amount: number; currency: string; breakdown: Record<string, number> } | null>(null);
-  const [isFetchingPrice, setIsFetchingPrice] = useState(true);
-  const [priceError, setPriceError] = useState<string | null>(null);
+  // Show what the client entered, in form order, with the form's own labels.
+  // (Consent and uploads aren't "details" — they're left out.)
+  const displayFields = service.formFields
+    .filter((f) => f.type !== 'file')
+    .map((f) => {
+      const raw = (formData[f.name] || '').trim();
+      if (!raw) return null;
+      let value = raw;
+      if (f.type === 'date') value = formatCalendarDate(raw);
+      else if (f.type === 'time') value = formatTime24(raw);
+      else if (f.type === 'tel') value = `+91 ${raw}`;
+      return { key: f.name, label: f.label.replace(/\s*\(optional\)\s*$/i, ''), value, long: f.type === 'textarea' };
+    })
+    .filter((f): f is { key: string; label: string; value: string; long: boolean } => f !== null);
 
-  useEffect(() => {
-    const fetchPrice = async () => {
-      try {
-        const data = await apiClient.get<{ amount: number; currency: string; breakdown: Record<string, number> }>(`/leads/${sessionId}/price`);
-        setServerPrice(data);
-      } catch (err: any) {
-        setPriceError(err.message || "Failed to fetch price");
-      } finally {
-        setIsFetchingPrice(false);
-      }
-    };
-    fetchPrice();
-  }, [sessionId]);
-
-  // Group form fields for display — skip empty values
-  const displayFields = Object.entries(formData).filter(
-    ([, value]) => value && value.trim() !== ""
-  );
-
-  const calculatedTotal = plan.priceINR * (1 + (SURCHARGE[urgencyTier] || 0));
-  const displayTotal = serverPrice?.amount ?? calculatedTotal;
+  const surcharge = Math.round(plan.priceINR * (SURCHARGE[urgencyTier] || 0));
+  const displayTotal = plan.priceINR + surcharge;
+  const isReport = service.bookingCategory === 'REPORT';
 
   return (
     <div className="p-6 sm:p-8">
@@ -113,13 +106,13 @@ export default function ReviewStep({
                 <div className="flex justify-between">
                   <span className="text-sm text-[#6B5F52]">Date</span>
                   <span className="text-sm font-semibold text-[#1E1A16]">
-                    {new Date(scheduledDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    {formatCalendarDate(scheduledDate, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}
                   </span>
                 </div>
                 {scheduledSlot && (
                   <div className="flex justify-between">
                     <span className="text-sm text-[#6B5F52]">Time Slot</span>
-                    <span className="text-sm font-semibold text-[#1E1A16]">{scheduledSlot}</span>
+                    <span className="text-sm font-semibold text-[#1E1A16]">{formatSlot(scheduledSlot)}</span>
                   </div>
                 )}
                 {urgencyTier !== 'STANDARD' && (
@@ -139,19 +132,19 @@ export default function ReviewStep({
                 Your Details
               </h3>
               <div className="space-y-2">
-                {displayFields.map(([key, value]) => {
-                  // Human-readable label from field name
-                  const label = key
-                    .replace(/([A-Z])/g, ' $1')
-                    .replace(/^./, (str) => str.toUpperCase())
-                    .trim();
-                  return (
+                {displayFields.map(({ key, label, value, long }) =>
+                  long ? (
+                    <div key={key} className="space-y-1">
+                      <span className="block text-sm text-[#6B5F52]">{label}</span>
+                      <p className="text-sm font-medium text-[#1E1A16] whitespace-pre-line break-words">{value}</p>
+                    </div>
+                  ) : (
                     <div key={key} className="flex justify-between gap-4">
                       <span className="text-sm text-[#6B5F52] shrink-0">{label}</span>
-                      <span className="text-sm font-medium text-[#1E1A16] text-right truncate">{value}</span>
+                      <span className="text-sm font-medium text-[#1E1A16] text-right break-words min-w-0">{value}</span>
                     </div>
-                  );
-                })}
+                  )
+                )}
               </div>
             </div>
           )}
@@ -183,14 +176,14 @@ export default function ReviewStep({
               <div className="flex justify-between text-sm">
                 <span className="text-[#6B5F52]">{service.name} — {plan.name}</span>
                 <span className="text-[#1E1A16]">
-                  {isFetchingPrice && !serverPrice ? <Loader2 className="w-4 h-4 animate-spin text-[#C8A04A]" /> : `₹${(serverPrice?.breakdown?.basePrice || plan.priceINR).toLocaleString('en-IN')}`}
+                  ₹{plan.priceINR.toLocaleString('en-IN')}
                 </span>
               </div>
               
-              {serverPrice?.breakdown?.urgencySurcharge || (SURCHARGE[urgencyTier] > 0) ? (
+              {surcharge > 0 ? (
                 <div className="flex justify-between text-sm">
                   <span className="text-[#C8A04A]">Priority Surcharge</span>
-                  <span className="text-[#C8A04A]">+ ₹{(serverPrice?.breakdown?.urgencySurcharge || (plan.priceINR * (SURCHARGE[urgencyTier] || 0))).toLocaleString('en-IN')}</span>
+                  <span className="text-[#C8A04A]">+ ₹{surcharge.toLocaleString('en-IN')}</span>
                 </div>
               ) : null}
 
@@ -202,8 +195,8 @@ export default function ReviewStep({
               </div>
             </div>
 
-            {priceError && (
-              <p className="text-xs text-rose-500 mb-4 font-medium text-center">{priceError}</p>
+            {error && (
+              <p role="alert" className="text-xs text-rose-500 mb-4 font-medium text-center">{error}</p>
             )}
 
             <button
@@ -216,7 +209,9 @@ export default function ReviewStep({
 
             <p className="text-xs text-[#9CA3AF] mt-4 text-center leading-relaxed">
               By proceeding, you agree to our Terms of Service.
-              All consultations are confidential.
+              {isReport
+                ? 'Your report is prepared personally and kept confidential.'
+                : 'All consultations are confidential.'}
             </p>
           </div>
         </div>

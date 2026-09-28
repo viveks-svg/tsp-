@@ -12,7 +12,7 @@ import { useCart } from "@/providers/CartProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import { useAuthModal } from "@/hooks/useAuthModal";
 import FormField from "@/components/ui/FormField";
-import { filterNameInput, filterPhoneInput, filterLocationInput } from "@/lib/validations/validators";
+import { filterNameInput, filterPhoneInput, filterLocationInput, filterPincodeInput } from "@/lib/validations/validators";
 
 export default function ShopPage() {
   const [search, setSearch] = useState("");
@@ -24,6 +24,7 @@ export default function ShopPage() {
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [checkoutStep, setCheckoutStep] = useState<"cart" | "shipping" | "success">("cart");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentPending, setPaymentPending] = useState(false);
   const { isAuthenticated, setPendingAction, user } = useAuth();
   const authModal = useAuthModal();
 
@@ -179,7 +180,8 @@ export default function ShopPage() {
 
       const res: any = await apiClient.post('/shop/orders', orderPayload);
 
-      if (res.razorpayOrderId?.startsWith("order_mock_") || !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+      // Only the server decides when payments are simulated (local testing without keys).
+      if (res.razorpayOrderId?.startsWith("order_mock_")) {
         // Simulate successful payment for mock orders
         try {
           await apiClient.post('/shop/orders/verify', {
@@ -205,8 +207,10 @@ export default function ShopPage() {
       }
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'mock_key',
-        amount: subtotal * 100,
+        // The key of the Razorpay account that created this order (set in admin Settings).
+        key: res.key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        // The server priced the order; charge exactly that.
+        amount: Math.round(Number(res.order?.totalAmount ?? subtotal) * 100),
         currency: "INR",
         name: "Time Space & Planets",
         description: "Divine Shop Order",
@@ -220,8 +224,12 @@ export default function ShopPage() {
             });
             setCheckoutStep("success");
             clearCart();
-          } catch (verifyError) {
-            alert("Payment verification failed.");
+          } catch {
+            // The money was taken; Razorpay also tells our server directly, which confirms the order.
+            setCheckoutStep("success");
+            setPaymentPending(true);
+            clearCart();
+          } finally {
             setIsProcessing(false);
           }
         },
@@ -531,9 +539,11 @@ export default function ShopPage() {
                 <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
                   <Star className="w-8 h-8 fill-emerald-600" />
                 </div>
-                <h3 className="font-heading text-xl font-bold text-dark">Order Placed Successfully!</h3>
+                <h3 className="font-heading text-xl font-bold text-dark">{paymentPending ? "Payment received" : "Order placed"}</h3>
                 <p className="text-xs text-paragraph">
-                  Thank you! Our Pandits will begin planetary energization calculations for your custom remedies. You will receive an SMS shipping link shortly.
+                  {paymentPending
+                    ? "Thank you! Your payment went through and we're confirming your order — it will appear in My orders within a few minutes. If it doesn't, please contact us."
+                    : "Thank you! We've emailed your order confirmation and will let you know when it ships. You can follow it in My orders."}
                 </p>
                 <button
                   onClick={() => {
@@ -622,7 +632,7 @@ export default function ShopPage() {
                       name="pincode"
                       placeholder="PIN *"
                       value={shippingData.pincode}
-                      onChange={(val) => setShippingData({ ...shippingData, pincode: filterPhoneInput(val) })} // Pincode should be numbers only
+                      onChange={(val) => setShippingData({ ...shippingData, pincode: filterPincodeInput(val) })}
                       required
                     />
                   </div>

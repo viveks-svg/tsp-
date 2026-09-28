@@ -29,8 +29,13 @@ export const USER_PORTAL_ROUTES = ["/dashboard", "/dashboard/consultations", "/k
  */
 export const USER_HOROSCOPE_ROUTE = "/dashboard/horoscope" as const;
 
-export const AUTH_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password", "/verify-email",] as const;
+/** Signed-in visitors are sent home from these. (Email links — /verify-email, /reset-password — work either way.) */
+export const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"] as const;
 
 export const ADMIN_ROUTES = ["/admin"] as const;
 
 export const ASTROLOGER_ROUTES = ["/astrologer"] as const;
+
+/** Where each role lands after signing in. */
+export const homeForRole = (role?: string | null) =>
+  role === "ADMIN" ? "/admin" : role === "ASTROLOGER" ? "/astrologer/dashboard" : "/";

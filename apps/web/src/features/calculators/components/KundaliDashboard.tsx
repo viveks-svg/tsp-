@@ -75,7 +75,10 @@ export function KundaliDashboard({ data }: { data: any }) {
             <p className="text-xs text-muted">Download every section in a single printable report.</p>
           </div>
         </div>
-        <button className="px-6 py-2.5 rounded-full border border-navy text-navy font-semibold hover:bg-navy hover:text-white transition-colors text-sm">
+        <button 
+          onClick={() => window.print()}
+          className="bg-navy hover:bg-navy-hover text-white px-5 py-2 rounded-lg text-sm font-semibold shadow transition-colors flex items-center justify-center min-w-[160px]"
+        >
           ↓ View PDF Report
         </button>
       </div>
@@ -166,32 +169,32 @@ function PlanetsTab({ data }: { data: any }) {
   return (
     <SectionCard title="Planetary Positions">
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-left text-sm whitespace-nowrap">
+        <table className="w-full text-left text-sm">
           <thead className="bg-gray-50">
             <tr className="border-b border-border text-navy font-bold text-[10px] uppercase">
-              <th className="py-3 px-4">Planet</th>
-              <th className="py-3 px-4">Sign</th>
-              <th className="py-3 px-4">Sign Lord</th>
-              <th className="py-3 px-4">Nakshatra</th>
-              <th className="py-3 px-4">Naksh Lord</th>
-              <th className="py-3 px-4">Degree</th>
-              <th className="py-3 px-4">Retro</th>
-              <th className="py-3 px-4">House</th>
-              <th className="py-3 px-4">State</th>
+              <th className="py-3 px-2">Planet</th>
+              <th className="py-3 px-2">Sign</th>
+              <th className="py-3 px-2">Sign Lord</th>
+              <th className="py-3 px-2">Nakshatra</th>
+              <th className="py-3 px-2">Naksh Lord</th>
+              <th className="py-3 px-2">Degree</th>
+              <th className="py-3 px-2">Retro</th>
+              <th className="py-3 px-2">House</th>
+              <th className="py-3 px-2">State</th>
               <th className="py-3 px-4">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             <tr className="hover:bg-gray-50/50">
-              <td className="py-3 px-4 font-bold text-navy">Ascendant</td>
-              <td className="py-3 px-4">{data.ascendant?.rashi || "-"}</td>
-              <td className="py-3 px-4">{data.lagna?.rulingPlanet || "-"}</td>
-              <td className="py-3 px-4">-</td>
-              <td className="py-3 px-4">-</td>
-              <td className="py-3 px-4 text-xs font-medium text-navy/70">{(data.ascendant?.longitude % 30)?.toFixed(2)}°</td>
-              <td className="py-3 px-4">-</td>
-              <td className="py-3 px-4 font-semibold">1</td>
-              <td className="py-3 px-4">-</td>
+              <td className="py-3 px-2 font-bold text-navy">Ascendant</td>
+              <td className="py-3 px-2">{data.ascendant?.rashi || planets['Ascendant']?.sign || "-"}</td>
+              <td className="py-3 px-2">{data.lagna?.rulingPlanet || planets['Ascendant']?.signLord || "-"}</td>
+              <td className="py-3 px-2">{planets['Ascendant']?.nakshatra || "-"}</td>
+              <td className="py-3 px-2">{planets['Ascendant']?.nakshatraLord || "-"}</td>
+              <td className="py-3 px-2 text-xs font-medium text-navy/70">{data.ascendant?.fullDegree ? data.ascendant.fullDegree.toFixed(2) + "°" : ((data.ascendant?.longitude % 30)?.toFixed(2) ? (data.ascendant?.longitude % 30).toFixed(2) + "°" : "-")}</td>
+              <td className="py-3 px-2">-</td>
+              <td className="py-3 px-2 font-semibold">1</td>
+              <td className="py-3 px-2">{planets['Ascendant']?.state || "-"}</td>
               <td className="py-3 px-4">-</td>
             </tr>
             {planetList.map((p) => {
@@ -199,18 +202,18 @@ function PlanetsTab({ data }: { data: any }) {
               if (!pData) return null;
               return (
                 <tr key={p} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-3 px-4 font-bold text-navy uppercase">{p}</td>
-                  <td className="py-3 px-4">{pData.rashi}</td>
-                  <td className="py-3 px-4">-</td>
-                  <td className="py-3 px-4">{pData.nakshatra}</td>
-                  <td className="py-3 px-4">-</td>
-                  <td className="py-3 px-4 text-xs font-medium text-navy/70">{pData.degree || ((pData.longitude % 30)?.toFixed(2) + "°")}</td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-2 font-bold text-navy uppercase">{p}</td>
+                  <td className="py-3 px-2">{pData.rashi}</td>
+                  <td className="py-3 px-2">-</td>
+                  <td className="py-3 px-2">{pData.nakshatra}</td>
+                  <td className="py-3 px-2">-</td>
+                  <td className="py-3 px-2 text-xs font-medium text-navy/70">{pData.degree || ((pData.longitude % 30)?.toFixed(2) + "°")}</td>
+                  <td className="py-3 px-2">
                     {pData.isRetrograde ? <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold">YES</span> : <span className="text-muted">No</span>}
                   </td>
-                  <td className="py-3 px-4 font-semibold">{pData.house}</td>
-                  <td className="py-3 px-4">{pData.state || "-"}</td>
-                  <td className="py-3 px-4">{pData.status || "-"}</td>
+                  <td className="py-3 px-2 font-semibold">{pData.house}</td>
+                  <td className="py-3 px-2">{pData.state || "-"}</td>
+                  <td className="py-3 px-2">{pData.status || "-"}</td>
                 </tr>
               );
             })}

@@ -1,116 +1,76 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Star } from "lucide-react";
+import StaffSecurity from "@/features/auth/components/StaffSecurity";
+import { apiClient } from "@/lib/http/client";
+import { ENDPOINTS } from "@/lib/constants/http/endpoints";
 import { useAuth } from "@/providers/AuthProvider";
-import { User, Mail, Shield, Phone, Sparkles } from "lucide-react";
+import { PageHeader, Panel, Skeleton } from "@/features/admin/components/primitives";
+import { formatINR } from "@/features/admin/lib/format";
 
+interface Profile {
+  name: string | null;
+  email: string | null;
+  bio: string;
+  pricingPerMin: number;
+  isAvailable: boolean;
+  rating: number;
+}
+
+/** The astrologer's profile as clients see it. The TSP office edits it on request. */
 export default function AstrologerProfilePage() {
   const { user } = useAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    apiClient
+      .get<{ profile: Profile }>(ENDPOINTS.ASTROLOGER_PANEL.OVERVIEW)
+      .then((d) => setProfile(d.profile))
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Could not load your profile"));
+  }, []);
 
   return (
-    <div className="p-6 md:p-10 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold font-poppins">
-          Astrologer Panel
-        </p>
-        <h1 className="mt-1 font-heading text-3xl font-bold text-dark">
-          My Profile
-        </h1>
-        <p className="mt-1 text-sm text-paragraph">
-          View your profile details and credential settings.
-        </p>
-      </div>
+    <div className="mx-auto max-w-[900px] space-y-8 px-5 py-8 md:px-10 md:py-12">
+      <PageHeader eyebrow="Practice" title="Profile" description="How you appear to clients. To change your details or rate, ask the TSP office." />
 
-      <div className="grid gap-8 md:grid-cols-3">
-        {/* Info Card */}
-        <div className="bg-white border border-border rounded-card-lg p-6 shadow-card flex flex-col items-center text-center h-fit">
-          <div className="w-20 h-20 rounded-full bg-navy text-white text-3xl font-bold flex items-center justify-center mb-4">
-            {user?.name ? user.name.charAt(0).toUpperCase() : "A"}
-          </div>
-          <h2 className="font-heading text-xl font-bold text-dark">{user?.name || "Astrologer"}</h2>
-          <p className="text-sm text-muted mt-1">{user?.email}</p>
-          <div className="mt-6 inline-flex items-center gap-1 bg-gold/15 border border-gold/30 rounded-full px-4 py-1.5 text-xs font-bold text-gold font-poppins">
-            <Sparkles className="w-3.5 h-3.5" />
-            Verified Astrologer
-          </div>
-        </div>
-
-        {/* Settings Form Card */}
-        <div className="md:col-span-2 bg-white border border-border rounded-card-lg p-6 shadow-card">
-          <h2 className="font-heading text-lg font-bold text-dark mb-6 border-b border-border pb-4">
-            Profile Details
-          </h2>
-          <div className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2 font-poppins">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4.5 w-4.5 text-muted" />
-                  <input
-                    type="text"
-                    value={user?.name || ""}
-                    disabled
-                    className="w-full bg-cream/30 border border-border rounded-button pl-10 pr-4 py-2.5 text-sm text-dark font-medium focus:outline-none cursor-not-allowed"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2 font-poppins">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4.5 w-4.5 text-muted" />
-                  <input
-                    type="email"
-                    value={user?.email || ""}
-                    disabled
-                    className="w-full bg-cream/30 border border-border rounded-button pl-10 pr-4 py-2.5 text-sm text-dark font-medium focus:outline-none cursor-not-allowed"
-                  />
-                </div>
+      {!profile ? (
+        <Skeleton className="h-72" />
+      ) : (
+        <>
+          <Panel bodyClassName="pt-6">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+              <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-champagne/60 bg-midnight font-cinzel text-2xl font-semibold text-champagne-light">
+                {(profile.name || "A").replace(/^Dr\.?\s+/i, "").split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("")}
+              </span>
+              <div className="space-y-1">
+                <h2 className="font-playfair text-2xl font-semibold text-ink">{profile.name}</h2>
+                <p className="text-[14px] text-ink-3">{profile.email || user?.email}</p>
+                <p className="flex items-center gap-1 text-[13px] text-bronze">
+                  <Star className="h-3.5 w-3.5 fill-current" /> {profile.rating.toFixed(1)} rating
+                </p>
               </div>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <dl className="mt-6 grid grid-cols-2 gap-6 border-t border-hairline pt-6">
               <div>
-                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2 font-poppins">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 h-4.5 w-4.5 text-muted" />
-                  <input
-                    type="text"
-                    value={user?.phone || "+91 98765 43210"}
-                    disabled
-                    className="w-full bg-cream/30 border border-border rounded-button pl-10 pr-4 py-2.5 text-sm text-dark font-medium focus:outline-none cursor-not-allowed"
-                  />
-                </div>
+                <dt className="text-[12px] text-ink-3">Rate</dt>
+                <dd className="font-inter text-[17px] font-semibold text-ink">{formatINR(profile.pricingPerMin)}/min</dd>
               </div>
               <div>
-                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2 font-poppins">
-                  System Role
-                </label>
-                <div className="relative">
-                  <Shield className="absolute left-3 top-3 h-4.5 w-4.5 text-muted" />
-                  <input
-                    type="text"
-                    value={user?.role || "ASTROLOGER"}
-                    disabled
-                    className="w-full bg-cream/30 border border-border rounded-button pl-10 pr-4 py-2.5 text-sm text-dark font-medium focus:outline-none cursor-not-allowed"
-                  />
-                </div>
+                <dt className="text-[12px] text-ink-3">Instant chat & calls</dt>
+                <dd className="font-inter text-[17px] font-semibold text-ink">{profile.isAvailable ? "Available" : "Paused"}</dd>
               </div>
-            </div>
+            </dl>
+          </Panel>
 
-            <div className="pt-4 border-t border-border mt-6">
-              <p className="text-xs text-muted leading-relaxed">
-                Contact administration to modify your registered email or phone number.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+          <Panel title="About you" subtitle="Shown to clients">
+            <p className="text-[15px] leading-relaxed whitespace-pre-line text-ink-2">{profile.bio || "No bio yet."}</p>
+          </Panel>
+
+          <StaffSecurity />
+        </>
+      )}
     </div>
   );
 }

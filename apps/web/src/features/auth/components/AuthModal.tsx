@@ -4,7 +4,10 @@ import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Sparkles } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useAuthModal } from "@/hooks/useAuthModal";
+import { homeForRole } from "@/lib/constants/route-ownership";
+import type { User } from "@/types/user";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
 
@@ -13,6 +16,8 @@ import SignupForm from "./SignupForm";
  * on top of the current page. Controlled via the useAuthModal hook.
  */
 export default function AuthModal() {
+  const router = useRouter();
+
   const { isOpen, mode, close, switchMode } = useAuthModal();
 
   // Lock body scroll when modal is open
@@ -38,6 +43,12 @@ export default function AuthModal() {
     return () => window.removeEventListener("keydown", handleEscape);
   }, [isOpen, close]);
 
+
+  // Clients stay where they were (e.g. mid-booking); staff and astrologers go to their panel.
+  const handleLoggedIn = (user: User) => {
+    close();
+    if (user?.role === "ADMIN" || user?.role === "ASTROLOGER") router.replace(homeForRole(user.role));
+  };
   return (
     <AnimatePresence>
       {isOpen && (
@@ -97,7 +108,7 @@ export default function AuthModal() {
             <div className="px-6 pb-8">
               {mode === "login" ? (
                 <LoginForm
-                  onSuccess={close}
+                  onSuccess={handleLoggedIn}
                   onSwitchToSignup={switchMode}
                 />
               ) : (
