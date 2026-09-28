@@ -12,6 +12,10 @@ import { JwtService } from "@nestjs/jwt";
 import { Logger } from "@nestjs/common";
 import { ConsultationsService } from "../modules/consultations/consultations.service";
 import { CallService } from "../modules/consultations/call.service";
+import { PrismaService } from "../database/prisma.service";
+import { checkAccessToken } from "../modules/auth/token-check";
+
+const MAX_SOCKETS_PER_USER = 10;
 
 const frontendOrigins = (process.env.FRONTEND_URL ?? "http://localhost:3000")
   .split(",")
@@ -42,6 +46,8 @@ console.log("[RealtimeGateway] CORS origins:", frontendOrigins);
     origin: frontendOrigins,
     credentials: true,
   },
+  // Chat text and call signals are small; refuse oversized frames outright.
+  maxHttpBufferSize: 64 * 1024,
 })
 export class RealtimeGateway
   implements OnGatewayConnection, OnGatewayDisconnect {
@@ -49,6 +55,24 @@ export class RealtimeGateway
   server!: Server;
 
   private readonly logger = new Logger("RealtimeGateway");
+
+  /** Per-person event counters (this API runs as one process). */
+  private readonly eventHits = new Map<string, number[]>();
+
+  /** Sliding-window limit per person and event kind; false when over. */
+  private allow(userId: string, kind: string, limit: number, windowMs = 60_000) {
+    const key = `${userId}:${kind}`;
+    const now = Date.now();
+    const hits = (this.eventHits.get(key) ?? []).filter((t) => now - t < windowMs);
+    if (hits.length >= limit) {
+      this.eventHits.set(key, hits);
+      return false;
+    }
+    hits.push(now);
+    this.eventHits.set(key, hits);
+    if (this.eventHits.size > 50_000) this.eventHits.clear(); // bounded memory
+    return true;
+  }
 
   /**
    * Maps userId → Set<socketId> for routing call events to specific users.
@@ -65,6 +89,7 @@ export class RealtimeGateway
     private readonly consultationsService: ConsultationsService,
     private readonly callService: CallService,
     private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
   ) { }
 
   /**
@@ -72,7 +97,7 @@ export class RealtimeGateway
    * Expects the client to connect with:
    *   io(url, { auth: { token: "<accessToken>" } })
    */
-  handleConnection(client: Socket) {
+  async handleConnection(client: Socket) {
     try {
       let token =
         client.handshake.auth?.token ||
@@ -98,20 +123,29 @@ export class RealtimeGateway
       }
 
       const payload = this.jwtService.verify(token);
+      // Same rules as HTTP: signed-out sessions, refresh tokens and deactivated logins are refused.
+      const user = await checkAccessToken(this.prisma, payload);
 
       // Attach user identity to socket for downstream handlers
       client.data.user = {
-        id: payload.sub,
-        email: payload.email,
-        role: payload.role,
+        id: user.id,
+        email: user.email,
+        role: user.role,
       };
 
-      // Register in user→socket map
-      const userId = payload.sub;
+      // Register in user→socket map (a handful of tabs/devices per person)
+      const userId = user.id;
       if (!this.userSockets.has(userId)) {
         this.userSockets.set(userId, new Set());
       }
+      if (this.userSockets.get(userId)!.size >= MAX_SOCKETS_PER_USER) {
+        client.emit("auth_error", { message: "Too many open connections" });
+        client.disconnect(true);
+        return;
+      }
       this.userSockets.get(userId)!.add(client.id);
+      // A private room per person, for messages meant only for them (e.g. call credentials).
+      void client.join(`user:${userId}`);
 
       this.logger.log(
         `Client connected: ${client.id} (userId: ${userId}, sockets: ${this.userSockets.get(userId)!.size})`,
@@ -186,10 +220,15 @@ export class RealtimeGateway
   // ─────────────────────────────────────────────────────
 
   @SubscribeMessage("join_thread")
-  handleJoinThread(
+  async handleJoinThread(
     @MessageBody() data: { threadId: string },
     @ConnectedSocket() client: Socket,
   ) {
+    const userId: string | undefined = client.data?.user?.id;
+    if (userId && !this.allow(userId, "join", 30)) return { status: "error", error: "Too many requests" };
+    if (!userId || !data?.threadId || !(await this.consultationsService.isThreadParticipant(data.threadId, userId))) {
+      return { status: "error", error: "Not a participant of this consultation" };
+    }
     client.join(data.threadId);
     this.logger.log(`Socket ${client.id} joined thread room: ${data.threadId}`);
     return { status: "success" };
@@ -212,8 +251,18 @@ export class RealtimeGateway
       return { status: "error", error: "Not authenticated" };
     }
 
-    if (!data.threadId || !data.content) {
+    if (!data?.threadId || typeof data.content !== "string" || !data.content.trim()) {
       return { status: "error", error: "Missing fields" };
+    }
+    if (data.content.length > 2000) {
+      return { status: "error", error: "Message is too long (2,000 characters at most)" };
+    }
+    if (!this.allow(senderId, "chat", 40)) {
+      return { status: "error", error: "You're sending messages too quickly" };
+    }
+
+    if (!(await this.consultationsService.isThreadParticipant(data.threadId, senderId))) {
+      return { status: "error", error: "Not a participant of this consultation" };
     }
 
     const message = await this.consultationsService.saveMessage(
@@ -228,10 +277,14 @@ export class RealtimeGateway
   }
 
   @SubscribeMessage("end_session")
-  handleEndSession(
+  async handleEndSession(
     @MessageBody() data: { threadId: string },
     @ConnectedSocket() client: Socket,
   ) {
+    const userId: string | undefined = client.data?.user?.id;
+    if (!userId || !data?.threadId || !(await this.consultationsService.isThreadParticipant(data.threadId, userId))) {
+      return { status: "error", error: "Not a participant of this consultation" };
+    }
     this.server
       .to(data.threadId)
       .emit("end_session", { threadId: data.threadId });
@@ -247,10 +300,15 @@ export class RealtimeGateway
    * Both user and astrologer join this room to receive call events.
    */
   @SubscribeMessage("join_call")
-  handleJoinCall(
+  async handleJoinCall(
     @MessageBody() data: { consultationId: string },
     @ConnectedSocket() client: Socket,
   ) {
+    const userId: string | undefined = client.data?.user?.id;
+    if (userId && !this.allow(userId, "join", 30)) return { status: "error", error: "Too many requests" };
+    if (!userId || !data?.consultationId || !(await this.consultationsService.isParticipant(data.consultationId, userId))) {
+      return { status: "error", error: "Not a participant of this consultation" };
+    }
     const roomId = `call:${data.consultationId}`;
     client.join(roomId);
     this.logger.log(`[CALL:${data.consultationId}] Socket ${client.id} joined call room`);
@@ -275,8 +333,20 @@ export class RealtimeGateway
     if (!userId) {
       return { status: "error", error: "Not authenticated" };
     }
+    if (!this.allow(userId, "call", 5)) {
+      return { status: "error", error: "Too many call attempts. Please wait a minute." };
+    }
 
-    const { consultationId, astrologerUserId, callerName } = data;
+    const { consultationId } = data ?? ({} as typeof data);
+    const callerName = String(data?.callerName ?? "").slice(0, 60);
+
+    // Only the client of this consultation may ring, and only its own astrologer —
+    // the callee comes from the database, never from the client's payload.
+    const participants = consultationId ? await this.consultationsService.getParticipants(consultationId) : null;
+    if (!participants || participants.clientUserId !== userId || !participants.astrologerUserId) {
+      return { status: "error", error: "Not allowed to call for this consultation" };
+    }
+    const astrologerUserId = participants.astrologerUserId;
 
     // Join the call signaling room
     const roomId = `call:${consultationId}`;

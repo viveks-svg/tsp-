@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Get, Param, HttpCode, HttpStatus, NotFoundException, BadRequestException } from "@nestjs/common";
 import { ConsultationsService } from "./consultations.service";
 import { CallService } from "./call.service";
-import { CreateConsultationDto, CompleteConsultationDto, InitiateCallDto } from "./dto/consultation.dto";
+import { CreateConsultationDto, CompleteConsultationDto, InitiateCallDto, ChatMessageDto, ReviewDto } from "./dto/consultation.dto";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 
 @Controller("consultations")
@@ -59,6 +59,9 @@ export class ConsultationsController {
     @CurrentUser() user: any,
     @Param("id") id: string,
   ) {
+    if (!(await this.consultationsService.isParticipant(id, user.id))) {
+      throw new NotFoundException("Chat thread not found for this consultation");
+    }
     const thread = await this.consultationsService.findThread(id);
     if (!thread) {
       throw new NotFoundException("Chat thread not found for this consultation");
@@ -70,12 +73,15 @@ export class ConsultationsController {
   async sendMessage(
     @CurrentUser() user: any,
     @Param("id") id: string,
-    @Body("content") content: string,
+    @Body() { content }: ChatMessageDto,
   ) {
     if (!content || content.trim() === "") {
       throw new BadRequestException("Message content cannot be empty");
     }
 
+    if (!(await this.consultationsService.isParticipant(id, user.id))) {
+      throw new NotFoundException("Chat thread not found");
+    }
     const thread = await this.consultationsService.findThread(id);
     if (!thread) {
       throw new NotFoundException("Chat thread not found");
@@ -92,14 +98,9 @@ export class ConsultationsController {
   async createReview(
     @CurrentUser() user: any,
     @Param("id") id: string,
-    @Body("rating") rating: number,
-    @Body("review") review?: string,
+    @Body() dto: ReviewDto,
   ) {
-    if (rating === undefined || rating < 1 || rating > 5) {
-      throw new BadRequestException("Rating must be a number between 1 and 5");
-    }
-
-    return this.consultationsService.createReview(user.id, id, rating, review);
+    return this.consultationsService.createReview(user.id, id, dto.rating, dto.review);
   }
 
   // --- Call Endpoints ---

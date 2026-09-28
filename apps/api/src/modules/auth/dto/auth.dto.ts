@@ -1,5 +1,4 @@
-import { IsEmail, IsString, MinLength, IsOptional, IsEnum, Matches } from "class-validator";
-import { Role } from "@prisma/client";
+import { IsEmail, IsString, MinLength, IsOptional, Matches } from "class-validator";
 
 export class SignupDto {
   @IsEmail({}, { message: "Invalid email format" })
@@ -21,10 +20,6 @@ export class SignupDto {
   @IsString()
   @Matches(/^\d{10}$/, { message: "Phone must be exactly 10 digits" })
   phone?: string;
-
-  @IsOptional()
-  @IsEnum(Role, { message: "Invalid role specified" })
-  role?: Role;
 }
 
 export class LoginDto {

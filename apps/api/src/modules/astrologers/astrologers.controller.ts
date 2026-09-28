@@ -1,7 +1,8 @@
+import { RequirePermission } from "../../common/decorators/require-permission.decorator";
 import { Controller, Post, Body, Get, Patch, Param } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AstrologersService } from "./astrologers.service";
-import { OnboardAstrologerDto, UpdateAvailabilityDto, SubmitKycDto, ReviewKycDto } from "./dto/astrologer.dto";
+import { UpdateAvailabilityDto, ReviewKycDto } from "./dto/astrologer.dto";
 import { SetAvailabilityRulesDto, AddAvailabilityExceptionDto } from "./dto/availability.dto";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Public } from "../../common/decorators/public.decorator";
@@ -13,15 +14,10 @@ import { Role } from "@prisma/client";
 export class AstrologersController {
   constructor(private readonly astrologersService: AstrologersService) {}
 
-  @Post("onboard")
-  async onboard(
-    @CurrentUser() user: any,
-    @Body() dto: OnboardAstrologerDto,
-  ) {
-    return this.astrologersService.onboard(user.id, dto);
-  }
+  // Astrologers are created by admins (Admin → Astrologers); there is no self sign-up.
 
   @Throttle(TIER_ADMIN_INTERNAL)
+  @Roles(Role.ASTROLOGER)
   @Patch("me/availability")
   async updateAvailability(
     @CurrentUser() user: any,
@@ -30,17 +26,10 @@ export class AstrologersController {
     return this.astrologersService.updateAvailability(user.id, dto.isAvailable);
   }
 
-  @Post("kyc/submit")
-  async submitKyc(
-    @CurrentUser() user: any,
-    @Body() dto: SubmitKycDto,
-  ) {
-    return this.astrologersService.submitKyc(user.id, dto);
-  }
-
   @Throttle(TIER_ADMIN_INTERNAL)
   @Patch(":id/kyc/review")
   @Roles(Role.ADMIN)
+  @RequirePermission("astrologers.manage")
   async reviewKyc(
     @CurrentUser() user: any,
     @Param("id") id: string,
@@ -50,6 +39,7 @@ export class AstrologersController {
   }
 
   @Throttle(TIER_ADMIN_INTERNAL)
+  @Roles(Role.ASTROLOGER)
   @Post("me/availability/rules")
   async setAvailabilityRules(
     @CurrentUser() user: any,
@@ -59,6 +49,7 @@ export class AstrologersController {
   }
 
   @Throttle(TIER_ADMIN_INTERNAL)
+  @Roles(Role.ASTROLOGER)
   @Get("me/availability/rules")
   async getMyAvailabilityRules(@CurrentUser() user: any) {
     return this.astrologersService.getMyAvailabilityRules(user.id);
@@ -72,6 +63,7 @@ export class AstrologersController {
   }
 
   @Throttle(TIER_ADMIN_INTERNAL)
+  @Roles(Role.ASTROLOGER)
   @Post("me/availability/exceptions")
   async addAvailabilityException(
     @CurrentUser() user: any,

@@ -7,12 +7,10 @@ export class AdminService {
   constructor(private readonly prisma: PrismaService) { }
 
   async reviewAstrologer(adminId: string, astrologerId: string, dto: ReviewAstrologerDto) {
-    console.log(adminId, astrologerId, dto);
     const astrologer = await this.prisma.astrologer.findUnique({
       where: { id: astrologerId },
     });
 
-    console.log("Hello World");
     if (!astrologer) {
       throw new NotFoundException("Astrologer profile not found");
     }

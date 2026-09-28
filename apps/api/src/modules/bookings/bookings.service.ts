@@ -1,3 +1,4 @@
+import { EarningsService } from '../finance/earnings.service';
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { RazorpayService } from '../payments/razorpay.service';
@@ -8,15 +9,19 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import { ServiceCategory, UrgencyTier, BookingStatus } from '@prisma/client';
 import { SERVICE_PRICES } from '../../common/constants/service-prices';
+import { ScheduleService } from '../schedule/schedule.service';
+import { istToUtc, parseSlotLabel } from '../schedule/slot-label';
 
 @Injectable()
 export class BookingsService {
   constructor(
+    private earnings: EarningsService,
     private prisma: PrismaService,
     private razorpay: RazorpayService,
     private notifications: NotificationsService,
     private leads: LeadsService,
     private googleCalendar: GoogleCalendarService,
+    private schedule: ScheduleService,
   ) {}
 
   // ── Compute pricing with urgency surcharge ──────────────────────────────────
@@ -36,7 +41,24 @@ export class BookingsService {
   }
 
   // ── Create booking + Razorpay order ────────────────────────────────────────
-  async initiateBooking(dto: CreateBookingDto) {
+  async initiateBooking(dto: CreateBookingDto, userId: string | null = null) {
+    // Closed the payment window and pressed Pay again? Carry on with the same
+    // checkout (same slot, same Razorpay order) instead of refusing their own hold.
+    const resumed = await this.resumeOpenCheckout(dto, userId);
+    if (resumed) return resumed;
+
+    // Unpaid checkouts hold a slot for a while: a person can have only a couple open at once.
+    const openCheckouts = await this.prisma.booking.count({
+      where: {
+        status: BookingStatus.PENDING_PAYMENT,
+        createdAt: { gte: new Date(Date.now() - 30 * 60 * 1000) },
+        OR: [{ email: dto.email }, { phone: dto.phone }],
+      },
+    });
+    if (openCheckouts >= 2) {
+      throw new BadRequestException('You already have a checkout in progress. Please complete it or try again in a few minutes.');
+    }
+
     // Validate scheduled date is not in the past or today (unless SAME_DAY enabled)
     if (dto.scheduledDate) {
       const scheduled = new Date(dto.scheduledDate);
@@ -72,11 +94,20 @@ export class BookingsService {
       }
     }
 
+    // The slot must be one Dr. Pradeep's schedule offers and nobody else holds.
+    if (dto.scheduledDate && dto.scheduledSlot) {
+      const bookable = await this.schedule.isBookable(dto.scheduledDate.slice(0, 10), dto.scheduledSlot);
+      if (!bookable) {
+        throw new BadRequestException('That time is no longer available. Please choose another slot.');
+      }
+    }
+
     const pricing = this.computePricing(dto.serviceSlug, dto.urgencyTier);
 
     // Create booking record in PENDING_PAYMENT state
     const booking = await this.prisma.booking.create({
       data: {
+        userId,
         serviceCategory: dto.serviceCategory,
         serviceSlug: dto.serviceSlug,
         serviceName: dto.serviceName,
@@ -124,6 +155,54 @@ export class BookingsService {
     return {
       bookingId: booking.id,
       razorpayOrderId: rzpOrder.id,
+      // Checkout must open with the key of the account that created the order.
+      key: await this.razorpay.getKeyId(),
+      amount: pricing.totalAmountPaise,
+      currency: 'INR',
+      pricing,
+      leadSessionId: dto.leadSessionId || null,
+    };
+  }
+
+  /** The same person's unpaid checkout for exactly this service and time, still holding its slot. */
+  private async resumeOpenCheckout(dto: CreateBookingDto, userId: string | null) {
+    const pricing = this.computePricing(dto.serviceSlug, dto.urgencyTier);
+    const open = await this.prisma.booking.findFirst({
+      where: {
+        status: BookingStatus.PENDING_PAYMENT,
+        createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) },
+        OR: [{ email: dto.email }, { phone: dto.phone }],
+        serviceSlug: dto.serviceSlug,
+        urgencyTier: dto.urgencyTier,
+        scheduledDate: dto.scheduledDate ? new Date(dto.scheduledDate) : null,
+        scheduledSlot: dto.scheduledSlot ?? null,
+        totalAmountPaise: pricing.totalAmountPaise,
+        razorpayOrderId: { not: null },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!open) return null;
+    // Keep what they typed this time.
+    await this.prisma.booking.update({
+      where: { id: open.id },
+      data: {
+        userId: open.userId ?? userId,
+        fullName: dto.fullName,
+        email: dto.email,
+        phone: dto.phone,
+        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
+        timeOfBirth: dto.timeOfBirth,
+        placeOfBirth: dto.placeOfBirth,
+        businessName: dto.businessName,
+        businessAddress: dto.businessAddress,
+        spaceType: dto.spaceType,
+        notes: dto.notes,
+      },
+    });
+    return {
+      bookingId: open.id,
+      razorpayOrderId: open.razorpayOrderId!,
+      key: await this.razorpay.getKeyId(),
       amount: pricing.totalAmountPaise,
       currency: 'INR',
       pricing,
@@ -133,21 +212,15 @@ export class BookingsService {
 
   // ── Verify payment after Razorpay modal closes ──────────────────────────────
   async verifyPayment(dto: VerifyPaymentDto) {
-    const booking = await this.prisma.booking.findUnique({
-      where: { id: dto.bookingId },
-    });
+    const booking = await this.prisma.booking.findUnique({ where: { id: dto.bookingId } });
     if (!booking) throw new NotFoundException('Booking not found');
-    if (booking.status === BookingStatus.CONFIRMED) {
-      return { success: true, bookingId: booking.id }; // idempotent
+
+    // The payment must be for THIS booking's Razorpay order (created by us, for its price).
+    if (!booking.razorpayOrderId || dto.razorpayOrderId !== booking.razorpayOrderId) {
+      throw new BadRequestException('This payment does not belong to this booking.');
     }
-
-    const isValid = this.razorpay.verifySignature(
-      dto.razorpayOrderId,
-      dto.razorpayPaymentId,
-      dto.razorpaySignature,
-    );
-
-    if (!isValid) {
+    const valid = await this.razorpay.verifySignature(booking.razorpayOrderId, dto.razorpayPaymentId, dto.razorpaySignature);
+    if (!valid) {
       await this.prisma.paymentEvent.create({
         data: {
           bookingId: booking.id,
@@ -159,65 +232,91 @@ export class BookingsService {
       throw new BadRequestException('Payment signature verification failed');
     }
 
+    const outcome = await this.confirmPaid(booking.id, booking.razorpayOrderId, dto.razorpayPaymentId, {
+      signature: dto.razorpaySignature,
+    });
+    if (outcome === 'NOT_PENDING') {
+      throw new BadRequestException('This booking is no longer awaiting payment. Please contact the TSP office.');
+    }
+    if (outcome === 'CONFIRMED') this.tryMarkLeadConverted(dto.leadSessionId, booking.id);
+    return { success: true, bookingId: booking.id };
+  }
+
+  /**
+   * Marks a booking paid — once. Used by the checkout callback and the Razorpay
+   * webhook, whichever arrives first; the other finds it already done.
+   * Only a PENDING_PAYMENT booking for this exact order can be confirmed, so a
+   * payment can't be reused for another booking or revive a cancelled one.
+   */
+  async confirmPaid(
+    bookingId: string,
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    extra: { signature?: string; rawPayload?: unknown } = {},
+  ): Promise<'CONFIRMED' | 'ALREADY_CONFIRMED' | 'NOT_PENDING'> {
+    let claimed: { count: number };
+    try {
+      claimed = await this.prisma.booking.updateMany({
+        where: { id: bookingId, razorpayOrderId, status: BookingStatus.PENDING_PAYMENT },
+        data: {
+          status: BookingStatus.CONFIRMED,
+          razorpayPaymentId,
+          razorpaySignature: extra.signature ?? null,
+          confirmedAt: new Date(),
+        },
+      });
+    } catch (e) {
+      // This payment already confirmed another booking.
+      if ((e as { code?: string }).code === 'P2002') return 'NOT_PENDING';
+      throw e;
+    }
+    const booking = await this.prisma.booking.findUniqueOrThrow({ where: { id: bookingId } });
+    if (claimed.count === 0) {
+      return booking.razorpayPaymentId === razorpayPaymentId ? 'ALREADY_CONFIRMED' : 'NOT_PENDING';
+    }
+
+    await this.prisma.paymentEvent.create({
+      data: {
+        bookingId: booking.id,
+        eventType: 'PAYMENT_CAPTURED',
+        razorpayEventId: razorpayPaymentId,
+        amountPaise: booking.totalAmountPaise,
+        ...(extra.rawPayload ? { rawPayload: extra.rawPayload as any } : {}),
+      },
+    });
+
     let meetLink: string | undefined;
-    let calendarEventId: string | undefined;
-
     if (booking.scheduledDate) {
-      const scheduledStart = new Date(booking.scheduledDate);
-      const scheduledEnd = new Date(scheduledStart.getTime() + 60 * 60 * 1000); // Default 1 hour
-
-      const meetDetails = await this.googleCalendar.createEventWithMeetLink(
-        `TSP Booking: ${booking.serviceName} for ${booking.fullName}`,
-        `Booking ID: ${booking.id}\nService: ${booking.serviceName}`,
-        scheduledStart,
-        scheduledEnd,
-        [booking.email]
-      );
-
-      if (meetDetails) {
-        meetLink = meetDetails.meetLink;
-        calendarEventId = meetDetails.eventId;
+      try {
+        // The invite covers the chosen session (IST); without a readable slot, fall back to a 1-hour block.
+        const dateStr = booking.scheduledDate.toISOString().slice(0, 10);
+        const slot = parseSlotLabel(booking.scheduledSlot);
+        const scheduledStart = slot ? istToUtc(dateStr, slot.start) : new Date(booking.scheduledDate);
+        const scheduledEnd = slot ? istToUtc(dateStr, slot.end) : new Date(scheduledStart.getTime() + 60 * 60 * 1000);
+        const meetDetails = await this.googleCalendar.createEventWithMeetLink(
+          `TSP Booking: ${booking.serviceName} for ${booking.fullName}`,
+          `Booking ID: ${booking.id}\nService: ${booking.serviceName}`,
+          scheduledStart,
+          scheduledEnd,
+          [booking.email],
+        );
+        if (meetDetails) {
+          meetLink = meetDetails.meetLink;
+          await this.prisma.booking.update({
+            where: { id: booking.id },
+            data: { meetLink: meetDetails.meetLink, calendarEventId: meetDetails.eventId },
+          });
+        }
+      } catch (e) {
+        console.error('Could not create the Meet invite', e);
       }
     }
 
-    await this.prisma.$transaction([
-      this.prisma.booking.update({
-        where: { id: booking.id },
-        data: {
-          status: BookingStatus.CONFIRMED,
-          razorpayPaymentId: dto.razorpayPaymentId,
-          razorpaySignature: dto.razorpaySignature,
-          confirmedAt: new Date(),
-          meetLink,
-          calendarEventId,
-        },
-      }),
-      this.prisma.paymentEvent.create({
-        data: {
-          bookingId: booking.id,
-          eventType: 'PAYMENT_CAPTURED',
-          razorpayEventId: dto.razorpayPaymentId,
-          amountPaise: booking.totalAmountPaise,
-        },
-      }),
-    ]);
+    // The astrologer's share of this session (less commission), once.
+    await this.earnings.creditBooking(booking.id);
 
-    // Send notifications
-    this.notifications.sendOrderConfirmationEmail(
-      booking.email,
-      booking.fullName,
-      booking.id,
-      booking.totalAmountPaise / 100,
-      meetLink
-    );
-
-    this.notifications.sendOrderConfirmationSMS(
-      booking.phone,
-      booking.fullName,
-      booking.id,
-      booking.scheduledDate,
-      meetLink
-    );
+    // The client's confirmation (email; WhatsApp once a sender is configured)
+    void this.notifications.sendBookingConfirmation({ ...booking, meetLink: meetLink ?? booking.meetLink });
 
     // Send push notification to admin(s)
     this.notifications.sendAdminBookingNotification(
@@ -227,12 +326,13 @@ export class BookingsService {
       booking.scheduledDate,
     );
 
-    // Persist in-app notification for admin(s)
+    // Persist in-app notification for admin(s) and for Dr. Pradeep (the session is his)
     try {
-      const admins = await this.prisma.user.findMany({
-        where: { role: 'ADMIN' },
-        select: { id: true },
-      });
+      const [admins, provider] = await Promise.all([
+        this.prisma.user.findMany({ where: { role: 'ADMIN' }, select: { id: true } }),
+        this.schedule.getProvider(),
+      ]);
+      if (provider) admins.push({ id: provider.userId });
       const dateStr = booking.scheduledDate
         ? new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium' }).format(new Date(booking.scheduledDate))
         : 'TBD';
@@ -249,10 +349,7 @@ export class BookingsService {
       console.error('Failed to persist admin notification', e);
     }
 
-    // Mark lead as converted if this booking came through the lead flow
-    this.tryMarkLeadConverted(dto.leadSessionId, booking.id);
-
-    return { success: true, bookingId: booking.id };
+    return 'CONFIRMED';
   }
 
   // ── Mark lead as converted after successful payment ─────────────────────────
@@ -268,7 +365,4 @@ export class BookingsService {
     }
   }
 
-  async getBookingById(id: string) {
-    return this.prisma.booking.findUnique({ where: { id } });
-  }
 }

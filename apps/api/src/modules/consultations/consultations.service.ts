@@ -1,3 +1,4 @@
+import { EarningsService } from "../finance/earnings.service";
 import {
   BadRequestException,
   ForbiddenException,
@@ -13,6 +14,7 @@ import { Prisma } from "@prisma/client";
 @Injectable()
 export class ConsultationsService {
   constructor(
+    private readonly earnings: EarningsService,
     private readonly prisma: PrismaService,
     private readonly walletService: WalletService,
     private readonly googleCalendarService: GoogleCalendarService,
@@ -135,13 +137,17 @@ export class ConsultationsService {
 
     // Check ownership
     const isClient = consultation.userId === userId;
-    const isAstrologer = consultation.astrologer?.userId === userId || consultation.adminProviderId === userId;
+    const isAstrologer = consultation.astrologer?.userId === userId;
 
     if (!isClient && !isAstrologer) {
       throw new ForbiddenException("You do not have access to start this consultation");
     }
 
     return this.prisma.$transaction(async (tx) => {
+      // The paid clock starts when the astrologer joins — not while the client waits.
+      if (isAstrologer) {
+        await tx.consultation.updateMany({ where: { id, startedAt: null }, data: { startedAt: new Date() } });
+      }
       const updated = await tx.consultation.update({
         where: { id },
         data: { status: "ACTIVE" },
@@ -194,36 +200,54 @@ export class ConsultationsService {
 
     // Check ownership
     const isClient = consultation.userId === userId;
-    const isAstrologer = consultation.astrologer?.userId === userId || consultation.adminProviderId === userId;
+    const isAstrologer = consultation.astrologer?.userId === userId;
 
     if (!isClient && !isAstrologer) {
       throw new ForbiddenException("You do not have access to complete this consultation");
     }
 
-    const cost = consultation.lockedPricingPerMin.mul(dto.durationMin);
+    return this.completeChat(id, new Date());
+  }
 
+  /**
+   * Ends a live chat and bills it — once. The length is measured by the server
+   * (start → end, whole minutes, at least one); the client pays at most what is
+   * in their wallet, and the astrologer is credited on what was actually paid.
+   * Used when either side ends the chat, and by the hourly clean-up for chats
+   * left open (billed up to the last message).
+   */
+  async completeChat(id: string, endAt: Date) {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Deduct cost from client wallet (with ledger entry & compatibility transaction)
-      await this.walletService.debitWallet(
-        tx,
-        consultation.userId,
-        cost,
-        "CONSULTATION",
-        `Consultation fee with provider ${consultation.astrologer?.user.name || "Admin"}`,
-        consultation.id,
-      );
+      const claimed = await tx.consultation.updateMany({ where: { id, status: "ACTIVE" }, data: { status: "COMPLETED" } });
+      if (claimed.count === 0) throw new BadRequestException("This consultation has already ended.");
 
-      // 2. Add/Credit cost to astrologer wallet (with ledger entry & compatibility transaction)
-      const providerUserId = consultation.astrologer?.userId || consultation.adminProviderId;
-      if (providerUserId) {
-        await this.walletService.creditWallet(
+      const consultation = await tx.consultation.findUniqueOrThrow({
+        where: { id },
+        include: { astrologer: { include: { user: true } }, user: { include: { wallet: true } } },
+      });
+      // No astrologer ever joined: nothing to pay.
+      const started = consultation.startedAt;
+      const durationMin = started ? Math.max(1, Math.ceil((endAt.getTime() - started.getTime()) / 60_000)) : 0;
+      const due = consultation.lockedPricingPerMin.mul(durationMin);
+      const balance = consultation.user.wallet?.balance ?? new Prisma.Decimal(0);
+      const cost = Prisma.Decimal.max(0, Prisma.Decimal.min(due, balance));
+
+      if (cost.gt(0)) {
+        // 1. Deduct cost from client wallet (with ledger entry & compatibility transaction)
+        await this.walletService.debitWallet(
           tx,
-          providerUserId,
+          consultation.userId,
           cost,
           "CONSULTATION",
-          `Consultation payout from user ${consultation.user.name}`,
+          `Chat with ${consultation.astrologer?.user.name || "TSP"} — ${durationMin} min`,
           consultation.id,
         );
+
+        // 2. The astrologer's share (less commission)
+        const providerUserId = consultation.astrologer?.userId;
+        if (providerUserId) {
+          await this.earnings.creditConsultation(tx, providerUserId, cost, consultation.id, `Chat with ${consultation.user.name || "a client"}`);
+        }
       }
 
       // 3. Update ChatThread status if exists
@@ -232,14 +256,10 @@ export class ConsultationsService {
         data: { status: "COMPLETED" },
       });
 
-      // 4. Update consultation status
+      // 4. Record what was billed
       return tx.consultation.update({
         where: { id },
-        data: {
-          status: "COMPLETED",
-          durationMin: dto.durationMin,
-          cost,
-        },
+        data: { durationMin, cost },
       });
     });
   }
@@ -264,7 +284,7 @@ export class ConsultationsService {
 
     // Check ownership
     const isClient = consultation.userId === userId;
-    const isAstrologer = consultation.astrologer?.userId === userId || consultation.adminProviderId === userId;
+    const isAstrologer = consultation.astrologer?.userId === userId;
 
     if (!isClient && !isAstrologer) {
       throw new ForbiddenException("You do not have access to cancel this consultation");
@@ -277,7 +297,7 @@ export class ConsultationsService {
   }
 
   async findUserConsultations(userId: string) {
-    return this.prisma.consultation.findMany({
+    const rows = await this.prisma.consultation.findMany({
       where: {
         OR: [
           { userId },
@@ -313,6 +333,41 @@ export class ConsultationsService {
       },
       orderBy: { scheduledAt: "desc" },
     });
+    // Each side sees only what it needs: the astrologer doesn't get the client's
+    // email or wallet balance, and nobody gets the other party's email.
+    return rows.map((c) => {
+      const isClient = c.userId === userId;
+      return {
+        ...c,
+        user: isClient ? c.user : { id: c.user.id, name: c.user.name },
+        astrologer: c.astrologer ? { ...c.astrologer, user: { id: c.astrologer.user.id, name: c.astrologer.user.name } } : null,
+        adminProvider: c.adminProvider ? { id: c.adminProvider.id, name: c.adminProvider.name } : null,
+      };
+    });
+  }
+
+  /**
+   * The two people in a consultation: the client and the astrologer.
+   * Admins are not participants — they never read or join a client's session.
+   */
+  async getParticipants(consultationId: string) {
+    const c = await this.prisma.consultation.findUnique({
+      where: { id: consultationId },
+      select: { userId: true, astrologer: { select: { userId: true } } },
+    });
+    if (!c) return null;
+    return { clientUserId: c.userId, astrologerUserId: c.astrologer?.userId ?? null };
+  }
+
+  async isParticipant(consultationId: string, userId: string) {
+    const p = await this.getParticipants(consultationId);
+    return !!p && (p.clientUserId === userId || p.astrologerUserId === userId);
+  }
+
+  /** Same check, starting from a chat thread id (socket events carry threadId). */
+  async isThreadParticipant(threadId: string, userId: string) {
+    const thread = await this.prisma.chatThread.findUnique({ where: { id: threadId }, select: { consultationId: true } });
+    return !!thread && this.isParticipant(thread.consultationId, userId);
   }
 
   async findThread(consultationId: string) {
@@ -327,6 +382,15 @@ export class ConsultationsService {
   }
 
   async saveMessage(threadId: string, senderId: string, content: string, type = "TEXT") {
+    // The astrologer's first reply also starts the paid clock (if opening the chat didn't).
+    const thread = await this.prisma.chatThread.findUnique({
+      where: { id: threadId },
+      select: { consultation: { select: { id: true, startedAt: true, astrologer: { select: { userId: true } } } } },
+    });
+    const c = thread?.consultation;
+    if (c && !c.startedAt && c.astrologer?.userId === senderId) {
+      await this.prisma.consultation.updateMany({ where: { id: c.id, startedAt: null }, data: { startedAt: new Date() } });
+    }
     return this.prisma.chatMessage.create({
       data: {
         threadId,
@@ -344,6 +408,17 @@ export class ConsultationsService {
 
     if (!consultation) {
       throw new NotFoundException("Consultation not found");
+    }
+    // Only the client, after the session, reviews it — and only their own review can change.
+    if (consultation.userId !== userId) {
+      throw new ForbiddenException("Only the client of this consultation can review it");
+    }
+    if (consultation.status !== "COMPLETED") {
+      throw new BadRequestException("You can review a consultation once it has ended");
+    }
+    const existing = await this.prisma.consultationReview.findUnique({ where: { consultationId }, select: { userId: true } });
+    if (existing && existing.userId !== userId) {
+      throw new ForbiddenException("This consultation already has a review");
     }
 
     return this.prisma.consultationReview.upsert({

@@ -1,7 +1,14 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import { Role } from '@prisma/client';
 import { Public } from '../../common/decorators/public.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
+import { TIER_ADMIN_INTERNAL } from '../../common/config/rate-limit.config';
 import { PromoService } from './promo.service';
+import { PromoDto, UpdatePromoDto } from './promo.dto';
 
+/** The website asks which promo popups are live. */
 @Controller('promo')
 export class PromoController {
   constructor(private readonly promoService: PromoService) {}
@@ -9,15 +16,35 @@ export class PromoController {
   @Public()
   @Get('active')
   async getActivePromos() {
-    console.log('Fetching active promos...');
     return this.promoService.getActivePromos();
   }
+}
 
-  @Public()
-  @Post('create')
-  async createPromo(@Body() data: any) {
-    const promo = await this.promoService.createPromo(data);
-    await this.promoService.broadcastActivePromos();
-    return promo;
+/** Admins create and manage promo popups (used to be a public endpoint). */
+@Controller('admin/promos')
+@Roles(Role.ADMIN)
+@RequirePermission('content.manage')
+@Throttle(TIER_ADMIN_INTERNAL)
+export class AdminPromoController {
+  constructor(private readonly promoService: PromoService) {}
+
+  @Get()
+  list() {
+    return this.promoService.listAll();
+  }
+
+  @Post()
+  create(@Body() dto: PromoDto) {
+    return this.promoService.createPromo(dto);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdatePromoDto) {
+    return this.promoService.updatePromo(id, dto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.promoService.deletePromo(id);
   }
 }

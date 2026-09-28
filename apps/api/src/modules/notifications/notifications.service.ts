@@ -1,115 +1,144 @@
 import { Injectable, Logger, Inject, forwardRef } from "@nestjs/common";
+import { escapeHtml } from "../../common/html";
 import { PrismaService } from "../../database/prisma.service";
 import { FirebaseService } from "../firebase/firebase.service";
 import { RealtimeGateway } from "../../realtime/realtime.gateway";
 import { NotificationType } from "@prisma/client";
-import twilio from "twilio";
+import { MailService } from "../mail/mail.service";
+import { parseSlotLabel, formatSlotLabel } from "../schedule/slot-label";
+
+const inr = (n: number) => `₹${Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+const site = () => (process.env.FRONTEND_URL || "https://timespaceplanets.com").replace(/\/$/, "");
+const firstName = (name: string) => (name || "").trim().split(/\s+/)[0] || "there";
+/** Booking dates are calendar days stored at 00:00 UTC. */
+const calendarDate = (d: Date) =>
+  new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(d));
+const slotText = (label: string) => {
+  const range = parseSlotLabel(label);
+  return `${range ? formatSlotLabel(range) : label} IST`;
+};
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
-  private readonly resendApiKey = process.env.RESEND_API_KEY || "";
   private readonly twilioSid = process.env.TWILIO_ACCOUNT_SID || "";
   private readonly twilioToken = process.env.TWILIO_AUTH_TOKEN || "";
-  private readonly twilioFrom = process.env.TWILIO_FROM_NUMBER || "";
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly firebaseService: FirebaseService,
+    private readonly mail: MailService,
     @Inject(forwardRef(() => RealtimeGateway))
     private readonly realtimeGateway: RealtimeGateway,
   ) { }
 
-  async sendOrderConfirmationEmail(toEmail: string, customerName: string, orderId: string, totalAmount: number, meetLink?: string) {
-    try {
-      const response = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${this.resendApiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          from: "onboarding@resend.dev",
-          to: toEmail,
-          subject: `Order Confirmation - Time Space & Planets`,
-          html: `
-            <div style="font-family: sans-serif; padding: 20px;">
-              <h2>Namaste, ${customerName}!</h2>
-              <p>Thank you for your order. We have successfully received your payment.</p>
-              <p><strong>Order ID:</strong> ${orderId}</p>
-              <p><strong>Total Amount Paid:</strong> ₹${totalAmount}</p>
-              ${meetLink ? `<br/><p><strong>Your Google Meet Link:</strong> <a href="${meetLink}">${meetLink}</a></p>` : ''}
-              <br/>
-              <p>Our Pandits will soon begin planetary energization calculations if applicable. You can track your orders in your dashboard.</p>
-              <p>Divine Blessings,<br/>Time Space & Planets Team</p>
-            </div>
-          `
-        })
-      });
-      if (!response.ok) {
-        this.logger.error(`Resend API Error: ${await response.text()}`);
-      }
-    } catch (e) {
-      this.logger.error("Failed to send order email", e);
-    }
+  // ── Client confirmations ─────────────────────────────────────────────────
+
+  /** Email + WhatsApp to a client whose booking is paid and confirmed. */
+  async sendBookingConfirmation(b: {
+    id: string;
+    email: string;
+    phone: string;
+    fullName: string;
+    serviceName: string;
+    scheduledDate: Date | null;
+    scheduledSlot: string | null;
+    totalAmountPaise: number;
+    meetLink?: string | null;
+  }) {
+    const when = b.scheduledDate
+      ? `${calendarDate(b.scheduledDate)}${b.scheduledSlot ? `, ${slotText(b.scheduledSlot)}` : ""}`
+      : null;
+    const ref = b.id.slice(-8).toUpperCase();
+    void this.mail.sendActionEmail(b.email, {
+      subject: `Your ${b.serviceName} is confirmed — Time Space & Planets`,
+      greetingName: b.fullName,
+      paragraphs: [
+        "Thank you — your payment is received and your session with Dr. Pradeep Sharma is confirmed.",
+        b.meetLink
+          ? "Join the video session from the link below a few minutes before the time."
+          : b.scheduledDate
+            ? "We'll send your video session link before the session."
+            : "Our team will begin preparing and will contact you with next steps.",
+      ],
+      details: [
+        ["Service", b.serviceName],
+        ...(when ? ([["When", when]] as [string, string][]) : []),
+        ["Amount paid", inr(b.totalAmountPaise / 100)],
+        ["Booking reference", ref],
+      ],
+      ...(b.meetLink
+        ? { buttonText: "Join video session", link: b.meetLink }
+        : { buttonText: "View my bookings", link: `${site()}/orders` }),
+      footnote: "Need to change something? Reply to this email or write to us from the website.",
+    });
+    void this.sendWhatsApp(
+      b.phone,
+      `Namaste ${firstName(b.fullName)}, your ${b.serviceName} with Dr. Pradeep Sharma is confirmed` +
+        (when ? ` for ${when}` : "") +
+        `. Ref ${ref}.` +
+        (b.meetLink ? ` Join: ${b.meetLink}` : "") +
+        " — Time Space & Planets",
+    );
   }
 
-  async sendOrderConfirmationSMS(toNumber: string, customerName: string, orderId: string, scheduledDate?: Date | null, meetLink?: string) {
+  /** Email + WhatsApp to a client whose shop order is paid. */
+  async sendShopOrderConfirmation(o: {
+    id: string;
+    customerEmail: string;
+    customerPhone: string;
+    customerName: string;
+    totalAmount: number;
+    items: { productName: string; quantity: number }[];
+  }) {
+    const ref = o.id.slice(-8).toUpperCase();
+    void this.mail.sendActionEmail(o.customerEmail, {
+      subject: `Order ${ref} received — Time Space & Planets`,
+      greetingName: o.customerName,
+      paragraphs: [
+        "Thank you — your payment is received. We'll prepare your order and let you know when it ships.",
+      ],
+      details: [
+        ...o.items.map((i) => [i.productName, `× ${i.quantity}`] as [string, string]),
+        ["Amount paid", inr(o.totalAmount)],
+        ["Order reference", ref],
+      ],
+      buttonText: "View my orders",
+      link: `${site()}/orders`,
+    });
+    void this.sendWhatsApp(
+      o.customerPhone,
+      `Namaste ${firstName(o.customerName)}, we've received your order ${ref} (${inr(o.totalAmount)}). ` +
+        "We'll message you when it ships. — Time Space & Planets",
+    );
+  }
+
+  /**
+   * WhatsApp through Twilio, only when a production sender is configured
+   * (TWILIO_WHATSAPP_FROM, e.g. "whatsapp:+9198xxxxxxxx", approved by Meta).
+   * Without it nothing is sent: Twilio's sandbox only reaches test phones.
+   */
+  private async sendWhatsApp(toNumber: string, body: string) {
+    const from = (process.env.TWILIO_WHATSAPP_FROM || "").trim();
+    if (!from || !this.twilioSid || !this.twilioToken || !toNumber) return;
     try {
-      // Ensure phone number starts with country code, default to +91
-      let phone = toNumber.trim();
-      if (!phone.startsWith("+")) {
-        phone = `+91${phone}`;
-      }
-
-      const accountSid = this.twilioSid;
-      const authToken = this.twilioToken;
-      const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
-
-      let dateStr = "TBD";
-      let timeStr = "TBD";
-      
-      if (scheduledDate) {
-        const dateObj = new Date(scheduledDate);
-        // format like "July 21"
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        dateStr = `${monthNames[dateObj.getMonth()]} ${dateObj.getDate()}`;
-        
-        // format like "3PM"
-        let hours = dateObj.getHours();
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12; // the hour '0' should be '12'
-        timeStr = `${hours}${ampm}`;
-      }
-
-      let messageBody = `Your appointment is coming up on ${dateStr} at ${timeStr}.`;
-      if (meetLink) {
-        messageBody += ` Join via Google Meet: ${meetLink}`;
-      }
-
-      const bodyParams = new URLSearchParams();
-      bodyParams.append("To", `whatsapp:${phone}`);
-      bodyParams.append("From", "whatsapp:+14155238886");
-      bodyParams.append("Body", messageBody);
-
-      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
+      let phone = toNumber.trim().replace(/\s+/g, "");
+      if (!phone.startsWith("+")) phone = `+91${phone}`;
+      const params = new URLSearchParams();
+      params.append("To", `whatsapp:${phone}`);
+      params.append("From", from.startsWith("whatsapp:") ? from : `whatsapp:${from}`);
+      params.append("Body", body);
+      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${this.twilioSid}/Messages.json`, {
         method: "POST",
         headers: {
-          "Authorization": `Basic ${auth}`,
-          "Content-Type": "application/x-www-form-urlencoded"
+          Authorization: `Basic ${Buffer.from(`${this.twilioSid}:${this.twilioToken}`).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: bodyParams.toString()
+        body: params.toString(),
       });
-
-      if (!response.ok) {
-        this.logger.error(`Twilio API Error: ${await response.text()}`);
-      } else {
-        const data = await response.json();
-        this.logger.log(`WhatsApp confirmation sent to ${phone}: ${data.sid}`);
-      }
+      if (!response.ok) this.logger.error(`Twilio WhatsApp error: ${await response.text()}`);
     } catch (e) {
-      this.logger.error("Failed to send order WhatsApp", e);
+      this.logger.error("Failed to send WhatsApp", e as Error);
     }
   }
 
@@ -166,7 +195,7 @@ export class NotificationsService {
         },
         webpush: {
           fcmOptions: {
-            link: "/astrologer/dashboard",
+            link: "/admin",
           },
         },
       });
@@ -345,13 +374,6 @@ export class NotificationsService {
   async getUnreadCount(userId: string) {
     return this.prisma.notification.count({
       where: { userId, isRead: false },
-    });
-  }
-
-  async makeUserAdmin(userId: string) {
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { role: "ADMIN" },
     });
   }
 

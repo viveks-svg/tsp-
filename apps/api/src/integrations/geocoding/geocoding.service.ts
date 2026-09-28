@@ -34,7 +34,23 @@ export class GeocodingService {
 
     const apiKey = this.configService.get<string>('OPENCAGE_API_KEY');
     if (!apiKey) {
-      this.logger.warn('OPENCAGE_API_KEY is not set, falling back to default coordinates (Delhi)');
+      this.logger.warn('OPENCAGE_API_KEY is not set, falling back to Nominatim API (OpenStreetMap). Beware of rate limits (1 req/sec).');
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(place)}&format=json&limit=1`;
+        const response: any = await lastValueFrom(this.httpService.get(url, { headers: { 'User-Agent': 'TSP-App' } }));
+        if (response.data && response.data.length > 0) {
+          const match = response.data[0];
+          const result: GeocodeResult = {
+            lat: parseFloat(match.lat),
+            lng: parseFloat(match.lon),
+            timezone: 'Asia/Kolkata', // Nominatim doesn't provide TZ easily
+          };
+          await this.redisService.set(cacheKey, JSON.stringify(result), 604800);
+          return result;
+        }
+      } catch (err) {
+        this.logger.error(`Nominatim geocoding failed: ${err}`);
+      }
       return { lat: 28.6139, lng: 77.2090, timezone: 'Asia/Kolkata' };
     }
 
@@ -78,12 +94,19 @@ export class GeocodingService {
 
     const apiKey = this.configService.get<string>('OPENCAGE_API_KEY');
     if (!apiKey) {
-      // Mock data for development when API key is missing
-      return [
-        { name: `${query}, Delhi, India` },
-        { name: `${query}, Mumbai, India` },
-        { name: `${query}, Uttar Pradesh, India` },
-      ];
+      this.logger.warn('OPENCAGE_API_KEY is not set, falling back to Nominatim API for places autocomplete.');
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&featuretype=city`;
+        const response: any = await lastValueFrom(this.httpService.get(url, { headers: { 'User-Agent': 'TSP-App' } }));
+        if (response.data && response.data.length > 0) {
+          const mappedResults = response.data.map((r: any) => ({ name: r.display_name }));
+          await this.redisService.set(cacheKey, JSON.stringify(mappedResults), 604800);
+          return mappedResults;
+        }
+      } catch (err) {
+        this.logger.error(`Nominatim places search failed: ${err}`);
+      }
+      return [];
     }
 
     try {

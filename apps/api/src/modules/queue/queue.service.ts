@@ -1,3 +1,5 @@
+import { EarningsService } from "../finance/earnings.service";
+import { chargeUpTo } from "../wallet/charge";
 import {
   Injectable,
   Logger,
@@ -14,6 +16,8 @@ import { WalletService } from "../wallet/wallet.service";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { Inject, forwardRef } from "@nestjs/common";
 import { QueueGateway } from "./queue.gateway";
+import { ScheduleService } from "../schedule/schedule.service";
+import { ConsultationsService } from "../consultations/consultations.service";
 
 /** Minimum wallet balance required to join the queue (₹100 = ~5 min at ₹19/min) */
 const MIN_WALLET_BALANCE = 100;
@@ -26,6 +30,7 @@ export class QueueService {
   private readonly logger = new Logger(QueueService.name);
 
   constructor(
+    private readonly earnings: EarningsService,
     private readonly prisma: PrismaService,
     private readonly campaignService: CampaignService,
     private readonly googleCalendarService: GoogleCalendarService,
@@ -33,6 +38,8 @@ export class QueueService {
     private readonly walletService: WalletService,
     @Inject(forwardRef(() => QueueGateway))
     private readonly queueGateway: QueueGateway,
+    private readonly schedule: ScheduleService,
+    private readonly consultations: ConsultationsService,
   ) {}
 
   /**
@@ -258,27 +265,25 @@ export class QueueService {
    * Called when Dr. Pradeep finishes a call or manually triggers next.
    *
    * Flow:
-   * 1. Verify no existing IN_CALL consultation for admin
+   * 1. End the astrologer's current IN_CALL consultation, if any
    * 2. Pop oldest WAITING entry → CALLING
    * 3. Re-check wallet balance (user may have spent money since joining)
    * 4. Create Consultation with campaign rate
    * 5. Update QueueEntry with consultationId, status → IN_CALL
    */
-  async dequeueNext(campaignId: string): Promise<any> {
+  async dequeueNext(campaignId: string, actingUserId: string): Promise<any> {
     const campaign = await this.campaignService.findById(campaignId);
 
-    // Get admin user (Dr. Pradeep)
-    const admin = await this.prisma.user.findFirst({
-      where: { role: "ADMIN" },
-      select: { id: true },
-    });
-
-    if (!admin) {
-      this.logger.error("[QUEUE] No ADMIN user found for dequeue");
-      return null;
+    // Queue calls belong to Dr. Pradeep's astrologer profile, and only he runs his queue.
+    const provider = await this.schedule.getProvider();
+    if (!provider) {
+      throw new BadRequestException("No astrologer is set to take live-queue calls.");
+    }
+    if (provider.userId !== actingUserId) {
+      throw new ForbiddenException("Only the astrologer taking this queue can call the next client.");
     }
 
-    // Check existing IN_CALL consultation for admin
+    // Check existing IN_CALL consultation for the astrologer
     const existingInCall = await this.prisma.queueEntry.findFirst({
       where: {
         campaignId,
@@ -300,24 +305,23 @@ export class QueueService {
 
       await this.prisma.$transaction(async (tx) => {
         if (consultation && consultation.status === "ACTIVE") {
-          // Debit user
-          await this.walletService.debitWallet(
-            tx, existingInCall.userId, cost, "CONSULTATION", "Queue Consultation Fee", existingInCall.consultationId!, true
-          );
-          // Credit admin
-          await this.walletService.creditWallet(
-            tx, admin.id, cost, "CONSULTATION", "Queue Consultation Payout", existingInCall.consultationId!
-          );
+          // Charge the client — never more than their wallet holds
+          const charged = await chargeUpTo(tx, this.walletService, existingInCall.userId, cost, existingInCall.consultationId!,
+            `Live-queue call — ${durationMin} min`);
+          // The astrologer's share of what was actually paid
+          if (charged.gt(0)) {
+            await this.earnings.creditConsultation(tx, provider.userId, charged, existingInCall.consultationId!, "Live-queue call");
+          }
           // Update consultation
           await tx.consultation.update({
             where: { id: existingInCall.consultationId! },
-            data: { status: "COMPLETED", durationMin, cost },
+            data: { status: "COMPLETED", durationMin, cost: charged },
           });
           // If TRTC callSession exists, complete it too
           if (consultation.callSession && consultation.callSession.status === "ACTIVE") {
             await tx.callSession.updateMany({
               where: { id: consultation.callSession.id },
-              data: { status: "COMPLETED", durationSeconds, endReason: "ADMIN_ENDED_QUEUE", endedAt: new Date() }
+              data: { status: "COMPLETED", durationSeconds, endReason: "ASTROLOGER_ENDED_QUEUE", endedAt: new Date() }
             });
           }
         }
@@ -365,14 +369,14 @@ export class QueueService {
       await this.reorderPositions(campaignId);
 
       // Recursively try the next user
-      return this.dequeueNext(campaignId);
+      return this.dequeueNext(campaignId, actingUserId);
     }
 
     // Create consultation with campaign rate
     const consultation = await this.prisma.consultation.create({
       data: {
         userId: nextEntry.userId,
-        adminProviderId: admin.id,
+        astrologerId: provider.astrologerId,
         campaignId: campaign.id,
         lockedPricingPerMin: campaign.ratePerMinute,
         status: "ACTIVE",
@@ -383,7 +387,7 @@ export class QueueService {
 
     const channelName = `tsp_q_${consultation.id.replace(/-/g, "").substring(0, 16)}`;
     const trtcUserIdCaller = `u_${nextEntry.userId.replace(/-/g, "").substring(0, 16)}`;
-    const trtcUserIdAstro = `a_${admin.id.replace(/-/g, "").substring(0, 16)}`;
+    const trtcUserIdAstro = `a_${provider.userId.replace(/-/g, "").substring(0, 16)}`;
 
     const callSession = await this.prisma.callSession.create({
       data: {
@@ -417,10 +421,15 @@ export class QueueService {
     const astrologerSig = this.trtcService.generateUserSig(trtcUserIdAstro, tokenExpireSeconds);
     const callerSig = this.trtcService.generateUserSig(trtcUserIdCaller, tokenExpireSeconds);
 
+    // How long the client's wallet pays for at the campaign rate (billing is capped there too).
+    const rate = new Prisma.Decimal(campaign.ratePerMinute);
+    const maxDurationSeconds = rate.gt(0) ? Math.max(60, Math.floor(wallet.balance.div(rate).toNumber()) * 60) : 3600;
+
     const trtcPayload = {
       consultationId: consultation.id,
       channelName,
       sdkAppId: this.trtcService.getSdkAppId(),
+      maxDurationSeconds,
       user: {
         userId: nextEntry.userId,
         userSig: callerSig,
@@ -443,8 +452,9 @@ export class QueueService {
         consultationId: consultation.id,
         channelName,
         sdkAppId: this.trtcService.getSdkAppId(),
+        maxDurationSeconds,
         astrologer: {
-          userId: admin.id,
+          userId: provider.userId,
           userSig: astrologerSig,
           trtcUserId: trtcUserIdAstro,
         }
@@ -606,6 +616,20 @@ export class QueueService {
 
     for (const c of staleConsultations) {
       this.logger.warn(`[QUEUE] Cleaning up stale consultation ${c.id}`);
+      // A chat left open is billed up to its last message (capped at the wallet), not given away.
+      if (c.type === "CHAT" && !c.campaignId) {
+        try {
+          const last = await this.prisma.chatMessage.findFirst({
+            where: { thread: { consultationId: c.id } },
+            orderBy: { createdAt: "desc" },
+            select: { createdAt: true },
+          });
+          await this.consultations.completeChat(c.id, last?.createdAt ?? c.startedAt ?? c.updatedAt);
+          continue;
+        } catch (e) {
+          this.logger.error(`[QUEUE] Could not bill stale chat ${c.id}: ${(e as Error).message}`);
+        }
+      }
       await this.prisma.$transaction(async (tx) => {
         await tx.consultation.update({
           where: { id: c.id },

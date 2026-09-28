@@ -1,3 +1,4 @@
+import { permissionsFor } from "../../common/permissions";
 import {
   Controller,
   Post,
@@ -21,6 +22,7 @@ import { TIER_AUTH_STRICT, TIER_AUTH_REFRESH } from "../../common/config/rate-li
 import { Request, Response } from "express";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { PrismaService } from "../../database/prisma.service";
+import { clearAuthCookie, setAuthCookie } from "./auth-cookie";
 
 @Controller("auth")
 export class AuthController {
@@ -29,33 +31,17 @@ export class AuthController {
     private readonly prisma: PrismaService,
   ) { }
 
-  /** Set the access token as an HTTP-only cookie on the response. */
   private setAuthCookie(res: Response, accessToken: string): void {
-    const isProduction = process.env.NODE_ENV === "production";
-    res.cookie("access_token", accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-      maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
-    });
+    setAuthCookie(res, accessToken);
   }
 
-  /** Clear the access token cookie. */
   private clearAuthCookie(res: Response): void {
-    const isProduction = process.env.NODE_ENV === "production";
-    res.clearCookie("access_token", {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-    });
+    clearAuthCookie(res);
   }
 
   private getSessionMetadata(req: Request, body: any): any {
-    const rawIp =
-      req.headers["x-forwarded-for"] || req.ip || req.socket.remoteAddress;
-    const ipAddress = Array.isArray(rawIp) ? rawIp[0] : (rawIp as string);
+    // req.ip is the address nginx saw (trust proxy = 1); the raw header can be forged.
+    const ipAddress = req.ip || req.socket.remoteAddress;
 
     return {
       ipAddress,
@@ -93,7 +79,8 @@ export class AuthController {
   ) {
     const metadata = this.getSessionMetadata(req, loginDto);
     const result = await this.authService.login(loginDto, metadata);
-    this.setAuthCookie(res, result.accessToken);
+    // With two-step verification the password alone doesn't open a session yet.
+    if ("accessToken" in result) this.setAuthCookie(res, result.accessToken);
     return result;
   }
 
@@ -190,9 +177,15 @@ export class AuthController {
         phone: true,
         name: true,
         role: true,
+        staffRole: true,
         avatarUrl: true,
         firebaseUid: true,
         authProvider: true,
+        emailVerifiedAt: true,
+        phoneVerifiedAt: true,
+        pendingEmail: true,
+        passwordHash: true,
+        totpEnabledAt: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -204,7 +197,14 @@ export class AuthController {
     });
 
     return {
-      user: fullUser,
+      user: fullUser && (({ passwordHash, emailVerifiedAt, phoneVerifiedAt, totpEnabledAt, ...rest }) => ({
+        ...rest,
+        permissions: permissionsFor(fullUser.role, fullUser.staffRole),
+        emailVerified: !!emailVerifiedAt,
+        phoneVerified: !!phoneVerifiedAt,
+        hasPassword: !!passwordHash,
+        twoStepEnabled: !!totpEnabledAt,
+      }))(fullUser),
       walletBalance: wallet?.balance ?? 0,
     };
   }

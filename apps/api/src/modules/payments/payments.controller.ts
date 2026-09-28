@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Headers, Req, HttpCode, HttpStatus } from "@nestjs/common";
+import { Controller, Get, Post, Body, Headers, Req, HttpCode, HttpStatus, RawBodyRequest } from "@nestjs/common";
 import { Throttle, SkipThrottle } from "@nestjs/throttler";
 import { PaymentsService } from "./payments.service";
-import { CreatePaymentOrderDto, VerifyPaymentDto, RefundOrderDto } from "./dto/payments.dto";
+import { CreatePaymentOrderDto, VerifyPaymentDto } from "./dto/payments.dto";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Public } from "../../common/decorators/public.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -52,17 +52,9 @@ export class PaymentsController {
   @HttpCode(HttpStatus.OK)
   async handleWebhook(
     @Headers("x-razorpay-signature") signature: string,
-    @Req() req: Request,
+    @Req() req: RawBodyRequest<Request>,
   ) {
-    // If body is already parsed by body-parser middleware, stringify it
-    const rawBody = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
+    const rawBody = req.rawBody?.toString("utf8") ?? JSON.stringify(req.body);
     return this.paymentsService.handleWebhook(rawBody, signature);
-  }
-
-  @Throttle(TIER_ADMIN_INTERNAL)
-  @Post("refunds")
-  @Roles(Role.ADMIN)
-  async processRefund(@Body() dto: RefundOrderDto) {
-    return this.paymentsService.processRefund(dto);
   }
 }

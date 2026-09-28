@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsNotEmpty, IsNumber, Min, Matches, ValidateNested, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, IsNumber, IsInt, Min, Max, Matches, ValidateNested, IsOptional, MaxLength, ArrayMinSize, ArrayMaxSize, IsArray } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ShopOrderItemDto {
@@ -6,23 +6,27 @@ export class ShopOrderItemDto {
   @IsNotEmpty()
   productId!: string;
 
+  // Ignored: the name and price come from the server's product list.
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  productName!: string;
+  @MaxLength(200)
+  productName?: string;
 
+  @IsOptional()
   @IsNumber()
-  @Min(0)
-  price!: number;
+  price?: number;
 
-  @IsNumber()
+  @IsInt()
   @Min(1)
+  @Max(20)
   quantity!: number;
 }
 
 export class CreateShopOrderDto {
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[a-zA-Z\s]+$/, { message: "Name must contain only letters and spaces" })
+  @MaxLength(80)
+  @Matches(/^[\p{L}][\p{L}\s.'\u2019-]*$/u, { message: "Please enter your name using letters (spaces, full stops, apostrophes and hyphens are fine)" })
   customerName!: string;
 
   @IsOptional()
@@ -41,10 +45,12 @@ export class CreateShopOrderDto {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(80)
   city!: string;
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(80)
   state!: string;
 
   @IsString()
@@ -52,13 +58,17 @@ export class CreateShopOrderDto {
   @Matches(/^\d{6}$/, { message: "Pincode must be exactly 6 digits" })
   pincode!: string;
 
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(20)
   @ValidateNested({ each: true })
   @Type(() => ShopOrderItemDto)
   items!: ShopOrderItemDto[];
 
+  // Ignored: the total is computed on the server and the owner comes from the login.
+  @IsOptional()
   @IsNumber()
-  @Min(0)
-  totalAmount!: number;
+  totalAmount?: number;
 
   @IsOptional()
   @IsString()

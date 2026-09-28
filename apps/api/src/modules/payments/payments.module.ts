@@ -2,14 +2,12 @@ import { Module } from "@nestjs/common";
 import { PaymentsService } from "./payments.service";
 import { PaymentsController } from "./payments.controller";
 import { WalletModule } from "../wallet/wallet.module";
-import { RazorpayService } from "./razorpay.service";
-import { RazorpayWebhookHandler } from "./webhooks/razorpay-webhook.handler";
 import { LeadsModule } from "../leads/leads.module";
 
 @Module({
   imports: [WalletModule, LeadsModule],
-  controllers: [PaymentsController, RazorpayWebhookHandler],
-  providers: [PaymentsService, RazorpayService],
-  exports: [PaymentsService, RazorpayService],
+  controllers: [PaymentsController],
+  providers: [PaymentsService],
+  exports: [PaymentsService],
 })
 export class PaymentsModule {}

@@ -1,3 +1,4 @@
+import { RequirePermission } from "../../common/decorators/require-permission.decorator";
 import { Controller, Get, Post, Patch, Param, Body } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { CampaignService } from "./campaign.service";
@@ -12,6 +13,7 @@ import { Role } from "@prisma/client";
  */
 @Controller("admin/campaigns")
 @Roles(Role.ADMIN)
+@RequirePermission("campaigns.manage")
 @Throttle(TIER_ADMIN_INTERNAL)
 export class AdminCampaignController {
   constructor(private readonly campaignService: CampaignService) {}

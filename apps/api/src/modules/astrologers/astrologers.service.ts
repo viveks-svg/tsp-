@@ -172,7 +172,6 @@ export class AstrologersService {
           select: {
             id: true,
             name: true,
-            email: true,
             avatarUrl: true,
           },
         },
@@ -227,22 +226,23 @@ export class AstrologersService {
       
       // We explicitly exclude availabilityRules and exceptions from the final response payload 
       // if we want to keep it identical, or just return them since the DTO mapper can ignore them.
+      const { approvedById: _a, rejectionReason: _r, ...publicAstro } = astro;
       return {
-        ...astro,
+        ...publicAstro,
         isAvailable
       };
     });
   }
 
+  /** Public profile: approved astrologers only, never contact details or ID documents. */
   async findById(id: string) {
-    const astrologer = await this.prisma.astrologer.findUnique({
-      where: { id },
+    const astrologer = await this.prisma.astrologer.findFirst({
+      where: { id, status: "APPROVED" },
       include: {
         user: {
           select: {
             id: true,
             name: true,
-            email: true,
             avatarUrl: true,
           },
         },
@@ -256,7 +256,6 @@ export class AstrologersService {
             language: true,
           },
         },
-        verification: true,
         availabilityRules: true,
         exceptions: {
           where: {
@@ -294,8 +293,9 @@ export class AstrologersService {
       }
     }
 
+    const { approvedById: _a, rejectionReason: _r, ...publicAstrologer } = astrologer;
     return {
-      ...astrologer,
+      ...publicAstrologer,
       isAvailable
     };
   }

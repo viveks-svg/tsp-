@@ -83,11 +83,13 @@ export class QueueGateway {
    * Called from QueueService or QueueController after successful join.
    */
   broadcastQueueJoined(campaignId: string, entry: any) {
-    const roomId = `queue:${campaignId}`;
-    this.server.to(roomId).emit("queue:joined", {
-      campaignId,
-      entry,
-    });
+    // The joiner's own confirmation; the room just gets the new positions.
+    if (entry?.userId) {
+      this.server.to(`user:${entry.userId}`).emit("queue:joined", {
+        campaignId,
+        entry: { id: entry.id, userId: entry.userId, position: entry.position, status: entry.status },
+      });
+    }
   }
 
   /**
@@ -100,10 +102,10 @@ export class QueueGateway {
 
     this.server.to(roomId).emit("queue:position_update", {
       campaignId,
+      // Positions only — no names; everyone in the room sees this.
       entries: state.entries.map((e: any) => ({
         id: e.id,
         userId: e.userId,
-        userName: (e.user as any)?.name ?? "Unknown",
         status: e.status,
         position: e.position,
       })),
@@ -115,9 +117,8 @@ export class QueueGateway {
    * Notify a specific user that they are being called (position 1 → CALLING).
    */
   emitCallingToUser(campaignId: string, userId: string, consultationId: string, trtc?: any) {
-    const roomId = `queue:${campaignId}`;
-    // Broadcast to the room — the client filters by their own userId
-    this.server.to(roomId).emit("queue:calling", {
+    // Only to that person's own connections: the payload holds their private call credentials.
+    this.server.to(`user:${userId}`).emit("queue:calling", {
       campaignId,
       userId,
       consultationId,
@@ -130,8 +131,8 @@ export class QueueGateway {
    * Notify the room that a user has been promoted to IN_CALL.
    */
   emitPromotedToInCall(campaignId: string, userId: string, consultationId: string, trtc?: any) {
-    const roomId = `queue:${campaignId}`;
-    this.server.to(roomId).emit("queue:promoted", {
+    // Only to that person's own connections: the payload holds their private call credentials.
+    this.server.to(`user:${userId}`).emit("queue:promoted", {
       campaignId,
       userId,
       consultationId,

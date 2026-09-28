@@ -1,3 +1,4 @@
+import { RequirePermission } from "../../common/decorators/require-permission.decorator";
 import { Controller, Post, Get, Param, Body, HttpCode, HttpStatus, Query } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { QueueService } from "./queue.service";
@@ -48,10 +49,12 @@ export class QueueController {
 }
 
 /**
- * Admin queue management endpoints.
+ * Admin queue monitoring. Admins can see and tidy the queue (skip, remove,
+ * close a stuck call) but never take calls — that is the astrologer's job.
  */
 @Controller("admin/queue")
 @Roles(Role.ADMIN)
+@RequirePermission("queue.manage")
 @Throttle(TIER_ADMIN_INTERNAL)
 export class AdminQueueController {
   constructor(private readonly queueService: QueueService) {}
@@ -73,15 +76,31 @@ export class AdminQueueController {
     return this.queueService.removeEntry(entryId);
   }
 
-  @Post("dequeue/:campaignId")
-  @HttpCode(HttpStatus.OK)
-  async manualDequeue(@Param("campaignId") campaignId: string) {
-    return this.queueService.dequeueNext(campaignId);
-  }
-
   @Post("force-close/:consultationId")
   @HttpCode(HttpStatus.OK)
   async forceClose(@Param("consultationId") consultationId: string) {
     return this.queueService.forceCloseStuckConsultation(consultationId);
+  }
+}
+
+/**
+ * The astrologer's live queue: Dr. Pradeep sees who is waiting and calls the
+ * next client. Only the astrologer set as the queue's provider can dequeue.
+ */
+@Controller("astrologer/queue")
+@Roles(Role.ASTROLOGER)
+@Throttle(TIER_ADMIN_INTERNAL)
+export class AstrologerQueueController {
+  constructor(private readonly queueService: QueueService) {}
+
+  @Get()
+  async getOverview() {
+    return this.queueService.getAdminQueueOverview();
+  }
+
+  @Post("dequeue/:campaignId")
+  @HttpCode(HttpStatus.OK)
+  async callNext(@CurrentUser() user: any, @Param("campaignId") campaignId: string) {
+    return this.queueService.dequeueNext(campaignId, user.id);
   }
 }

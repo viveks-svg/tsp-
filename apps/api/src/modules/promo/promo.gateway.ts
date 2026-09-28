@@ -8,7 +8,7 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
-  cors: { origin: '*' },
+  cors: { origin: [(process.env.FRONTEND_URL ?? 'http://localhost:3000').replace(/\/$/, ''), 'http://localhost:3000'] },
   namespace: '/promo',
 })
 export class PromoGateway implements OnGatewayConnection, OnGatewayDisconnect {

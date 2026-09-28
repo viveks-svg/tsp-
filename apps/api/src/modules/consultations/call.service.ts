@@ -1,3 +1,5 @@
+import { EarningsService } from "../finance/earnings.service";
+import { chargeUpTo } from "../wallet/charge";
 import {
   BadRequestException,
   ForbiddenException,
@@ -34,6 +36,7 @@ export class CallService {
   private readonly logger = new Logger("CallService");
 
   constructor(
+    private readonly earnings: EarningsService,
     private readonly prisma: PrismaService,
     private readonly trtcService: TrtcService,
     private readonly walletService: WalletService,
@@ -437,7 +440,7 @@ export class CallService {
     }
 
     const isClient = consultation.userId === userId;
-    const isAstrologer = consultation.astrologer?.userId === userId || consultation.adminProviderId === userId;
+    const isAstrologer = consultation.astrologer?.userId === userId;
     if (!isClient && !isAstrologer) {
       throw new ForbiddenException("You are not a participant in this call");
     }
@@ -518,30 +521,14 @@ export class CallService {
 
     // Billing + consultation update inside transaction
     return this.prisma.$transaction(async (tx) => {
-      // 1. Debit user wallet (allow negative to avoid rolling back the call completion)
-      await this.walletService.debitWallet(
-        tx,
-        consultation.userId,
-        cost,
-        "CONSULTATION",
-        `Call consultation fee with provider ${consultation.astrologer?.user.name || "Admin"}`,
-        consultation.id,
-        true // allowNegative
-      );
+      // 1. Charge the client — never more than their wallet holds (no negative balances)
+      const charged = await chargeUpTo(tx, this.walletService, consultation.userId, cost, consultation.id,
+        `Call with ${consultation.astrologer?.user.name || "TSP"} — ${durationMin} min`);
 
-      // 2. Credit astrologer or admin wallet
-      const providerUserId = consultation.astrologer?.userId || consultation.adminProviderId;
-      const providerName = consultation.astrologer?.user.name || "Admin";
-      
-      if (providerUserId) {
-        await this.walletService.creditWallet(
-          tx,
-          providerUserId,
-          cost,
-          "CONSULTATION",
-          `Call consultation payout from user ${consultation.user.name}`,
-          consultation.id,
-        );
+      // 2. The astrologer's share of what was actually paid
+      const providerUserId = consultation.astrologer?.userId;
+      if (providerUserId && charged.gt(0)) {
+        await this.earnings.creditConsultation(tx, providerUserId, charged, consultation.id, `Call with ${consultation.user.name || "a client"}`);
       }
 
       // 3. Update consultation
@@ -550,7 +537,7 @@ export class CallService {
         data: {
           status: "COMPLETED",
           durationMin,
-          cost,
+          cost: charged,
         },
       });
 
@@ -631,7 +618,7 @@ export class CallService {
     }
 
     const isClient = consultation.userId === userId;
-    const isAstrologer = consultation.astrologer?.userId === userId || consultation.adminProviderId === userId;
+    const isAstrologer = consultation.astrologer?.userId === userId;
     if (!isClient && !isAstrologer) {
       throw new ForbiddenException("You are not a participant in this call");
     }
@@ -668,7 +655,7 @@ export class CallService {
     }
 
     const isClient = consultation.userId === userId;
-    const isAstrologer = consultation.astrologer?.userId === userId || consultation.adminProviderId === userId;
+    const isAstrologer = consultation.astrologer?.userId === userId;
     if (!isClient && !isAstrologer) {
       throw new ForbiddenException("You are not a participant in this consultation");
     }

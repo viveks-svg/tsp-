@@ -68,16 +68,16 @@ export class ThrottlerStorageRedis implements ThrottlerStorage {
         };
       }
 
-      // Atomic increment + set expiry
-      const totalHits = await redis.incr(redisKey);
-
-      // Set TTL on first hit only
-      if (totalHits === 1) {
-        await redis.pexpire(redisKey, ttl);
-      }
-
-      // Get remaining TTL for the response
-      const pttl = await redis.pttl(redisKey);
+      // Increment and set the window's expiry in one atomic step (a key can
+      // never be left without an expiry, which would block its owner forever).
+      const [totalHits, pttl] = (await redis.eval(
+        `local n = redis.call('INCR', KEYS[1])
+         if n == 1 or redis.call('PTTL', KEYS[1]) < 0 then redis.call('PEXPIRE', KEYS[1], ARGV[1]) end
+         return { n, redis.call('PTTL', KEYS[1]) }`,
+        1,
+        redisKey,
+        String(ttl),
+      )) as [number, number];
       const timeToExpire = pttl > 0 ? Math.ceil(pttl / 1000) : Math.ceil(ttl / 1000);
 
       // If limit exceeded and blockDuration is set, create a block key

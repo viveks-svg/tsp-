@@ -1,9 +1,8 @@
 import { Module } from "@nestjs/common";
 import { OtpService } from "./otp.service";
-import { OtpController } from "./otp.controller";
 
+/** Not exposed over HTTP: the website signs in by phone through Firebase. */
 @Module({
-  controllers: [OtpController],
   providers: [OtpService],
   exports: [OtpService],
 })

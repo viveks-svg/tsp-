@@ -1,4 +1,4 @@
-import {
+import { MaxLength,
   IsString, IsEmail, IsEnum, IsOptional,
   IsDateString, IsInt, Min, IsNotEmpty, Matches
 } from 'class-validator';
@@ -16,7 +16,8 @@ export class CreateBookingDto {
   serviceName!: string;
 
   @IsString() @IsNotEmpty()
-  @Matches(/^[a-zA-Z\s]+$/, { message: "Name must contain only letters and spaces" })
+  @MaxLength(80)
+  @Matches(/^[\p{L}][\p{L}\s.'\u2019-]*$/u, { message: "Please enter your name using letters (spaces, full stops, apostrophes and hyphens are fine)" })
   fullName!: string;
 
   @IsEmail()
@@ -59,7 +60,8 @@ export class CreateBookingDto {
   @IsEnum(UrgencyTier)
   urgencyTier!: UrgencyTier;
 
-  @IsOptional() @IsString()
+  // What the client told us in the booking form (concerns, background, …).
+  @IsOptional() @IsString() @MaxLength(4000)
   notes?: string;
 
   // Lead capture session ID — if present, the booking came through the lead flow

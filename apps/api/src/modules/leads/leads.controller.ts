@@ -1,3 +1,4 @@
+import { RequirePermission } from "../../common/decorators/require-permission.decorator";
 import {
   Controller,
   Post,
@@ -59,6 +60,7 @@ export class LeadsController {
 @ApiTags('Admin - Leads')
 @Controller('admin/leads')
 @Roles(Role.ADMIN)
+@RequirePermission("leads.manage")
 @Throttle(TIER_ADMIN_INTERNAL)
 export class AdminLeadsController {
   constructor(private readonly service: LeadsService) {}

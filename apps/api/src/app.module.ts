@@ -1,9 +1,14 @@
+import { PermissionsGuard } from "./common/guards/permissions.guard";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { BullModule } from '@nestjs/bullmq';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ConsultationScheduleModule } from "./modules/schedule/schedule.module";
+import { AstrologerPanelModule } from "./modules/astrologer-panel/astrologer-panel.module";
+import { FinanceModule } from "./modules/finance/finance.module";
 import { APP_GUARD } from "@nestjs/core";
+import { AuditModule } from "./modules/audit/audit.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
 import { OtpModule } from "./modules/otp/otp.module";
@@ -28,6 +33,7 @@ import { LeadsModule } from "./modules/leads/leads.module";
 import { CampaignModule } from "./modules/campaign/campaign.module";
 import { QueueModule } from "./modules/queue/queue.module";
 import { PromoModule } from "./modules/promo/promo.module";
+import { MailModule } from "./modules/mail/mail.module";
 import { GoogleCalendarModule } from "./integrations/google-calendar/google-calendar.module";
 import { RedisModule } from "./integrations/redis/redis.module";
 import { RedisService } from "./integrations/redis/redis.service";
@@ -36,6 +42,7 @@ import { RolesGuard } from "./common/guards/roles.guard";
 import { CustomThrottlerGuard } from "./common/guards/custom-throttler.guard";
 import { ThrottlerStorageRedis } from "./common/throttler/throttler-storage-redis";
 import { TIER_AUTHENTICATED_DEFAULT } from "./common/config/rate-limit.config";
+import { validateEnv } from "./config/env.validation";
 import configuration from "./config/configuration";
 
 @Module({
@@ -43,8 +50,13 @@ import configuration from "./config/configuration";
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
+      validate: validateEnv,
     }),
     ScheduleModule.forRoot(),
+    ConsultationScheduleModule,
+    AstrologerPanelModule,
+    FinanceModule,
+    AuditModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
@@ -74,11 +86,8 @@ import configuration from "./config/configuration";
       inject: [RedisService],
       useFactory: (redisService: RedisService) => ({
         throttlers: [
-          {
-            name: 'default',
-            ttl: TIER_AUTHENTICATED_DEFAULT.default.ttl,
-            limit: TIER_AUTHENTICATED_DEFAULT.default.limit,
-          },
+          { name: 'default', ...TIER_AUTHENTICATED_DEFAULT.default },
+          { name: 'long', ...TIER_AUTHENTICATED_DEFAULT.long },
         ],
         storage: new ThrottlerStorageRedis(redisService),
       }),
@@ -109,6 +118,7 @@ import configuration from "./config/configuration";
     CampaignModule,
     QueueModule,
     PromoModule,
+    MailModule,
     GoogleCalendarModule,
   ],
   providers: [
@@ -119,6 +129,10 @@ import configuration from "./config/configuration";
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
     },
     // CustomThrottlerGuard runs AFTER JwtAuthGuard (registration order matters),
     // so req.user is already populated for per-user rate limiting keying.

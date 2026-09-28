@@ -1,11 +1,13 @@
-import { Controller, Get, Param, Post, Req, Query } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param, Post, Req, Query } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { HoroscopeService } from './horoscope.service';
 import { GetHoroscopeQueryDto } from './dto/get-horoscope-query.dto';
 import { HoroscopeResponseDto } from './dto/horoscope-response.dto';
 import { Public } from '../../common/decorators/public.decorator';
-import { TIER_PUBLIC_TOOLS, TIER_ADMIN_INTERNAL } from '../../common/config/rate-limit.config';
-import { HoroscopePeriod } from '@prisma/client';
+import { TIER_PUBLIC_TOOLS } from '../../common/config/rate-limit.config';
+import { HoroscopePeriod, Role } from '@prisma/client';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 
 @Controller('horoscope')
 export class HoroscopeController {
@@ -42,12 +44,16 @@ export class HoroscopeController {
    * Admin-only manual trigger for testing.
    * In production, generation is handled by the BullMQ cron.
    */
-  @Public()
-  @Throttle(TIER_ADMIN_INTERNAL)
+  @Roles(Role.ADMIN)
+  @RequirePermission('content.manage')
+  @Throttle({ default: { limit: 2, ttl: 60_000 }, long: { limit: 20, ttl: 3_600_000 } })
   @Post('generate')
   async triggerGeneration(
     @Query('period') period?: HoroscopePeriod,
   ): Promise<{ generated: number }> {
+    if (period && !Object.values(HoroscopePeriod).includes(period)) {
+      throw new BadRequestException('Unknown period');
+    }
     const targetPeriod = period ?? 'DAILY';
     return this.horoscopeService.generateAllReadings(targetPeriod);
   }

@@ -1,30 +1,28 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 import { WalletService } from "../wallet/wallet.service";
-import { ConfigService } from "@nestjs/config";
-import { CreatePaymentOrderDto, RefundOrderDto } from "./dto/payments.dto";
+import { CreatePaymentOrderDto } from "./dto/payments.dto";
 import { Prisma } from "@prisma/client";
 import * as crypto from "crypto";
+import { RazorpayService } from "./razorpay.service";
 
+/**
+ * Wallet top-ups through Razorpay. Refunds of top-ups are money requests
+ * (see finance/money-actions.service.ts) so they follow the approval rules.
+ */
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
-  private readonly keyId: string;
-  private readonly keySecret: string;
-  private readonly webhookSecret: string;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly walletService: WalletService,
-    private readonly configService: ConfigService,
-  ) {
-    this.keyId = (this.configService.get<string>("razorpay.keyId") || "").trim();
-    this.keySecret = (this.configService.get<string>("razorpay.keySecret") || "").trim();
-    this.webhookSecret = (this.configService.get<string>("razorpay.webhookSecret") || "").trim();
-  }
+    private readonly razorpay: RazorpayService,
+  ) {}
 
-  private isMockMode(): boolean {
-    return !this.keyId || !this.keySecret;
+  /** Without keys, fake payments are allowed only outside production (local testing). */
+  private async mockAllowed() {
+    return process.env.NODE_ENV !== "production" && !(await this.razorpay.isConfigured());
   }
 
   async getOrders(userId: string) {
@@ -43,8 +41,12 @@ export class PaymentsService {
   }
 
   async createOrder(userId: string, dto: CreatePaymentOrderDto) {
-    const currency = dto.currency || "INR";
+    const currency = "INR"; // the wallet is credited in rupees
     const amountDecimal = new Prisma.Decimal(dto.amount);
+    const configured = await this.razorpay.isConfigured();
+    if (!configured && !(await this.mockAllowed())) {
+      throw new ServiceUnavailableException("Online payments are not configured yet.");
+    }
 
     // Create local pending order
     const localOrder = await this.prisma.paymentOrder.create({
@@ -57,64 +59,33 @@ export class PaymentsService {
       },
     });
 
-    if (this.isMockMode()) {
-      this.logger.warn("Razorpay credentials missing. Running in MOCK Mode.");
-      const mockGatewayOrderId = `order_mock_${crypto.randomUUID()}`;
-
+    if (!configured) {
+      this.logger.warn("Razorpay credentials missing. Running in MOCK Mode (non-production).");
       const updated = await this.prisma.paymentOrder.update({
         where: { id: localOrder.id },
-        data: { gatewayOrderId: mockGatewayOrderId },
+        data: { gatewayOrderId: `order_mock_${crypto.randomUUID()}` },
       });
-
-      return {
-        ...updated,
-        key: "mock-key-id",
-        mock: true,
-      };
+      return { ...updated, key: "mock-key-id", mock: true };
     }
 
     try {
-      const auth = "Basic " + Buffer.from(`${this.keyId}:${this.keySecret}`).toString("base64");
-      const response = await fetch("https://api.razorpay.com/v1/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: auth,
-        },
-        body: JSON.stringify({
-          amount: Math.round(dto.amount * 100), // convert to paise
-          currency,
-          receipt: localOrder.id,
-        }),
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Razorpay API error: ${errText}`);
-      }
-
-      const pgOrder = await response.json();
-
+      const pgOrder = await this.razorpay.createOrder(Math.round(dto.amount * 100), currency, localOrder.id);
       const updated = await this.prisma.paymentOrder.update({
         where: { id: localOrder.id },
         data: { gatewayOrderId: pgOrder.id },
       });
-
-      return {
-        ...updated,
-        key: this.keyId,
-        mock: false,
-      };
+      return { ...updated, key: await this.razorpay.getKeyId(), mock: false };
     } catch (error: any) {
       this.logger.error(`Failed to create Razorpay order: ${error.message}`);
       await this.prisma.paymentOrder.update({
         where: { id: localOrder.id },
         data: { status: "FAILED" },
       });
-      throw new BadRequestException(`Payment initialization failed: ${error.message}`);
+      throw new BadRequestException("Could not start the payment. Please try again in a moment.");
     }
   }
 
+  /** Called by the browser after Razorpay checkout closes. */
   async verifyPayment(
     userId: string,
     orderId: string, // Local order ID
@@ -125,7 +96,7 @@ export class PaymentsService {
       where: { id: orderId },
     });
 
-    if (!order) {
+    if (!order || order.userId !== userId) {
       throw new NotFoundException("Payment order not found");
     }
 
@@ -133,24 +104,23 @@ export class PaymentsService {
       return { success: true, message: "Payment already processed", order };
     }
 
-    // Signature verification (skip if mock mode)
-    if (!this.isMockMode()) {
-      const text = `${order.gatewayOrderId}|${gatewayTransactionId}`;
-      const generatedSignature = crypto
-        .createHmac("sha256", this.keySecret)
-        .update(text)
-        .digest("hex");
-
-      if (generatedSignature !== signature) {
+    if (await this.razorpay.isConfigured()) {
+      const valid = await this.razorpay.verifySignature(order.gatewayOrderId ?? "", gatewayTransactionId, signature);
+      if (!valid) {
         throw new BadRequestException("Invalid payment signature check failed");
       }
-    } else {
+    } else if (await this.mockAllowed()) {
       this.logger.warn(`Mock verification accepted for transaction: ${gatewayTransactionId}`);
+    } else {
+      throw new ServiceUnavailableException("Online payments are not configured yet.");
     }
 
-    // Process completion inside transaction
+    return this.completeTopup(order.id, gatewayTransactionId, signature);
+  }
+
+  /** Credits the wallet once per order (browser verify and webhook may both arrive). */
+  private async completeTopup(orderId: string, gatewayTransactionId: string, signature: string | null) {
     return this.prisma.$transaction(async (tx) => {
-      // Re-fetch within transaction block
       const currentOrder = await tx.paymentOrder.findUnique({
         where: { id: orderId },
       });
@@ -159,30 +129,27 @@ export class PaymentsService {
         return { success: true, message: "Order processed concurrently" };
       }
 
-      // Update Order Status
       await tx.paymentOrder.update({
         where: { id: orderId },
         data: { status: "SUCCESS" },
       });
 
-      // Create Payment Transaction
       const transaction = await tx.paymentTransaction.create({
         data: {
-          orderId: order.id,
+          orderId,
           gatewayTransactionId,
           gatewaySignature: signature,
-          amount: order.amount,
+          amount: currentOrder.amount,
           status: "SUCCESS",
         },
       });
 
-      // Credit User's Wallet with ledger entry
       await this.walletService.creditWallet(
         tx,
-        userId,
-        order.amount,
+        currentOrder.userId,
+        currentOrder.amount,
         "TOPUP",
-        `Wallet top-up of ${order.amount} via Razorpay transaction ${gatewayTransactionId}`,
+        `Wallet top-up of ${currentOrder.amount} via Razorpay transaction ${gatewayTransactionId}`,
         transaction.id,
       );
 
@@ -194,16 +161,10 @@ export class PaymentsService {
     });
   }
 
+  /** Razorpay server-to-server notification; completes top-ups even if the browser never returned. */
   async handleWebhook(rawBody: string, signature: string) {
-    if (!this.isMockMode() && this.webhookSecret) {
-      const expectedSignature = crypto
-        .createHmac("sha256", this.webhookSecret)
-        .update(rawBody)
-        .digest("hex");
-
-      if (expectedSignature !== signature) {
-        throw new BadRequestException("Invalid webhook signature");
-      }
+    if (!(await this.razorpay.verifyWebhookSignature(rawBody, signature))) {
+      throw new BadRequestException("Invalid webhook signature");
     }
 
     const payload = JSON.parse(rawBody);
@@ -211,7 +172,6 @@ export class PaymentsService {
 
     this.logger.log(`Received Webhook event: ${event}`);
 
-    // We process "order.paid" or "payment.captured"
     if (event === "order.paid" || event === "payment.captured") {
       const pgOrderId = payload.payload.payment?.entity?.order_id || payload.payload.order?.entity?.id;
       const pgPaymentId = payload.payload.payment?.entity?.id;
@@ -225,106 +185,18 @@ export class PaymentsService {
       });
 
       if (!order) {
-        this.logger.warn(`Order not found for gateway order ID: ${pgOrderId}`);
-        return { success: false, message: "Order not found" };
+        // Not a wallet top-up (bookings and shop are handled elsewhere).
+        return { success: true, message: "Not a wallet order" };
       }
 
       if (order.status === "SUCCESS") {
         return { success: true, message: "Already processed" };
       }
 
-      // Verify and process payment
-      await this.verifyPayment(order.userId, order.id, pgPaymentId, signature || "WEBHOOK_VERIFIED");
+      await this.completeTopup(order.id, pgPaymentId, null);
       return { success: true, message: "Processed successfully" };
     }
 
     return { success: true, message: "Unhandled event" };
-  }
-
-  async processRefund(dto: RefundOrderDto) {
-    const transaction = await this.prisma.paymentTransaction.findUnique({
-      where: { id: dto.paymentTransactionId },
-      include: {
-        order: true,
-        refunds: true,
-      },
-    });
-
-    if (!transaction || transaction.status !== "SUCCESS") {
-      throw new BadRequestException("Invalid or unsuccessful transaction ID for refund");
-    }
-
-    const refundAmount = new Prisma.Decimal(dto.amount);
-
-    // Calculate existing refunds total
-    const totalRefunded = transaction.refunds
-      .filter((r) => r.status === "SUCCESS")
-      .reduce((sum, r) => sum.plus(r.amount), new Prisma.Decimal(0));
-
-    const remainingRefundable = transaction.amount.minus(totalRefunded);
-
-    if (refundAmount.greaterThan(remainingRefundable)) {
-      throw new BadRequestException(
-        `Refund amount ${refundAmount} exceeds maximum remaining refundable amount: ${remainingRefundable}`,
-      );
-    }
-
-    let gatewayRefundId = `ref_mock_${crypto.randomUUID()}`;
-
-    // If keys exist, dispatch to Razorpay
-    if (!this.isMockMode() && transaction.gatewayTransactionId) {
-      try {
-        const auth = "Basic " + Buffer.from(`${this.keyId}:${this.keySecret}`).toString("base64");
-        const response = await fetch(`https://api.razorpay.com/v1/payments/${transaction.gatewayTransactionId}/refund`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: auth,
-          },
-          body: JSON.stringify({
-            amount: Math.round(dto.amount * 100), // paise
-            notes: {
-              reason: dto.reason || "Partial Refund",
-            },
-          }),
-        });
-
-        if (!response.ok) {
-          const errText = await response.text();
-          throw new Error(`Razorpay Refund API error: ${errText}`);
-        }
-
-        const pgRefund = await response.json();
-        gatewayRefundId = pgRefund.id;
-      } catch (error: any) {
-        this.logger.error(`Failed to execute gateway refund: ${error.message}`);
-        throw new BadRequestException(`Gateway refund request failed: ${error.message}`);
-      }
-    }
-
-    // Record Refund and Debit Wallet inside database transaction
-    return this.prisma.$transaction(async (tx) => {
-      const refund = await tx.refund.create({
-        data: {
-          transactionId: transaction.id,
-          amount: refundAmount,
-          status: "SUCCESS",
-          gatewayRefundId,
-          reason: dto.reason || "Requested Refund",
-        },
-      });
-
-      // Debit wallet with ledger entry
-      await this.walletService.debitWallet(
-        tx,
-        transaction.order.userId,
-        refundAmount,
-        "REFUND",
-        `Wallet debit for refund of ${refundAmount} (Refund ID: ${refund.id})`,
-        refund.id,
-      );
-
-      return refund;
-    });
   }
 }

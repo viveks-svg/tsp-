@@ -1,6 +1,6 @@
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 
-RUN apk add --no-cache python3 make g++ py3-setuptools
+RUN apt-get update && apt-get install -y python3 make g++
 
 RUN npm install -g pnpm@9.1.4 node-gyp@10
 
@@ -17,13 +17,13 @@ COPY apps/api/ ./apps/api/
 # Dummy DATABASE_URL only needed for prisma generate at build time
 RUN DATABASE_URL="postgresql://user:pass@localhost:5432/db" pnpm --filter @tsp/api exec prisma generate
 
-RUN pnpm --filter @tsp/api run build
+RUN NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter @tsp/api run build
 
 # ---------------- Production ----------------
 
-FROM node:22-alpine
+FROM node:22-slim
 
-RUN apk add --no-cache libstdc++ libgcc
+# No need for libstdc++ separately since slim includes it
 
 RUN npm install -g pnpm@9.1.4
 

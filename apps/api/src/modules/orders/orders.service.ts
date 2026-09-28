@@ -1,35 +1,51 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 
+const plain = (phone: string) => phone.replace(/^\+91/, '').replace(/^\+/, '');
+
 @Injectable()
 export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getUserOrders(user: { id: string, email?: string, phone?: string }) {
-    if (!user.id && !user.email && !user.phone) {
-      return { shopOrders: [], bookings: [] };
-    }
+  /**
+   * A client's bookings and shop orders. Anything placed while signed in is
+   * theirs. Guest orders are matched by email or phone only when the account
+   * has proved it owns them (a confirmed email, or a phone verified by SMS code) —
+   * otherwise signing up with someone's email would reveal their bookings.
+   */
+  async getUserOrders(requester: { id: string }) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: requester.id },
+      select: { id: true, email: true, phone: true, emailVerifiedAt: true, phoneVerifiedAt: true },
+    });
+    if (!user) return { shopOrders: [], bookings: [] };
 
-    // Match Shop Orders by userId, customerEmail, or customerPhone
-    const shopConds: any[] = [];
-    if (user.id) shopConds.push({ userId: user.id });
-    if (user.email) shopConds.push({ customerEmail: user.email });
-    if (user.phone) shopConds.push({ customerPhone: user.phone });
+    const emailVerified = !!user.email && !!user.emailVerifiedAt;
+    const phoneVerified = !!user.phone && !!user.phoneVerifiedAt;
+    const phones = user.phone ? [user.phone, plain(user.phone)] : [];
 
     const shopOrders = await this.prisma.shopOrder.findMany({
-      where: shopConds.length > 0 ? { OR: shopConds } : { id: 'impossible' },
+      where: {
+        OR: [
+          { userId: user.id },
+          ...(emailVerified ? [{ customerEmail: { equals: user.email!, mode: 'insensitive' as const } }] : []),
+          ...(phoneVerified ? [{ customerPhone: { in: phones } }] : []),
+        ],
+      },
       include: { items: true },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
-    // Match Bookings by email or phone (Booking model doesn't have userId yet)
-    const bookingConds: any[] = [];
-    if (user.email) bookingConds.push({ email: user.email });
-    if (user.phone) bookingConds.push({ phone: user.phone });
-
     const bookings = await this.prisma.booking.findMany({
-      where: bookingConds.length > 0 ? { OR: bookingConds } : { id: 'impossible' },
-      orderBy: { createdAt: 'desc' }
+      where: {
+        OR: [
+          { userId: user.id },
+          ...(emailVerified ? [{ email: { equals: user.email!, mode: 'insensitive' as const } }] : []),
+          ...(phoneVerified ? [{ phone: { in: phones } }] : []),
+        ],
+      },
+      omit: { razorpaySignature: true },
+      orderBy: { createdAt: 'desc' },
     });
 
     return { shopOrders, bookings };

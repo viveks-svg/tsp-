@@ -4,7 +4,7 @@ export default () => ({
     url: process.env.DATABASE_URL,
   },
   jwt: {
-    secret: process.env.JWT_SECRET ?? "dev-secret",
+    secret: process.env.JWT_SECRET,
     expiration: process.env.JWT_EXPIRATION ?? "7d",
   },
   redis: {

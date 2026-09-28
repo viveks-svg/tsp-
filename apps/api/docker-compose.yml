@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: tsp_dev
+      TZ: UTC
+    ports:
+      - "127.0.0.1:5432:5432" # local only
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tsp_network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379" # local only
+    volumes:
+      - redis_data:/data
+    networks:
+      - tsp_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tsp-backend
+    restart: always
+    ports:
+      - "127.0.0.1:3001:3001"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/tsp_dev?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - tsp_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  tsp_network:
+    driver: bridge

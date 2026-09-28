@@ -1,9 +1,10 @@
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { PassportStrategy } from "@nestjs/passport";
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../database/prisma.service";
 import { Request } from "express";
+import { checkAccessToken } from "./token-check";
 
 /**
  * Extract JWT from the access_token cookie or the Authorization header.
@@ -29,27 +30,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: extractJwtFromCookieOrHeader,
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>("jwt.secret") || "dev-secret",
+      secretOrKey: configService.getOrThrow<string>("jwt.secret"),
     });
   }
 
   async validate(payload: any) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
-      select: {
-        id: true,
-        email: true,
-        phone: true,
-        name: true,
-        role: true,
-        avatarUrl: true,
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException("User not found or session invalid");
-    }
-
-    return user;
+    return checkAccessToken(this.prisma, payload);
   }
 }

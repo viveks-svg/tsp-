@@ -20,7 +20,7 @@ export class NotificationsController {
     return this.notificationsService.getUserNotifications(
       user.id,
       unreadOnly,
-      isNaN(limit) ? 20 : limit,
+      isNaN(limit) ? 20 : Math.min(Math.max(limit, 1), 100),
     );
   }
 
@@ -31,13 +31,6 @@ export class NotificationsController {
     @Body("body") body?: string,
   ) {
     return this.notificationsService.sendTestPushNotification(user.id, title, body);
-  }
-
-  @Post("force-admin")
-  async forceAdmin(@CurrentUser() user: any) {
-    // A helpful debug endpoint to ensure the user is an ADMIN
-    await this.notificationsService.makeUserAdmin(user.id);
-    return { success: true, message: "You are now an ADMIN! You will now receive push notifications." };
   }
 
   @Patch("read-all")

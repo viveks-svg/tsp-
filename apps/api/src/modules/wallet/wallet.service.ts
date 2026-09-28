@@ -45,26 +45,19 @@ export class WalletService {
     description: string,
     referenceId?: string | null,
   ) {
-    const wallet = await tx.wallet.findUnique({
-      where: { userId },
-    });
-
-    if (!wallet) {
-      throw new NotFoundException("Wallet not found for user");
-    }
-
     const decimalAmount = new Prisma.Decimal(amount);
-    const newBalance = wallet.balance.plus(decimalAmount);
+    if (decimalAmount.lte(0)) throw new BadRequestException("Amount must be positive");
 
-    const updated = await tx.wallet.update({
-      where: { userId },
-      data: { balance: newBalance },
-    });
+    // Atomic increment: concurrent credits and debits can't overwrite each other.
+    const found = await tx.wallet.updateMany({ where: { userId }, data: { balance: { increment: decimalAmount } } });
+    if (found.count === 0) throw new NotFoundException("Wallet not found for user");
+    const updated = await tx.wallet.findUniqueOrThrow({ where: { userId } });
+    const newBalance = updated.balance;
 
     // Record immutable ledger entry
     await this.ledgerService.recordEntry(
       tx,
-      wallet.id,
+      updated.id,
       decimalAmount,
       "CREDIT",
       newBalance,
@@ -97,30 +90,27 @@ export class WalletService {
     referenceId?: string | null,
     allowNegative = false,
   ) {
-    const wallet = await tx.wallet.findUnique({
-      where: { userId },
-    });
-
-    if (!wallet) {
-      throw new NotFoundException("Wallet not found for user");
-    }
-
     const decimalAmount = new Prisma.Decimal(amount);
-    if (!allowNegative && wallet.balance.lessThan(decimalAmount)) {
+    if (decimalAmount.lte(0)) throw new BadRequestException("Amount must be positive");
+
+    // Atomic, conditional decrement: the balance check and the debit are one
+    // statement, so two debits at once can't both spend the same money.
+    const debited = await tx.wallet.updateMany({
+      where: allowNegative ? { userId } : { userId, balance: { gte: decimalAmount } },
+      data: { balance: { decrement: decimalAmount } },
+    });
+    if (debited.count === 0) {
+      const exists = await tx.wallet.findUnique({ where: { userId }, select: { id: true } });
+      if (!exists) throw new NotFoundException("Wallet not found for user");
       throw new BadRequestException("Insufficient wallet balance");
     }
-
-    const newBalance = wallet.balance.minus(decimalAmount);
-
-    const updated = await tx.wallet.update({
-      where: { userId },
-      data: { balance: newBalance },
-    });
+    const updated = await tx.wallet.findUniqueOrThrow({ where: { userId } });
+    const newBalance = updated.balance;
 
     // Record immutable ledger entry
     await this.ledgerService.recordEntry(
       tx,
-      wallet.id,
+      updated.id,
       decimalAmount,
       "DEBIT",
       newBalance,
@@ -143,49 +133,5 @@ export class WalletService {
     return updated;
   }
 
-  // Helper method to add funds for testing
-  async addFunds(userId: string, amount: number) {
-    const wallet = await this.prisma.wallet.findUnique({
-      where: { userId },
-    });
-
-    if (!wallet) {
-      throw new NotFoundException("Wallet not found for user");
-    }
-
-    return this.prisma.$transaction(async (tx) => {
-      const decimalAmount = new Prisma.Decimal(amount);
-      const newBalance = wallet.balance.plus(decimalAmount);
-
-      const updatedWallet = await tx.wallet.update({
-        where: { userId },
-        data: { balance: newBalance },
-      });
-
-      // Record immutable ledger entry
-      await this.ledgerService.recordEntry(
-        tx,
-        wallet.id,
-        decimalAmount,
-        "CREDIT",
-        newBalance,
-        "TOPUP",
-        "Top-up funds (Development/Testing)",
-      );
-
-      // Backward-compatibility write to WalletTransaction
-      await tx.walletTransaction.create({
-        data: {
-          userId,
-          amount: decimalAmount,
-          type: "CREDIT",
-          status: "SUCCESS",
-          description: "Top-up funds (Development/Testing)",
-        },
-      });
-
-      return updatedWallet;
-    });
-  }
 }
 
